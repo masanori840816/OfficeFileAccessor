@@ -22,7 +22,14 @@ try
     });*/
     builder.Services.AddSpaStaticFiles(configuration =>
     {
-        configuration.RootPath = "office-file-accessor/dist";
+        if (builder.Environment.EnvironmentName == "Development") 
+        {
+            configuration.RootPath = "office-file-accessor";
+        }
+        else
+        {
+            configuration.RootPath = "office-file-accessor/dist";
+        }
     });
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
@@ -35,19 +42,26 @@ try
     app.UseRouting();
     //app.UseSession();
     app.MapStaticAssets();
-    app.UseStaticFiles(new StaticFileOptions {
-        FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "office-file-accessor/dist")),
-        RequestPath = ""
-    });
+    if (builder.Environment.EnvironmentName != "Development")
+    {
+        app.UseStaticFiles(new StaticFileOptions {
+            FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "office-file-accessor/dist")),
+            RequestPath = ""
+        });
+    }
+    
     app.MapControllers();
     app.UseSpa(spa =>
     {
-        spa.Options.SourcePath = "office-file-accessor/dist";
-
-        /*if (env.IsDevelopment())
+        if (builder.Environment.EnvironmentName == "Development") 
         {
-            spa.UseAngularCliServer(npmScript: "start");
-        }*/
+            spa.Options.SourcePath = "office-file-accessor";
+            spa.UseProxyToSpaDevelopmentServer("http://localhost:5173");
+        }
+        else
+        {
+            spa.Options.SourcePath = "office-file-accessor/dist";
+        }
     });
     app.Run();
 }
