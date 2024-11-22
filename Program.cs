@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.FileProviders;
 using NLog;
 using NLog.Web;
 
@@ -12,12 +13,16 @@ try
     builder.Host.UseNLog();
     
     builder.Services.AddAntiforgery();
-    builder.Services.AddSession(options =>
+    /*builder.Services.AddSession(options =>
     {
         options.IdleTimeout = TimeSpan.FromSeconds(30);
         options.Cookie.HttpOnly = true;
         options.Cookie.IsEssential = true;
         options.Cookie.SameSite = SameSiteMode.Strict;
+    });*/
+    builder.Services.AddSpaStaticFiles(configuration =>
+    {
+        configuration.RootPath = "office-file-accessor/dist";
     });
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
@@ -28,9 +33,22 @@ try
     var app = builder.Build();
     
     app.UseRouting();
-    app.UseSession();
+    //app.UseSession();
     app.MapStaticAssets();
+    app.UseStaticFiles(new StaticFileOptions {
+        FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "office-file-accessor/dist")),
+        RequestPath = ""
+    });
     app.MapControllers();
+    app.UseSpa(spa =>
+    {
+        spa.Options.SourcePath = "office-file-accessor/dist";
+
+        /*if (env.IsDevelopment())
+        {
+            spa.UseAngularCliServer(npmScript: "start");
+        }*/
+    });
     app.Run();
 }
 catch (Exception ex) when (ex is not HostAbortedException)
