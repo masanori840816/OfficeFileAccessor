@@ -15,6 +15,7 @@ function App() {
       <Router>
 
       <Link to="/">TOP</Link>
+      <p>|</p>
       <Link to="/register">Register</Link>
       <Routes>
         <Route path="/" element={<IndexPage />} />

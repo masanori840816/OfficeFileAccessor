@@ -39,17 +39,18 @@ try
         });
     var app = builder.Build();
     
-    app.UseRouting();
-    //app.UseSession();
-    app.MapStaticAssets();
     if (builder.Environment.EnvironmentName != "Development")
     {
+        app.UsePathBase("/officefiles/");
         app.UseStaticFiles(new StaticFileOptions {
             FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "office-file-accessor/dist")),
             RequestPath = ""
         });
     }
     
+    app.UseRouting();
+    //app.UseSession();
+    app.MapStaticAssets();
     app.MapControllers();
     app.UseSpa(spa =>
     {
