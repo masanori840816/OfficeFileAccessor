@@ -12,7 +12,7 @@ function App() {
 
   return (
     <>
-      <Router>
+      <Router basename='/officefiles'>
 
       <Link to="/">TOP</Link>
       <p>|</p>

@@ -1,8 +1,9 @@
 import { useEffect } from "react"
+import { getServerUrl } from "./web/serverUrlGetter";
 
 export function IndexPage(): JSX.Element {
     useEffect(() => {
-        fetch("/api/files", {
+        fetch(`${getServerUrl()}/api/files`, {
             mode: "cors",
             method: "GET"
         })
