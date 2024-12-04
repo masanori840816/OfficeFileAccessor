@@ -41,7 +41,7 @@ try
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
         {
-            // ReferenceLoopを切る.
+            // stop reference loop.
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
     var app = builder.Build();
@@ -59,18 +59,21 @@ try
     //app.UseSession();
     app.MapStaticAssets();
     app.MapControllers();
-    app.UseSpa(spa =>
-    {
-        if (builder.Environment.EnvironmentName == "Development") 
-        {
-            spa.Options.SourcePath = "office-file-accessor";
-            spa.UseProxyToSpaDevelopmentServer("http://localhost:5173");
-        }
-        else
-        {
-            spa.Options.SourcePath = "office-file-accessor/dist";
-        }
-    });
+    app.MapWhen(context => !context.Request.Path.StartsWithSegments("/api"),
+        b => {
+            b.UseSpa(spa =>
+            {
+                if (builder.Environment.EnvironmentName == "Development") 
+                {
+                    spa.Options.SourcePath = "office-file-accessor";
+                    spa.UseProxyToSpaDevelopmentServer("http://localhost:5173");
+                }
+                else
+                {
+                    spa.Options.SourcePath = "office-file-accessor/dist";
+                }
+            });
+        });
     app.Run();
 }
 catch (Exception ex) when (ex is not HostAbortedException)
