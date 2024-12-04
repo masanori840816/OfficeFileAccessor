@@ -11,11 +11,15 @@ try
     builder.Logging.ClearProviders();
     builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
     builder.Host.UseNLog();
+    string serverUrl = builder.Configuration.GetValue<string>("ServerUrl") ?? "http://0.0.0.0:5170";
+    builder.WebHost.UseUrls(serverUrl);
+
+    string[] origins = builder.Configuration.GetSection("Origins").Get<string[]>() ?? [];
     const string AllowOrigins = "AllowOrigins";
     builder.Services.AddCors(options =>
     {
         options.AddPolicy(AllowOrigins,
-            builder => builder.WithOrigins("http://localhost:5170", "http://localhost:5173")
+            builder => builder.WithOrigins(origins)
                 .AllowAnyMethod()
                 .AllowAnyHeader());
     });
