@@ -11,7 +11,14 @@ try
     builder.Logging.ClearProviders();
     builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
     builder.Host.UseNLog();
-    
+    const string AllowOrigins = "AllowOrigins";
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(AllowOrigins,
+            builder => builder.WithOrigins("http://localhost:5170", "http://localhost:5173")
+                .AllowAnyMethod()
+                .AllowAnyHeader());
+    });
     builder.Services.AddAntiforgery();
     /*builder.Services.AddSession(options =>
     {
@@ -47,7 +54,7 @@ try
             RequestPath = ""
         });
     }
-    
+    app.UseCors(AllowOrigins);
     app.UseRouting();
     //app.UseSession();
     app.MapStaticAssets();
