@@ -10,7 +10,7 @@ public class OfficeFileController(ILogger<OfficeFileController> logger): Control
         return "Hello World!";
     }
     [HttpPost("/api/files")]
-    public IActionResult LoadOfficeFiles([FromForm] FormFileCollection files)
+    public IActionResult LoadOfficeFiles([FromForm] IFormFileCollection files)
     {
         logger.LogInformation($"Files? {files?.Count}");
         return Ok("Hello");

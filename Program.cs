@@ -63,7 +63,7 @@ try
     //app.UseSession();
     app.MapStaticAssets();
     app.MapControllers();
-    app.MapWhen(context => !context.Request.Path.StartsWithSegments("/api"),
+    app.MapWhen(context => context.Request.Path.StartsWithSegments("/api") == false,
         b => {
             b.UseSpa(spa =>
             {
