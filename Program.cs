@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.FileProviders;
 using NLog;
 using NLog.Web;
+using OfficeFileAccessor.OfficeFiles;
 
 var logger = LogManager.Setup().LoadConfigurationFromFile("Nlog.config").GetCurrentClassLogger();
 
@@ -31,6 +32,7 @@ try
         options.Cookie.IsEssential = true;
         options.Cookie.SameSite = SameSiteMode.Strict;
     });*/
+    builder.Services.AddScoped<IOfficeFileService, OfficeFileService>();
     builder.Services.AddSpaStaticFiles(configuration =>
     {
         if (builder.Environment.EnvironmentName == "Development") 

@@ -23,7 +23,7 @@ export function RegisterPage(): JSX.Element {
         body: formData,
       })
       .then(res => res.text())
-      .then(res => alert(res))
+      .then(res => console.log(res))
       .catch(err => console.error("Upload failed", err));
   };
 

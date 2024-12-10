@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 namespace OfficeFileAccessor.OfficeFiles;
-public class OfficeFileController(ILogger<OfficeFileController> logger): Controller
+public class OfficeFileController(ILogger<OfficeFileController> logger, IOfficeFileService officeFiles): Controller
 {
     [HttpGet("/api/files")]
     public string GetFileNames()
@@ -10,9 +10,9 @@ public class OfficeFileController(ILogger<OfficeFileController> logger): Control
         return "Hello World!";
     }
     [HttpPost("/api/files")]
-    public IActionResult LoadOfficeFiles([FromForm] IFormFileCollection files)
+    public async Task<IActionResult> LoadOfficeFiles([FromForm] IFormFileCollection files)
     {
-        logger.LogInformation($"Files? {files?.Count}");
-        return Ok("Hello");
+        
+        return Json(await officeFiles.RegisterAsync(files));
     }
 }
