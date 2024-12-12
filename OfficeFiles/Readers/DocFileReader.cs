@@ -13,5 +13,17 @@ public class DocFileReader: IOfficeFileReader
     public void Read(IFormFile file)
     {
         logger.Info("Read Docs");
+        using WordprocessingDocument wordDoc = WordprocessingDocument.Open(file.OpenReadStream(), false);
+        Body? body = wordDoc.MainDocumentPart?.Document?.Body;
+        if(body == null)
+        {
+            logger.Warn("Failed reading the document");
+            return;
+        }
+        // Get all paragraphs
+        foreach (var paragraph in body.Elements<Paragraph>())
+        {
+            logger.Info(paragraph.InnerText);
+        }
     }
 }
