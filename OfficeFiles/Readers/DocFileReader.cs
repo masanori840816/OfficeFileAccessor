@@ -1,3 +1,6 @@
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
+
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
 public class DocFileReader: IOfficeFileReader
