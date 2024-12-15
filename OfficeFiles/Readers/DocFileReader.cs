@@ -20,10 +20,10 @@ public class DocFileReader: IOfficeFileReader
             logger.Warn("Failed reading the document");
             return;
         }
-        // Get all paragraphs
-        foreach (var paragraph in body.Elements<Paragraph>())
+        logger.Info("-------------BODY---------");
+        foreach(var b in body)
         {
-            logger.Info(paragraph.InnerText);
+            logger.Info($"Text: {b.InnerText} XML: {b.InnerXml}");
         }
     }
 }
