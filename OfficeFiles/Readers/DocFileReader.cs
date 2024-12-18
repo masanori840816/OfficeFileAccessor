@@ -74,8 +74,16 @@ public class DocFileReader: IOfficeFileReader
         TableProperties? tableProperties = table.GetFirstChild<TableProperties>();
         if(tableProperties != null)
         {
+            // Table width
             TableWidth? tableWidth = tableProperties.GetFirstChild<TableWidth>();
-            logger.Info($"Table W: {tableWidth?.Width} WT: {tableWidth?.Type}");
+            logger.Info($"Table Width: {tableWidth?.Width}");
+            // Table borders
+            TableBorders? borders = tableProperties.GetFirstChild<TableBorders>();
+            if(borders != null)
+            {
+                logger.Info($"Table Border Left Val: {borders.LeftBorder?.Val} Color: {borders.LeftBorder?.Color} Size: {borders.LeftBorder?.Size}");
+                logger.Info($"Table Border Top Val: {borders.TopBorder?.Val} Color: {borders.TopBorder?.Color} Size: {borders.TopBorder?.Size}");
+            }
         }
         // Get rows
         var rows = table.Elements<TableRow>();
@@ -86,7 +94,8 @@ public class DocFileReader: IOfficeFileReader
             if(rowProperties != null)
             {
                 TableRowHeight? rowHeight = rowProperties.GetFirstChild<TableRowHeight>();
-                logger.Info($"Row H: {rowHeight?.Val} HT: {rowHeight?.HeightType}");
+                logger.Info($"Row Height: {rowHeight?.Val}");
+
             }
             // Get cells
             var cells = row.Elements<TableCell>();
@@ -94,16 +103,27 @@ public class DocFileReader: IOfficeFileReader
             {
                 // Get cell texts
                 string cellText = cell.InnerText;
-                logger.Info($"CELL: {cellText}\t");
-
+                logger.Info($"CELL Text: {cellText}");
+                // Get cell properties
                 TableCellProperties? cellProperties = cell.GetFirstChild<TableCellProperties>();
                 if(cellProperties != null)
                 {
                     TableCellWidth? cellWidth = cellProperties.GetFirstChild<TableCellWidth>();
-                    logger.Info($"Cell W: {cellWidth?.Width} WT: {cellWidth?.Type}");
+                    logger.Info($"Cell Width: {cellWidth?.Width}");
+                    TableCellBorders? borders = cellProperties.GetFirstChild<TableCellBorders>();
+                    if(borders != null)
+                    {
+                        logger.Info($"Cell Border Right Val: {borders.RightBorder?.Val} Color: {borders.RightBorder?.Color} Size: {borders.RightBorder?.Size}");
+                        logger.Info($"Cell Border Bottom Val: {borders.BottomBorder?.Val} Color: {borders.BottomBorder?.Color} Size: {borders.BottomBorder?.Size}");
+                    }
+                    Shading? shading = cellProperties.GetFirstChild<Shading>();
+                    if(shading != null)
+                    {
+                        logger.Info($"Cell BackgroundColor: {shading.Fill?.Value} Color:{shading.Color}");
+                    }
                 }
             }
-            logger.Info("\n");
+            logger.Info("-----------");
         }
         logger.Info("\n");
     }
