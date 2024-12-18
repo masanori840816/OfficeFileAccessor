@@ -30,6 +30,14 @@ public class XlsFileReader: IOfficeFileReader
                 logger.Info($"Failed getting Worksheet Name: {name}");
                 return;
             }
+            foreach(Row row in targetSheet.Descendants<Row>())
+            {                
+                logger.Info($"Row CH: {row.CustomHeight} H: {row.Height}");
+                foreach(Cell cell in row)
+                {
+                    logger.Info($"Cell Text: {cell.InnerText} XML: {cell.InnerXml}");
+                }
+            }
         }
        
         logger.Info("OK");
