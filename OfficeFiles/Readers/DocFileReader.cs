@@ -15,6 +15,50 @@ public class DocFileReader: IOfficeFileReader
     {
         logger.Info("Read Docs");
         using WordprocessingDocument wordDoc = WordprocessingDocument.Open(file.OpenReadStream(), false);
+            var stylePart = wordDoc.MainDocumentPart?.StyleDefinitionsPart;
+
+            if (stylePart != null)
+            {
+                var styles = stylePart.Styles;
+                if (styles != null)
+                {
+                    // default
+                    var docDefaults = styles.DocDefaults;
+                    if (docDefaults?.RunPropertiesDefault?.RunPropertiesBaseStyle != null)
+                    {
+                        RunPropertiesBaseStyle defaultRunProps = docDefaults.RunPropertiesDefault.RunPropertiesBaseStyle;
+                        string? defaultFont = GetFontName(defaultRunProps?.RunFonts);
+
+                        string? defaultSize = defaultRunProps?.FontSize?.Val ?? "Default Size";
+
+                        string? defaultColor = defaultRunProps?.Color?.Val ?? "Default Color";
+
+                        logger.Info($"Default Font: {defaultFont}");
+                        logger.Info($"Default Size: {defaultSize}");
+                        logger.Info($"Default Color: {defaultColor}");
+                    }
+
+                    foreach (var style in styles.Elements<Style>())
+                    {
+                        logger.Info($"Style Name: {style.StyleName?.Val}");
+
+                        StyleRunProperties? runProperties = style.StyleRunProperties;
+                        if (runProperties != null)
+                        {
+                            string font = GetFontName(runProperties.RunFonts);
+
+                            string? size = runProperties.FontSize?.Val ?? "Default Size";
+
+                            string? color = runProperties.Color?.Val ?? "Default Color";
+
+                            logger.Info($"Font: {font}");
+                            logger.Info($"Size: {size}");
+                            logger.Info($"Color: {color}");
+                        }
+                    }
+                }
+            }
+
         Body? body = wordDoc.MainDocumentPart?.Document?.Body;
         if(body == null)
         {
@@ -22,16 +66,29 @@ public class DocFileReader: IOfficeFileReader
             return;
         }
         logger.Info("-------------BODY---------");
+        
         foreach(OpenXmlElement elm in body.Elements())
         {
+            
             logger.Info($"Text: {elm.InnerText} Type: {elm.GetType()}");
             if(elm is Table table)
             {
                 logger.Info("Table found:");
                 ReadTableProps(table);
             }
-            else if(elm is Paragraph)
+            else if(elm is Paragraph paragraph)
             {
+                var paraProperties = paragraph.ParagraphProperties;
+                string? paraStyleId = paraProperties?.ParagraphStyleId?.Val;
+                logger.Info($"Paragraph Style ID: {paraStyleId}");
+
+                foreach (var run in paragraph.Elements<Run>())
+                {
+                    var runProperties = run.RunProperties;
+
+                    string? runStyleId = runProperties?.RunStyle?.Val;
+                    logger.Info($"Run Style ID: {runStyleId}");
+                }
                 logger.Info($"Paragraph Text: {elm.InnerText} Type: {elm.GetType()}");
                 if (elm.Descendants<DocumentFormat.OpenXml.Vml.Shape>().Any())
                 {
@@ -74,6 +131,7 @@ public class DocFileReader: IOfficeFileReader
         TableProperties? tableProperties = table.GetFirstChild<TableProperties>();
         if(tableProperties != null)
         {
+            logger.Info($"TableStyleVal: {tableProperties.TableStyle?.Val}");
             // Table width
             TableWidth? tableWidth = tableProperties.GetFirstChild<TableWidth>();
             logger.Info($"Table Width: {tableWidth?.Width}");
@@ -126,5 +184,18 @@ public class DocFileReader: IOfficeFileReader
             logger.Info("-----------");
         }
         logger.Info("\n");
+    }
+    private static string GetFontName(RunFonts? runFonts)
+    {
+        string? result = runFonts?.Ascii ??
+            runFonts?.HighAnsi ??
+            runFonts?.EastAsia ??
+            runFonts?.ComplexScript;
+            
+        if(string.IsNullOrEmpty(result))
+        {
+            return "Default Font";
+        }
+        return result;
     }
 }
