@@ -33,9 +33,20 @@ public class XlsFileReader: IOfficeFileReader
             foreach(Row row in targetSheet.Descendants<Row>())
             {                
                 logger.Info($"Row CH: {row.CustomHeight} H: {row.Height}");
-                foreach(Cell cell in row)
+                foreach(Cell cell in row.Cast<Cell>())
                 {
-                    logger.Info($"Cell Text: {cell.InnerText} XML: {cell.InnerXml}");
+
+                    logger.Info($"Cell styleIdx: {cell.StyleIndex} Type: {cell.DataType} Ref: {cell.CellReference}");
+                    string value = cell.InnerText;
+                    if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+                    {
+                        SharedStringTablePart? stringTablePart = bookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
+                        if (stringTablePart != null)
+                        {
+                            value = stringTablePart.SharedStringTable.ElementAt(int.Parse(value)).InnerText;
+                        }
+                    }
+                    logger.Info($"Cell Val: {value}");
                 }
             }
         }
