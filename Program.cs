@@ -63,7 +63,7 @@ try
     app.UseCors(AllowOrigins);
     app.UseRouting();
     //app.UseSession();
-    app.MapStaticAssets();
+    app.UseStaticFiles();
     app.MapControllers();
     app.MapWhen(context => context.Request.Path.StartsWithSegments("/api") == false,
         b => {
