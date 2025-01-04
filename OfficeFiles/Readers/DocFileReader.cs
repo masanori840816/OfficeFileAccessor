@@ -172,16 +172,8 @@ public class DocFileReader : IOfficeFileReader
     }
     private void PrintFontInfoFromParagraph(MainDocumentPart? mainPart, Paragraph paragraph, ThemeFont themeFont)
     {
-        TextProps? props = GetTextProps(mainPart, paragraph, themeFont);
-        logger.Info($"Props Color: {props?.Color} Bold: {props?.Bold} Size: {props?.FontSize}");
+        TextProps? props = GetTextProps(mainPart, paragraph, themeFont);        
         
-        if(props?.Fonts != null)
-        {
-            foreach(var f in props.Fonts)
-            {
-                logger.Info($"Font Type: {f?.FontType} Name: {f?.FontName}");
-            }
-        }
         // One paragraph is separated as multiple Run elements by styles and font types
         foreach (Run run in paragraph.Elements<Run>())
         {
@@ -189,26 +181,55 @@ public class DocFileReader : IOfficeFileReader
             RunProperties? runProperties = run.RunProperties;
             if (runProperties != null)
             {
-                logger.Info($"RunProperties found:");
-                var fonts = runProperties.RunFonts;
-                if (fonts != null)
+                var fonts = GetFonts(runProperties.RunFonts);
+                if(fonts.Count > 0)
                 {
-                    foreach(var f in GetFonts(fonts))
+                    foreach(var f in fonts)
                     {
                         logger.Info($"Font Name: {f.FontName} Type: {f.FontType}");
                     }
                 }
-                if (runProperties.Color != null)
+                else if(props?.Fonts != null)
+                {
+                    foreach(var f in props.Fonts)
+                    {
+                        logger.Info($"Font Name: {f.FontName} Type: {f.FontType}");
+                    }
+                }
+                
+                if (runProperties.Color == null)
+                {
+                    if(props?.Color != null)
+                    {
+                        logger.Info($"Color: {props.Color}");
+                    }
+                }
+                else
                 {
                     logger.Info($"Color: {runProperties.Color.Val}");
                 }
-                if (runProperties.Bold != null)
+                if (runProperties.Bold == null)
+                {
+                    if(props?.Bold != null)
+                    {
+                        logger.Info($"Bold: {props.Bold}");
+                    }
+                }
+                else
                 {
                     logger.Info($"Bold: {runProperties.Bold.Val}");
                 }
-                if (runProperties.FontSize != null)
+                if (runProperties.FontSize == null)
                 {
-                    logger.Info($"FontSize: {runProperties.FontSize.Val}");
+                    if(props?.FontSize != null)
+                    {
+                        logger.Info($"FontSize: {props.FontSize}");
+                    }
+                }
+                else if(int.TryParse(runProperties.FontSize.Val, out var size))
+                {
+                    // runProperties.FontSize.Val represents half-points
+                    logger.Info($"FontSize: {size / 2}");
                 }
             }
             logger.Info("------------");
@@ -309,10 +330,11 @@ public class DocFileReader : IOfficeFileReader
         {
             result.Bold = true;
         }
+        // runProperties.FontSize.Val represents half-points
         if (string.IsNullOrEmpty(runProperties.FontSize?.Val) == false &&
             int.TryParse(runProperties.FontSize?.Val, out var size))
         {
-            result.FontSize = size;
+            result.FontSize = size / 2;
         }
         return result;
     }
