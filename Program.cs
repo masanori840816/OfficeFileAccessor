@@ -4,7 +4,7 @@ using NLog;
 using NLog.Web;
 using OfficeFileAccessor.OfficeFiles;
 
-var logger = LogManager.Setup().LoadConfigurationFromFile("Nlog.config").GetCurrentClassLogger();
+var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
 
 try
 {
