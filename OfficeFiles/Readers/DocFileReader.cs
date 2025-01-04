@@ -7,6 +7,26 @@ namespace OfficeFileAccessor.OfficeFiles.Readers;
 public class DocFileReader : IOfficeFileReader
 {
     private readonly NLog.Logger logger;
+    private enum FontType
+    {
+        Ascii = 0,
+        HighAnsi,
+        EastAsia,
+        Latin,
+    }
+    private enum FontPriority {
+        Major = 0,
+        Minor
+    }
+    private record ThemeFont(string? EastAsiaMajorFont, string? EastAsiaMinorFont, string? LatinMajorFont, string? LatinMinorFont);
+    private record TextFont (FontType FontType, string FontName);
+    private class TextProps
+    {
+        public List<TextFont> Fonts { get; set; } = [];
+        public int? FontSize { get; set; }
+        public bool Bold { get; set; } = false;
+        public string Color { get; set; } = "000000";
+    }
     public DocFileReader()
     {
         this.logger = NLog.LogManager.GetCurrentClassLogger();
@@ -14,56 +34,24 @@ public class DocFileReader : IOfficeFileReader
     public void Read(IFormFile file)
     {
         using WordprocessingDocument wordDoc = WordprocessingDocument.Open(file.OpenReadStream(), false);
-        var stylePart = wordDoc.MainDocumentPart?.StyleDefinitionsPart;
-
-        if (stylePart != null)
-        {
-            var styles = stylePart.Styles;
-            if (styles != null)
-            {
-                // default
-                var docDefaults = styles.DocDefaults;
-                if (docDefaults?.RunPropertiesDefault?.RunPropertiesBaseStyle != null)
-                {
-                    RunPropertiesBaseStyle defaultRunProps = docDefaults.RunPropertiesDefault.RunPropertiesBaseStyle;
-                    string? defaultFont = GetFontName(defaultRunProps?.RunFonts, wordDoc.MainDocumentPart);
-
-                    string? defaultSize = defaultRunProps?.FontSize?.Val ?? "Default Size";
-
-                    string? defaultColor = defaultRunProps?.Color?.Val ?? "Default Color";
-
-                    logger.Info($"Default Font: {defaultFont}");
-                    logger.Info($"Default Size: {defaultSize}");
-                    logger.Info($"Default Color: {defaultColor}");
-                }
-                foreach (var style in styles.Elements<Style>())
-                {
-                    logger.Info($"Style Name: {style.StyleName?.Val}");
-                    PrintRunProperties(style.StyleRunProperties);
-                }
-            }
-        }
-
+        
         Body? body = wordDoc.MainDocumentPart?.Document?.Body;
         if (body == null)
         {
             logger.Warn("Failed reading the document");
             return;
         }
-        logger.Info("-------------BODY---------");
-
+        
+        ThemeFont themeFont = GetThemeFont(wordDoc.MainDocumentPart);
         foreach (OpenXmlElement elm in body.Elements())
         {
-            logger.Info($"Text: {elm.InnerText} Type: {elm.GetType()}");
             if (elm is Table table)
             {
                 logger.Info("Table found:");
-                ReadTableProps(wordDoc.MainDocumentPart, table);
+                ReadTableProps(wordDoc.MainDocumentPart, table, themeFont);
             }
             else if (elm is Paragraph paragraph)
-            {                                
-                PrintFontInfoFromParagraph(wordDoc.MainDocumentPart, paragraph);
-                logger.Info($"Paragraph Text: {elm.InnerText} Type: {elm.GetType()}");
+            {
                 if (elm.Descendants<DocumentFormat.OpenXml.Vml.Shape>().Any())
                 {
                     foreach (var s in elm.Descendants<DocumentFormat.OpenXml.Vml.Shape>())
@@ -87,15 +75,39 @@ public class DocFileReader : IOfficeFileReader
                 {
                     logger.Info("Found a Paragraph with text: " + elm.InnerText);
                 }
+                if (elm.InnerText.Trim().Length <= 0)
+                {
+                    continue;
+                }
+                logger.Info($"Paragraph Text: {paragraph.InnerText}");
+                PrintFontInfoFromParagraph(wordDoc.MainDocumentPart, paragraph, themeFont);
             }
-            else
-            {
-                logger.Info($"Unknown Text: {elm.InnerText} Type: {elm.GetType()}");
-            }
-
         }
     }
-    private void ReadTableProps(MainDocumentPart? mainPart, Table table)
+    private ThemeFont GetThemeFont(MainDocumentPart? mainPart)
+    {
+        if (mainPart?.ThemePart == null)
+        {
+            return new(null, null, null, null);
+        }
+        var theme = mainPart.ThemePart.Theme;
+        var themeElements = theme.ThemeElements;
+        if (themeElements == null)
+        {
+            return new(null, null, null, null);
+        }
+        var majorFontScheme = themeElements.FontScheme?.MajorFont;
+        var minorFontScheme = themeElements.FontScheme?.MinorFont;
+        if(majorFontScheme == null && minorFontScheme == null)
+        {
+            return new(null, null, null, null);
+        }
+        return new ThemeFont(EastAsiaMajorFont: majorFontScheme?.EastAsianFont?.Typeface,
+            EastAsiaMinorFont: minorFontScheme?.EastAsianFont?.Typeface,
+            LatinMajorFont: majorFontScheme?.LatinFont?.Typeface,
+            LatinMinorFont: minorFontScheme?.LatinFont?.Typeface);
+    }
+    private void ReadTableProps(MainDocumentPart? mainPart, Table table, ThemeFont themeFont)
     {
         // Get Table properties
         TableProperties? tableProperties = table.GetFirstChild<TableProperties>();
@@ -152,25 +164,39 @@ public class DocFileReader : IOfficeFileReader
                 }
                 foreach (Paragraph paragraph in cell.Elements<Paragraph>())
                 {
-                    PrintFontInfoFromParagraph(mainPart, paragraph);
+                    PrintFontInfoFromParagraph(mainPart, paragraph, themeFont);
                 }
                 logger.Info("-----------");
             }
         }
     }
-    private void PrintFontInfoFromParagraph(MainDocumentPart? mainPart, Paragraph paragraph)
+    private void PrintFontInfoFromParagraph(MainDocumentPart? mainPart, Paragraph paragraph, ThemeFont themeFont)
     {
+        TextProps? props = GetTextProps(mainPart, paragraph, themeFont);
+        logger.Info($"Props Color: {props?.Color} Bold: {props?.Bold} Size: {props?.FontSize}");
+        
+        if(props?.Fonts != null)
+        {
+            foreach(var f in props.Fonts)
+            {
+                logger.Info($"Font Type: {f?.FontType} Name: {f?.FontName}");
+            }
+        }
+        // One paragraph is separated as multiple Run elements by styles and font types
         foreach (Run run in paragraph.Elements<Run>())
         {
+            logger.Info($"Run Text: {run.InnerText}");
             RunProperties? runProperties = run.RunProperties;
             if (runProperties != null)
             {
-                logger.Info("RunProperties found:");
+                logger.Info($"RunProperties found:");
                 var fonts = runProperties.RunFonts;
                 if (fonts != null)
                 {
-                    logger.Info($"RunFontsFound: {GetFontName(fonts, mainPart)}");
-
+                    foreach(var f in GetFonts(fonts))
+                    {
+                        logger.Info($"Font Name: {f.FontName} Type: {f.FontType}");
+                    }
                 }
                 if (runProperties.Color != null)
                 {
@@ -179,59 +205,51 @@ public class DocFileReader : IOfficeFileReader
                 if (runProperties.Bold != null)
                 {
                     logger.Info($"Bold: {runProperties.Bold.Val}");
-
-                }
-                if (runProperties.Italic != null)
-                {
-                    logger.Info($"Italic: {runProperties.Italic.Val}");
                 }
                 if (runProperties.FontSize != null)
                 {
-                    logger.Info("FontSize: " + runProperties.FontSize.Val);
+                    logger.Info($"FontSize: {runProperties.FontSize.Val}");
                 }
             }
-            if (runProperties == null || runProperties.Bold == null)
-            {
-                ParagraphProperties? paragraphProperties = paragraph.ParagraphProperties;
-                if (paragraphProperties != null && paragraphProperties.ParagraphStyleId != null)
-                {
-                    string? styleId = paragraphProperties.ParagraphStyleId.Val?.Value;
-                    Style? style = mainPart?.StyleDefinitionsPart?.Styles?.Elements<Style>()?
-                            .FirstOrDefault(s => s.StyleId == styleId);
-                    if (style != null)
-                    {
-                        logger.Info("Inherited from Paragraph Style:");
-                        PrintRunProperties(style.StyleRunProperties);
-
-                        // スタイルの継承を再帰的に追跡
-                        StyleRunProperties? inheritedRunProperties = GetInheritedRunProperties(style, mainPart);
-                        if (inheritedRunProperties != null)
-                        {
-                            logger.Info("Inherited from Base Style:");
-                            PrintRunProperties(inheritedRunProperties);
-                        }
-                    }
-                }
-            }
+            logger.Info("------------");
         }
     }
-    private string GetFontName(RunFonts? runFonts, MainDocumentPart? mainPart)
+    private TextProps? GetTextProps(MainDocumentPart? mainPart, Paragraph paragraph, ThemeFont themeFont)
     {
-        string? result = runFonts?.Ascii ??
-            runFonts?.HighAnsi ??
-            runFonts?.EastAsia ??
-            runFonts?.ComplexScript;
-        logger.Info($"GetFontName: {result}");
-        if (string.IsNullOrEmpty(result))
+        string? styleId = paragraph.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
+        Style? style = GetStyleById(mainPart, styleId);
+        
+        TextProps? result = GetTextPropsFromRunProperties(style?.StyleRunProperties, themeFont);
+        if((style != null) && 
+            (result == null || result.Fonts == null || result.Fonts.Count <= 0))
         {
-            result = GetThemeFontName(runFonts, mainPart);
-        }
-        if (string.IsNullOrEmpty(result))
-        {
-            result = "No font set";
+            StyleRunProperties? inheritedRunProperties = GetInheritedRunProperties(style, mainPart);
+            if (inheritedRunProperties != null)
+            {
+                logger.Info("Inherited from Base Style:");
+                return GetTextPropsFromRunProperties(inheritedRunProperties, themeFont);
+            }
         }
         return result;
     }
+    private static List<TextFont> GetFonts(RunFonts? runFonts)
+    {
+        List<TextFont> results = [];
+        if(string.IsNullOrEmpty(runFonts?.Ascii?.Value) == false)
+        {
+            results.Add(new TextFont(FontType.Ascii, runFonts.Ascii.Value));
+        }
+        if(string.IsNullOrEmpty(runFonts?.HighAnsi?.Value) == false)
+        {
+            results.Add(new TextFont(FontType.HighAnsi, runFonts.HighAnsi.Value));
+        }
+        if(string.IsNullOrEmpty(runFonts?.EastAsia?.Value) == false)
+        {
+            results.Add(new TextFont(FontType.EastAsia, runFonts.EastAsia.Value));
+        }
+        return results;
+    }
+    
     private static StyleRunProperties? GetInheritedRunProperties(Style style, MainDocumentPart? mainPart)
     {
         if (style.BasedOn != null)
@@ -253,59 +271,99 @@ public class DocFileReader : IOfficeFileReader
         }
         return null;
     }
-
-    private void PrintRunProperties(StyleRunProperties? runProperties)
+    
+    private static Style? GetStyleById(MainDocumentPart? mainPart, string? styleId)
+    {
+        if(string.IsNullOrEmpty(styleId))
+        {
+            return null;
+        }
+        IEnumerable<Style>? styles = mainPart?.StyleDefinitionsPart?.Styles?.Elements<Style>();
+        if (styles != null)
+        {
+            return styles.FirstOrDefault(s => s.StyleId == styleId);
+        }
+        return null;
+    }
+    private TextProps? GetTextPropsFromRunProperties(StyleRunProperties? runProperties, ThemeFont themeFont)
     {
         if (runProperties == null)
         {
-            return;
+            return null;
         }
-        if (runProperties.Color != null)
+        TextProps? result = new();
+        var runFonts = runProperties.RunFonts;
+        if (runFonts != null)
         {
-            logger.Info("Color: " + runProperties.Color.Val);
+            result.Fonts = GetTextFonts(runFonts);
+            if(result.Fonts.Count <= 0)
+            {
+                result.Fonts = GetTextFonts(themeFont, runFonts);
+            }
+        }
+        if (runProperties.Color?.Val != null)
+        {
+            result.Color = runProperties.Color.Val!;
         }
         if (runProperties.Bold != null)
         {
-            logger.Info("Bold: " + runProperties.Bold.Val);
+            result.Bold = true;
         }
-        if (runProperties.Italic != null)
+        if (string.IsNullOrEmpty(runProperties.FontSize?.Val) == false &&
+            int.TryParse(runProperties.FontSize?.Val, out var size))
         {
-            logger.Info("Italic: " + runProperties.Italic.Val);
+            result.FontSize = size;
         }
-        if (runProperties.FontSize != null)
-        {
-            logger.Info("FontSize: " + runProperties.FontSize.Val);
-        }
+        return result;
     }
-    private string? GetThemeFontName(RunFonts? runFonts, MainDocumentPart? mainPart)
+    private static List<TextFont> GetTextFonts(RunFonts runFonts)
     {
-        if (mainPart?.ThemePart == null)
+        List<TextFont> results = [];
+        if (runFonts.Ascii?.Value != null && runFonts.Ascii.HasValue)
         {
-            return null;
+            results.Add(new TextFont(FontType.Ascii, runFonts.Ascii.Value));
         }
-        var theme = mainPart.ThemePart.Theme;
-        var themeElements = theme.ThemeElements;
-        if (themeElements == null)
+        if (runFonts.HighAnsi?.Value != null && runFonts.HighAnsi.HasValue)
         {
-            return null;
+            results.Add(new TextFont(FontType.HighAnsi, runFonts.HighAnsi.Value));
         }
-        var majorFontScheme = themeElements.FontScheme?.MajorFont;
-        var minorFontScheme = themeElements.FontScheme?.MinorFont;
-        logger.Info($"Lat Maj: {majorFontScheme?.LatinFont?.Typeface} Min: {minorFontScheme?.LatinFont?.Typeface}");
-        logger.Info($"Asi Maj: {majorFontScheme?.EastAsianFont?.Typeface} Min: {minorFontScheme?.EastAsianFont?.Typeface}");
-        logger.Info($"Com Maj: {majorFontScheme?.ComplexScriptFont?.Typeface} Min: {minorFontScheme?.ComplexScriptFont?.Typeface}");
-        if (!string.IsNullOrEmpty(majorFontScheme?.LatinFont?.Typeface))
+        if (runFonts.EastAsia?.Value != null && runFonts.EastAsia.HasValue)
         {
-            return majorFontScheme?.LatinFont?.Typeface;
+            results.Add(new TextFont(FontType.EastAsia, runFonts.EastAsia.Value));
         }
-        if (!string.IsNullOrEmpty(majorFontScheme?.EastAsianFont?.Typeface))
+        return results;
+    }
+    /// <summary>
+    /// Get Font Name from ThemeFonts
+    /// </summary>
+    /// <param name="themeFont"></param>
+    /// <param name="runFonts"></param>
+    /// <returns></returns>
+    private static List<TextFont> GetTextFonts(ThemeFont themeFont, RunFonts runFonts)
+    {
+        List<TextFont> results = [];
+        if((runFonts.EastAsiaTheme?.Value == ThemeFontValues.MajorEastAsia))
         {
-            return majorFontScheme?.EastAsianFont?.Typeface;
+            if(string.IsNullOrEmpty(themeFont.LatinMajorFont) == false)
+            {
+                results.Add(new(FontType.Latin, themeFont.LatinMajorFont));
+            }
+            if(string.IsNullOrEmpty(themeFont.EastAsiaMajorFont) == false)
+            {
+                results.Add(new(FontType.EastAsia, themeFont.EastAsiaMajorFont));
+            }
         }
-        if (!string.IsNullOrEmpty(majorFontScheme?.ComplexScriptFont?.Typeface))
+        else
         {
-            return majorFontScheme?.ComplexScriptFont?.Typeface;
+            if(string.IsNullOrEmpty(themeFont.LatinMinorFont) == false)
+            {
+                results.Add(new(FontType.Latin, themeFont.LatinMinorFont));
+            }
+            if(string.IsNullOrEmpty(themeFont.EastAsiaMinorFont) == false)
+            {
+                results.Add(new(FontType.EastAsia, themeFont.EastAsiaMinorFont));
+            }
         }
-        return null;
+        return results;
     }
 }
