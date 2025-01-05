@@ -255,25 +255,16 @@ public class DocFileReader : IOfficeFileReader
         TextProps? result = GetTextPropsFromRunProperties(style?.StyleRunProperties, themeFont);
         if(style == null)
         {
-            // If the style cannot be gotton, return the default font information.
-            List<TextFont> fonts = [];
-            if(string.IsNullOrEmpty(themeFont.LatinMinorFont) == false)
-            {
-                fonts.Add(new(FontType.Latin, themeFont.LatinMinorFont));
-            }
-            if(string.IsNullOrEmpty(themeFont.EastAsiaMinorFont) == false)
-            {
-                fonts.Add(new(FontType.EastAsia, themeFont.EastAsiaMinorFont));
-            }
-            return new ()
-            {
-                Fonts = fonts,
-            };
+            return GenerateDefaultProps(themeFont);
         } 
         else if(result == null || result.Fonts == null || result.Fonts.Count <= 0)
         {
             StyleRunProperties? inheritedRunProperties = GetInheritedRunProperties(style, mainPart);
-            if (inheritedRunProperties != null)
+            if (inheritedRunProperties == null)
+            {
+                return GenerateDefaultProps(themeFont);
+            }
+            else
             {
                 logger.Info("Inherited from Base Style:");
                 return GetTextPropsFromRunProperties(inheritedRunProperties, themeFont);
@@ -283,30 +274,30 @@ public class DocFileReader : IOfficeFileReader
     }
     private static int? GetFontSizeFromStyle(Style style, StyleDefinitionsPart stylesPart)
 {
-    // フォントサイズを取得
-    var fontSize = style.StyleRunProperties?.FontSize?.Val;
-    if (fontSize != null)
-    {
-        if(int.TryParse(fontSize, out var result))
+        // フォントサイズを取得
+        var fontSize = style.StyleRunProperties?.FontSize?.Val;
+        if (fontSize != null)
         {
-            return result;
+            if(int.TryParse(fontSize, out var result))
+            {
+                return result;
+            }
         }
-    }
 
-    // 親スタイルを辿る
-    var basedOnStyleId = style.BasedOn?.Val;
-    if (basedOnStyleId != null)
-    {
-        var parentStyle = stylesPart.Styles?.Elements<Style>()?.FirstOrDefault(s => s.StyleId == basedOnStyleId);
-        if (parentStyle != null)
+        // 親スタイルを辿る
+        var basedOnStyleId = style.BasedOn?.Val;
+        if (basedOnStyleId != null)
         {
-            return GetFontSizeFromStyle(parentStyle, stylesPart); // 再帰的に取得
+            var parentStyle = stylesPart.Styles?.Elements<Style>()?.FirstOrDefault(s => s.StyleId == basedOnStyleId);
+            if (parentStyle != null)
+            {
+                return GetFontSizeFromStyle(parentStyle, stylesPart); // 再帰的に取得
+            }
         }
-    }
 
-    // 親スタイルがない場合はnull
-    return null;
-}
+        // 親スタイルがない場合はnull
+        return null;
+    }
     private static List<TextFont> GetFonts(RunFonts? runFonts)
     {
         List<TextFont> results = [];
@@ -324,7 +315,23 @@ public class DocFileReader : IOfficeFileReader
         }
         return results;
     }
-    
+    private static TextProps GenerateDefaultProps(ThemeFont themeFont)
+    {
+        // If the style cannot be gotton, return the default font information.
+        List<TextFont> fonts = [];
+        if(string.IsNullOrEmpty(themeFont.LatinMinorFont) == false)
+        {
+            fonts.Add(new(FontType.Latin, themeFont.LatinMinorFont));
+        }
+        if(string.IsNullOrEmpty(themeFont.EastAsiaMinorFont) == false)
+        {
+            fonts.Add(new(FontType.EastAsia, themeFont.EastAsiaMinorFont));
+        }
+        return new ()
+        {
+            Fonts = fonts,
+        };
+    }
     private static StyleRunProperties? GetInheritedRunProperties(Style style, MainDocumentPart? mainPart)
     {
         if (style.BasedOn != null)
