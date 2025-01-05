@@ -23,7 +23,7 @@ public class DocFileReader : IOfficeFileReader
     private class TextProps
     {
         public List<TextFont> Fonts { get; set; } = [];
-        public int? FontSize { get; set; }
+        public int FontSize { get; set; } = 12;
         public bool Bold { get; set; } = false;
         public string Color { get; set; } = "000000";
     }
@@ -179,9 +179,14 @@ public class DocFileReader : IOfficeFileReader
         {
             logger.Info($"Run Text: {run.InnerText}");
             RunProperties? runProperties = run.RunProperties;
-            if (runProperties != null)
+            if (runProperties == null)
+            {
+                logger.Info("runProperties was null");
+            }
+            else
             {
                 var fonts = GetFonts(runProperties.RunFonts);
+                
                 if(fonts.Count > 0)
                 {
                     foreach(var f in fonts)
@@ -235,14 +240,37 @@ public class DocFileReader : IOfficeFileReader
             logger.Info("------------");
         }
     }
+    /// <summary>
+    /// Get style and font from paragraph
+    /// </summary>
+    /// <param name="mainPart"></param>
+    /// <param name="paragraph"></param>
+    /// <param name="themeFont"></param>
+    /// <returns></returns>
     private TextProps? GetTextProps(MainDocumentPart? mainPart, Paragraph paragraph, ThemeFont themeFont)
     {
         string? styleId = paragraph.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
         Style? style = GetStyleById(mainPart, styleId);
         
         TextProps? result = GetTextPropsFromRunProperties(style?.StyleRunProperties, themeFont);
-        if((style != null) && 
-            (result == null || result.Fonts == null || result.Fonts.Count <= 0))
+        if(style == null)
+        {
+            // If the style cannot be gotton, return the default font information.
+            List<TextFont> fonts = [];
+            if(string.IsNullOrEmpty(themeFont.LatinMinorFont) == false)
+            {
+                fonts.Add(new(FontType.Latin, themeFont.LatinMinorFont));
+            }
+            if(string.IsNullOrEmpty(themeFont.EastAsiaMinorFont) == false)
+            {
+                fonts.Add(new(FontType.EastAsia, themeFont.EastAsiaMinorFont));
+            }
+            return new ()
+            {
+                Fonts = fonts,
+            };
+        } 
+        else if(result == null || result.Fonts == null || result.Fonts.Count <= 0)
         {
             StyleRunProperties? inheritedRunProperties = GetInheritedRunProperties(style, mainPart);
             if (inheritedRunProperties != null)
@@ -253,6 +281,32 @@ public class DocFileReader : IOfficeFileReader
         }
         return result;
     }
+    private static int? GetFontSizeFromStyle(Style style, StyleDefinitionsPart stylesPart)
+{
+    // フォントサイズを取得
+    var fontSize = style.StyleRunProperties?.FontSize?.Val;
+    if (fontSize != null)
+    {
+        if(int.TryParse(fontSize, out var result))
+        {
+            return result;
+        }
+    }
+
+    // 親スタイルを辿る
+    var basedOnStyleId = style.BasedOn?.Val;
+    if (basedOnStyleId != null)
+    {
+        var parentStyle = stylesPart.Styles?.Elements<Style>()?.FirstOrDefault(s => s.StyleId == basedOnStyleId);
+        if (parentStyle != null)
+        {
+            return GetFontSizeFromStyle(parentStyle, stylesPart); // 再帰的に取得
+        }
+    }
+
+    // 親スタイルがない場合はnull
+    return null;
+}
     private static List<TextFont> GetFonts(RunFonts? runFonts)
     {
         List<TextFont> results = [];
