@@ -23,7 +23,7 @@ public class DocFileReader : IOfficeFileReader
     private class TextProps
     {
         public List<TextFont> Fonts { get; set; } = [];
-        public int FontSize { get; set; } = 12;
+        public int FontSize { get; set; } = 11;
         public bool Bold { get; set; } = false;
         public string Color { get; set; } = "000000";
     }
@@ -79,11 +79,17 @@ public class DocFileReader : IOfficeFileReader
                 {
                     continue;
                 }
+                // Get full text from paragraph.InnerText
                 logger.Info($"Paragraph Text: {paragraph.InnerText}");
                 PrintFontInfoFromParagraph(wordDoc.MainDocumentPart, paragraph, themeFont);
             }
         }
     }
+    /// <summary>
+    /// Get fonts from Theme
+    /// </summary>
+    /// <param name="mainPart"></param>
+    /// <returns></returns>
     private ThemeFont GetThemeFont(MainDocumentPart? mainPart)
     {
         if (mainPart?.ThemePart == null)
@@ -272,32 +278,6 @@ public class DocFileReader : IOfficeFileReader
         }
         return result;
     }
-    private static int? GetFontSizeFromStyle(Style style, StyleDefinitionsPart stylesPart)
-{
-        // フォントサイズを取得
-        var fontSize = style.StyleRunProperties?.FontSize?.Val;
-        if (fontSize != null)
-        {
-            if(int.TryParse(fontSize, out var result))
-            {
-                return result;
-            }
-        }
-
-        // 親スタイルを辿る
-        var basedOnStyleId = style.BasedOn?.Val;
-        if (basedOnStyleId != null)
-        {
-            var parentStyle = stylesPart.Styles?.Elements<Style>()?.FirstOrDefault(s => s.StyleId == basedOnStyleId);
-            if (parentStyle != null)
-            {
-                return GetFontSizeFromStyle(parentStyle, stylesPart); // 再帰的に取得
-            }
-        }
-
-        // 親スタイルがない場合はnull
-        return null;
-    }
     private static List<TextFont> GetFonts(RunFonts? runFonts)
     {
         List<TextFont> results = [];
@@ -399,6 +379,11 @@ public class DocFileReader : IOfficeFileReader
         }
         return result;
     }
+    /// <summary>
+    /// Get font name from RunFonts
+    /// </summary>
+    /// <param name="runFonts"></param>
+    /// <returns></returns>
     private static List<TextFont> GetTextFonts(RunFonts runFonts)
     {
         List<TextFont> results = [];
@@ -417,7 +402,7 @@ public class DocFileReader : IOfficeFileReader
         return results;
     }
     /// <summary>
-    /// Get Font Name from ThemeFonts
+    /// Get font name from ThemeFonts
     /// </summary>
     /// <param name="themeFont"></param>
     /// <param name="runFonts"></param>
@@ -425,7 +410,8 @@ public class DocFileReader : IOfficeFileReader
     private static List<TextFont> GetTextFonts(ThemeFont themeFont, RunFonts runFonts)
     {
         List<TextFont> results = [];
-        if((runFonts.EastAsiaTheme?.Value == ThemeFontValues.MajorEastAsia))
+        // ThemeFont is divided into MajorFont and MinorFont.
+        if(runFonts.EastAsiaTheme?.Value == ThemeFontValues.MajorEastAsia)
         {
             if(string.IsNullOrEmpty(themeFont.LatinMajorFont) == false)
             {
