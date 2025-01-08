@@ -1,7 +1,13 @@
+using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
+using OfficeFileAccessor;
+using OfficeFileAccessor.AppUsers.Repositories;
 using OfficeFileAccessor.OfficeFiles;
 
 var logger = LogManager.Setup().LoadConfigurationFromFile("Nlog.config").GetCurrentClassLogger();
@@ -24,14 +30,32 @@ try
                 .AllowAnyMethod()
                 .AllowAnyHeader());
     });
+    builder.Services.AddDbContext<OfficeFileAccessorContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("OfficeFileAccessor")));
+    //builder.Services.AddRazorPages();
     builder.Services.AddAntiforgery();
-    /*builder.Services.AddSession(options =>
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Jwt:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")),
+            };
+        });
+    builder.Services.AddSession(options =>
     {
         options.IdleTimeout = TimeSpan.FromSeconds(30);
         options.Cookie.HttpOnly = true;
         options.Cookie.IsEssential = true;
         options.Cookie.SameSite = SameSiteMode.Strict;
-    });*/
+    });
     builder.Services.AddScoped<IOfficeFileService, OfficeFileService>();
     builder.Services.AddSpaStaticFiles(configuration =>
     {
@@ -50,6 +74,7 @@ try
             // stop reference loop.
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
+    builder.Services.AddScoped<IApplicationUsers, ApplicationUsers>();
     var app = builder.Build();
     
     if (builder.Environment.EnvironmentName != "Development")
@@ -62,8 +87,10 @@ try
     }
     app.UseCors(AllowOrigins);
     app.UseRouting();
-    //app.UseSession();
+    app.UseSession();
     app.MapStaticAssets();
+    app.UseAuthentication();
+    app.UseAuthorization();
     app.MapControllers();
     app.MapWhen(context => context.Request.Path.StartsWithSegments("/api") == false,
         b => {
