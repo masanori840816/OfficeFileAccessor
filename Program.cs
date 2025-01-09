@@ -32,7 +32,7 @@ try
     });
     builder.Services.AddDbContext<OfficeFileAccessorContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("OfficeFileAccessor")));
-    //builder.Services.AddRazorPages();
+    builder.Services.AddRazorPages();
     builder.Services.AddAntiforgery();
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
