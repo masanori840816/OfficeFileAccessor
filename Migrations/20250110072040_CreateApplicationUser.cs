@@ -32,7 +32,7 @@ namespace OfficeFileAccessor.Migrations
             migrationBuilder.InsertData(
                 table: "application_user",
                 columns: new[] { "id", "mail", "organization", "password", "user_name" },
-                values: new object[] { -1, "default@example.com", null, "AQAAAAIAAYagAAAAENkEv7oRtqJlHD11CP4+/psO/+8t7vQpFUhE8rUHN4YED6OLvfeCLilx1aKOhwaNpA==", "DefaultUser" });
+                values: new object[] { -1, "default@example.com", null, "AQAAAAIAAYagAAAAEIhh1d8rSTiUjaMMxAm5xmLICEwkX798BQFJh3jEd2UfZLe0os7y6wrMQj9K+yhvpA==", "DefaultUser" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_application_user_mail",

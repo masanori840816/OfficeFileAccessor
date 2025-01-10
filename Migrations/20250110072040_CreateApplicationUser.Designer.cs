@@ -12,7 +12,7 @@ using OfficeFileAccessor;
 namespace OfficeFileAccessor.Migrations
 {
     [DbContext(typeof(OfficeFileAccessorContext))]
-    [Migration("20250109094449_CreateApplicationUser")]
+    [Migration("20250110072040_CreateApplicationUser")]
     partial class CreateApplicationUser
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace OfficeFileAccessor.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -72,7 +72,7 @@ namespace OfficeFileAccessor.Migrations
                             Id = -1,
                             Email = "default@example.com",
                             LastUpdateDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            PasswordHash = "AQAAAAIAAYagAAAAENkEv7oRtqJlHD11CP4+/psO/+8t7vQpFUhE8rUHN4YED6OLvfeCLilx1aKOhwaNpA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEIhh1d8rSTiUjaMMxAm5xmLICEwkX798BQFJh3jEd2UfZLe0os7y6wrMQj9K+yhvpA==",
                             UserName = "DefaultUser"
                         });
                 });

@@ -88,7 +88,7 @@ try
     app.UseCors(AllowOrigins);
     app.UseRouting();
     app.UseSession();
-    app.MapStaticAssets();
+    app.UseStaticFiles();
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
