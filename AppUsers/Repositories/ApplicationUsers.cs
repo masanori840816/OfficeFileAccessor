@@ -5,7 +5,7 @@ namespace OfficeFileAccessor.AppUsers.Repositories;
 
 public class ApplicationUsers(OfficeFileAccessorContext context): IApplicationUsers
 {
-    public async Task<ApplicationUser?> GetByEmailForSigninAsync(string email)
+    public async Task<ApplicationUser?> GetByEmailForSignInAsync(string email)
     {
         return await context.ApplicationUsers
             .FirstOrDefaultAsync(u => u.Email == email);

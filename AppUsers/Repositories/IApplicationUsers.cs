@@ -4,5 +4,5 @@ namespace OfficeFileAccessor.AppUsers.Repositories;
 
 public interface IApplicationUsers
 {
-    Task<ApplicationUser?> GetByEmailForSigninAsync(string email);
+    Task<ApplicationUser?> GetByEmailForSignInAsync(string email);
 }

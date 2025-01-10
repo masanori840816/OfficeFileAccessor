@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
 using OfficeFileAccessor;
+using OfficeFileAccessor.AppUsers;
 using OfficeFileAccessor.AppUsers.Repositories;
 using OfficeFileAccessor.OfficeFiles;
 
@@ -75,6 +76,8 @@ try
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
     builder.Services.AddScoped<IApplicationUsers, ApplicationUsers>();
+    builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
+    builder.Services.AddScoped<IUserTokens, UserTokens>();
     var app = builder.Build();
     
     if (builder.Environment.EnvironmentName != "Development")
