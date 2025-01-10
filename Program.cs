@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -8,6 +9,7 @@ using NLog;
 using NLog.Web;
 using OfficeFileAccessor;
 using OfficeFileAccessor.AppUsers;
+using OfficeFileAccessor.AppUsers.Entities;
 using OfficeFileAccessor.AppUsers.Repositories;
 using OfficeFileAccessor.OfficeFiles;
 
@@ -57,7 +59,6 @@ try
         options.Cookie.IsEssential = true;
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
-    builder.Services.AddScoped<IOfficeFileService, OfficeFileService>();
     builder.Services.AddSpaStaticFiles(configuration =>
     {
         if (builder.Environment.EnvironmentName == "Development") 
@@ -75,6 +76,12 @@ try
             // stop reference loop.
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
+    
+    builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
+        .AddUserStore<ApplicationUserStore>()
+        .AddEntityFrameworkStores<OfficeFileAccessorContext>()
+        .AddDefaultTokenProviders();
+    builder.Services.AddScoped<IOfficeFileService, OfficeFileService>();
     builder.Services.AddScoped<IApplicationUsers, ApplicationUsers>();
     builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
     builder.Services.AddScoped<IUserTokens, UserTokens>();

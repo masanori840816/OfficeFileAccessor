@@ -4,11 +4,11 @@ using OfficeFileAccessor.AppUsers.DTO;
 
 namespace OfficeFileAccessor.AppUsers;
 
-public class ApplicationUserController(ApplicationUserService Users): Controller
+public class ApplicationUserController(IApplicationUserService Users): Controller
 {
     [AllowAnonymous]
     [HttpPost("/api/users/signin")]
-    public async Task<IActionResult> ApplicationSignIn([FromForm] SignInValue value)
+    public async Task<IActionResult> ApplicationSignIn([FromBody] SignInValue value)
     {
         return Json(await Users.SignInAsync(value, HttpContext.Session));
     }
