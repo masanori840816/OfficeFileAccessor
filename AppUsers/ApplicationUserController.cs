@@ -10,7 +10,7 @@ public class ApplicationUserController(IApplicationUserService Users): Controlle
     [HttpPost("/api/users/signin")]
     public async Task<IActionResult> ApplicationSignIn([FromBody] SignInValue value)
     {
-        return Json(await Users.SignInAsync(value, HttpContext.Session));
+        return Json(await Users.SignInAsync(value, Response));
     }
     [HttpGet("/api/users/signout")]
     public async Task ApplicationSignOut()

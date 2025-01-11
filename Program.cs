@@ -52,6 +52,7 @@ try
                     Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")),
             };
         });
+    builder.Services.AddAuthorization();
     builder.Services.AddSession(options =>
     {
         options.IdleTimeout = TimeSpan.FromSeconds(30);

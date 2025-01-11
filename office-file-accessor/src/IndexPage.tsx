@@ -11,8 +11,26 @@ export function IndexPage(): JSX.Element {
             },
             body: JSON.stringify({ email: "default@example.com", password: "oXc5rZbz"})
         })
-        .then(res => res.json())
-        .then(res => console.log(res))
+        .then(res => res.json().then(result => {
+            return { key: res.headers.get("User-Token"), result: JSON.parse(JSON.stringify(result)) };
+        }))
+        .then(res => {
+            if(res.result.succeeded === true) {
+                fetch(`${getServerUrl()}/api/files`, {
+                    mode: "cors",
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${res.key}`
+                    }
+                })
+                .then(res => res.text())
+                .then(res => console.log(`Result: ${res}`))
+                .catch(err => console.error(err));
+            } else {
+                console.log("Failed login");
+                
+            }
+        })
         .catch(err => console.error(err));
     }, []);
 

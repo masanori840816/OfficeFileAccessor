@@ -13,10 +13,10 @@ public class UserTokens(IConfiguration Config): IUserTokens
         return new JwtSecurityTokenHandler()
                 .WriteToken(new JwtSecurityToken(Config["Jwt:Issuer"],
                     Config["Jwt:Audience"],
-                    claims: new []
-                    {
-                        new Claim(ClaimTypes.Email, user?.Email ?? "")
-                    },
+                    claims:
+                    [
+                        new Claim(ClaimTypes.Email, user?.Email ?? "-_-")
+                    ],
                     expires: DateTime.Now.AddSeconds(30),
                     signingCredentials: new SigningCredentials(
                         new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Config["Jwt:Key"] ?? "")),

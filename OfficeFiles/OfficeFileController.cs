@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace OfficeFileAccessor.OfficeFiles;
 public class OfficeFileController(ILogger<OfficeFileController> logger, IOfficeFileService officeFiles): Controller
 {
+    [Authorize]
     [HttpGet("/api/files")]
     public string GetFileNames()
     {

@@ -6,12 +6,11 @@ using OfficeFileAccessor.AppUsers.Repositories;
 
 namespace OfficeFileAccessor.AppUsers;
 
-public class ApplicationUserService(ILogger<ApplicationUserService> Logger,
-    SignInManager<ApplicationUser> SignIn,
+public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
     IApplicationUsers Users,
     IUserTokens Tokens): IApplicationUserService
 {
-    public async Task<ApplicationResult> SignInAsync(SignInValue value, ISession session)
+    public async Task<ApplicationResult> SignInAsync(SignInValue value, HttpResponse response)
     {
         var target = await Users.GetByEmailForSignInAsync(value.Email);
         if(target == null)
@@ -21,8 +20,7 @@ public class ApplicationUserService(ILogger<ApplicationUserService> Logger,
         SignInResult result = await SignIn.PasswordSignInAsync(target, value.Password, false, false);
         if(result.Succeeded)
         {
-            string token = Tokens.GenerateToken(target);
-            session.SetString("user-token", token);
+            response.Headers.Append("User-Token", Tokens.GenerateToken(target));            
             return ApplicationResult.GetSucceededResult();
         }
         return ApplicationResult.GetFailedResult("Invalid e-mail or password");
