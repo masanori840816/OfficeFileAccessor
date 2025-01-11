@@ -9,7 +9,7 @@ public class OfficeFileController(ILogger<OfficeFileController> logger, IOfficeF
     public string GetFileNames()
     {
         logger.LogInformation("GetFileNames");
-        return "Hello World!";
+        return "Viva Las Vegas!";
     }
     [HttpPost("/api/files")]
     public async Task<IActionResult> LoadOfficeFiles([FromForm] IFormFileCollection files)
