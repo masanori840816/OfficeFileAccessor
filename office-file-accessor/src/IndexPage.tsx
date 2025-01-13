@@ -1,44 +1,27 @@
 import { useEffect } from "react"
 import { getServerUrl } from "./web/serverUrlGetter";
+import { useApplicationUser } from "./ApplicationUserContext";
 import { hasAnyTexts } from "./texts/hasAnyTexts";
 
 export function IndexPage(): JSX.Element {
+    const users = useApplicationUser();
+
     useEffect(() => {
-        fetch(`${getServerUrl()}/api/users/signin`, {
+        if(users == null || !hasAnyTexts(users.token)) {
+            return;
+        }
+        fetch(`${getServerUrl()}/api/files`, {
             mode: "cors",
-            method: "POST",
+            method: "GET",
             headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email: "default@example.com", password: "oXc5rZbz"})
+                "Authorization": `Bearer ${users.token}`
+            }
         })
-        .then(res => res.json()
-            .then(r => {
-                const result = JSON.parse(JSON.stringify(r));
-                if(result.succeeded === true) {
-                    const token = res.headers.get("User-Token");
-                    if(hasAnyTexts(token)) {
-                        fetch(`${getServerUrl()}/api/files`, {
-                            mode: "cors",
-                            method: "GET",
-                            headers: {
-                                "Authorization": `Bearer ${token}`
-                            }
-                        })
-                        .then(res => res.text())
-                        .then(res => console.log(`Result: ${res}`))
-                        .catch(err => console.error(err));
-                    } else {
-                        console.log("Failed login: No tokens");
-                    }
-                    
-                } else {
-                    console.log("Failed login");
-                    
-                }
-            }))
+        .then(res => res.text())
+        .then(res => console.log(`Result: ${res}`))
         .catch(err => console.error(err));
-    }, []);
+    }, [users]);
+    
 
 
     return <h1>Hello World!</h1>

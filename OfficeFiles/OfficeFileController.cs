@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeFileAccessor.AppUsers;
@@ -5,7 +6,7 @@ using OfficeFileAccessor.AppUsers;
 namespace OfficeFileAccessor.OfficeFiles;
 public class OfficeFileController(ILogger<OfficeFileController> logger, IOfficeFileService officeFiles): Controller
 {
-    [Authorize(AuthenticationSchemes = UserTokens.AuthSchemes)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("/api/files")]
     public string GetFileNames()
     {
