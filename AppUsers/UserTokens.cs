@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using OfficeFileAccessor.AppUsers.Entities;
 
@@ -8,6 +9,7 @@ namespace OfficeFileAccessor.AppUsers;
 
 public class UserTokens(IConfiguration Config): IUserTokens
 {
+    public const string AuthSchemes = JwtBearerDefaults.AuthenticationScheme;
     public string GenerateToken(ApplicationUser user)
     {
         return new JwtSecurityTokenHandler()
