@@ -7,9 +7,9 @@ type LoginToken = {
     token: string | null;
     setToken: (token: string) => void;
 }
-export const ApplicationUserContext = createContext<LoginToken|null>(null);
+export const AuthenticationContext = createContext<LoginToken|null>(null);
 
-export const ApplicationUserProvider = ({children}: { children: ReactNode }) => {
+export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
     const [token, setToken] = useState<string|null>(null);
     useEffect(() => {
         fetch(`${getServerUrl()}/api/users/signin`, {
@@ -36,11 +36,11 @@ export const ApplicationUserProvider = ({children}: { children: ReactNode }) => 
 
         
     }, []);
-    return <ApplicationUserContext.Provider value={{ token, setToken }}>
+    return <AuthenticationContext.Provider value={{ token, setToken }}>
         {children}
-    </ApplicationUserContext.Provider>
+    </AuthenticationContext.Provider>
 }
-export const useApplicationUser = (): LoginToken|null => useContext(ApplicationUserContext);
+export const useAuthentication = (): LoginToken|null => useContext(AuthenticationContext);
 
 async function getLoginResult(res: Response): Promise<{result: ApplicationResult, token: string|null}> {
     try {

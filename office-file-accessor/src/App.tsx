@@ -7,13 +7,13 @@ import {
 } from "react-router-dom";
 import { IndexPage } from './IndexPage';
 import { RegisterPage } from './RegisterPage';
-import { ApplicationUserProvider } from './ApplicationUserContext';
+import { AuthenticationProvider } from './AuthenticationContext';
 
 function App() {
 
   return (
     <>
-      <ApplicationUserProvider>
+      <AuthenticationProvider>
         <Router basename='/officefiles'>
 
         <Link to="/">TOP</Link>
@@ -24,7 +24,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
         </Routes  >
         </Router>
-      </ApplicationUserProvider>
+      </AuthenticationProvider>
     </>
   )
 }

@@ -1,10 +1,10 @@
 import { useEffect } from "react"
 import { getServerUrl } from "./web/serverUrlGetter";
-import { useApplicationUser } from "./ApplicationUserContext";
 import { hasAnyTexts } from "./texts/hasAnyTexts";
+import { useAuthentication } from "./AuthenticationContext";
 
 export function IndexPage(): JSX.Element {
-    const users = useApplicationUser();
+    const users = useAuthentication();
 
     useEffect(() => {
         if(users == null || !hasAnyTexts(users.token)) {
