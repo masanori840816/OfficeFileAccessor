@@ -8,6 +8,7 @@ import {
 import { IndexPage } from './IndexPage';
 import { RegisterPage } from './RegisterPage';
 import { AuthenticationProvider } from './AuthenticationContext';
+import { SigninPage } from './SigninPage';
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
         <p>|</p>
         <Link to="/register">Register</Link>
         <Routes>
+          <Route path="/signin" element={<SigninPage />} />
           <Route path="/" element={<IndexPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes  >
