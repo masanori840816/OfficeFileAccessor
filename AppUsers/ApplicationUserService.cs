@@ -10,7 +10,7 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
     IApplicationUsers Users,
     IUserTokens Tokens): IApplicationUserService
 {
-    public async Task<ApplicationResult> SignInAsync(SignInValue value, HttpResponse response)
+    public async Task<ApplicationResult> SignInAsync(SignInValue value, ISession session)
     {
         var target = await Users.GetByEmailForSignInAsync(value.Email);
         if(target == null)
@@ -20,7 +20,7 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
         SignInResult result = await SignIn.PasswordSignInAsync(target, value.Password, false, false);
         if(result.Succeeded)
         {
-            response.Headers.Append("User-Token", Tokens.GenerateToken(target));            
+            session.SetString("User-Token", Tokens.GenerateToken(target));         
             return ApplicationResult.GetSucceededResult();
         }
         return ApplicationResult.GetFailedResult("Invalid e-mail or password");

@@ -1,62 +1,31 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import { getServerUrl } from "./web/serverUrlGetter";
-import { hasAnyTexts } from "./texts/hasAnyTexts";
 import { ApplicationResult } from "./officeFileAccessor.type";
 
-type LoginToken = {
-    token: string | null;
-    setToken: (token: string) => void;
+type AuthenticationType = {
+    signin: (email: string, password: string) => Promise<ApplicationResult>,
+    signout: () => Promise<ApplicationResult>
 }
-export const AuthenticationContext = createContext<LoginToken|null>(null);
+export const AuthenticationContext = createContext<AuthenticationType|null>(null);
 
 export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
-    const [token, setToken] = useState<string|null>(null);
-    useEffect(() => {
+    const signin = (email: string, password: string) =>
         fetch(`${getServerUrl()}/api/users/signin`, {
             mode: "cors",
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email: "default@example.com", password: "oXc5rZbz"})
-        }).then(res => getLoginResult(res))
-        .then(res => {
-            if(res.result.succeeded) {
-                if(hasAnyTexts(res.token)) {
-                    setToken(res.token);
-                } else {
-                    console.log("Failed login: No tokens");
-                    setToken(null);
-                }
-            } else {
-                console.log("Failed login");
-                setToken(null);
-            }
+            body: JSON.stringify({ email, password })
         })
-
-        
-    }, []);
-    return <AuthenticationContext.Provider value={{ token, setToken }}>
+        .then(res => res.json());
+    const signout = () =>
+        fetch(`${getServerUrl()}/api/users/signin`, {
+            mode: "cors",
+            method: "GET",
+        }).then(res => res.json());
+    return <AuthenticationContext.Provider value={{ signin, signout }}>
         {children}
     </AuthenticationContext.Provider>
 }
-export const useAuthentication = (): LoginToken|null => useContext(AuthenticationContext);
-
-async function getLoginResult(res: Response): Promise<{result: ApplicationResult, token: string|null}> {
-    try {
-        const result = JSON.parse(JSON.stringify(await res.json()));
-        return {
-            result,
-            token: res.headers.get("User-Token"),
-        };
-    }catch(err) {
-        console.error(err);
-        return {
-            result: {
-                succeeded: false,
-                errorMessage: "Something wrong"
-            },
-            token: null,
-        };
-    }
-}
+export const useAuthentication = (): AuthenticationType|null => useContext(AuthenticationContext);

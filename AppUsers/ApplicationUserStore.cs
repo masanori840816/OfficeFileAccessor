@@ -76,7 +76,6 @@ public class ApplicationUserStore(OfficeFileAccessorContext Context): IUserPassw
         public async Task<string?> GetPasswordHashAsync(ApplicationUser user,
             CancellationToken cancellationToken)
         {
-            Console.WriteLine("GetPASSWORD " + user.PasswordHash);
             return await Task.FromResult(user.PasswordHash);
         }
         public async Task<string> GetUserIdAsync(ApplicationUser user,

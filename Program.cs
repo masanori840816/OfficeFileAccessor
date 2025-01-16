@@ -99,6 +99,15 @@ try
     app.UseCors(AllowOrigins);
     app.UseRouting();
     app.UseSession();
+    app.Use(async (context, next) =>
+    {
+        var token = context.Session.GetString("User-Token");
+        if(string.IsNullOrEmpty(token) == false)
+        {            
+            context.Request.Headers.Append("Authorization", $"Bearer {token}");
+        }
+        await next();
+    });
     app.UseStaticFiles();
     app.UseAuthentication();
     app.UseAuthorization();

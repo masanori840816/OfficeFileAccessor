@@ -1,20 +1,37 @@
 import { useState } from "react"
+import { useAuthentication } from "./AuthenticationContext";
+import { useNavigate } from "react-router-dom";
 
 export function SigninPage(): JSX.Element {
-    const [userName, setUserName] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
-    const signin = () => {
-
-    }
-    const handleUserNameChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setUserName(event.target.value);
+    const authContext = useAuthentication();
+    const navigate = useNavigate();
+    const handleEmailChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setEmail(event.target.value);
     }
     const handlePasswordChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPassword(event.target.value);
     }
+    const signin = () => {
+        if(authContext == null) {
+            console.error("No Auth context");
+            return;
+        }
+        authContext.signin(email, password)
+            .then(res => {
+                if(res.succeeded) {
+                    navigate("/");
+                }
+                console.log(res);
+                
+            })
+            .catch(err => console.error(err));
+    };
     return <div>
-        <input type="text" placeholder="Username" value={userName}
-            onChange={handleUserNameChanged}></input>
+        <h1>Signin</h1>
+        <input type="text" placeholder="Email" value={email}
+            onChange={handleEmailChanged}></input>
         <input type="password" value={password}
             onChange={handlePasswordChanged}></input>
         <button onClick={signin}>Signin</button>
