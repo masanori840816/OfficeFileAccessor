@@ -101,11 +101,13 @@ try
     app.UseSession();
     app.Use(async (context, next) =>
     {
-        var token = context.Session.GetString("User-Token");
-        if(string.IsNullOrEmpty(token) == false)
-        {            
-            context.Request.Headers.Append("Authorization", $"Bearer {token}");
-        }
+        if(context.Request.Cookies.TryGetValue("User-Token", out string? token))
+        {
+            if(string.IsNullOrEmpty(token) == false)
+            {            
+                context.Request.Headers.Append("Authorization", $"Bearer {token}");
+            }
+        }        
         await next();
     });
     app.UseStaticFiles();
