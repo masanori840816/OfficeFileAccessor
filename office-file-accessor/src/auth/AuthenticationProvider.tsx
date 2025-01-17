@@ -18,7 +18,13 @@ export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
             mode: "cors",
             method: "GET",
         }).then(res => res.json());
-    return <AuthenticationContext.Provider value={{ signin, signout }}>
+    const check = () => 
+        fetch(`${getServerUrl()}/api/auth`, {
+            mode: "cors",
+            method: "GET",
+        })
+        .then(res => res.ok);
+    return <AuthenticationContext.Provider value={{ signin, signout, check }}>
         {children}
     </AuthenticationContext.Provider>
 }

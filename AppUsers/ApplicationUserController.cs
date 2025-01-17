@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeFileAccessor.AppUsers.DTO;
 
 namespace OfficeFileAccessor.AppUsers;
 
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class ApplicationUserController(IApplicationUserService Users): Controller
 {
     [AllowAnonymous]
@@ -16,5 +18,10 @@ public class ApplicationUserController(IApplicationUserService Users): Controlle
     public async Task ApplicationSignOut()
     {
         await Users.SignOutAsync();
+    }
+    [HttpGet("/api/auth")]
+    public IActionResult CheckAuthenticationStatus()
+    {
+        return Ok();
     }
 }
