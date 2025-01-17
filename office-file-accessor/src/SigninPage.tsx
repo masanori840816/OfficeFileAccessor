@@ -1,6 +1,6 @@
-import { useState } from "react"
-import { useAuthentication } from "./AuthenticationContext";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthentication } from "./auth/authenticationContext";
 
 export function SigninPage(): JSX.Element {
     const [email, setEmail] = useState<string>("");

@@ -7,8 +7,8 @@ import {
 } from "react-router-dom";
 import { IndexPage } from './IndexPage';
 import { RegisterPage } from './RegisterPage';
-import { AuthenticationProvider } from './AuthenticationContext';
 import { SigninPage } from './SigninPage';
+import { AuthenticationProvider } from './auth/AuthenticationProvider';
 
 function App() {
 

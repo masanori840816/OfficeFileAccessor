@@ -1,12 +1,6 @@
-import { createContext, ReactNode, useContext } from "react";
-import { getServerUrl } from "./web/serverUrlGetter";
-import { ApplicationResult } from "./officeFileAccessor.type";
-
-type AuthenticationType = {
-    signin: (email: string, password: string) => Promise<ApplicationResult>,
-    signout: () => Promise<ApplicationResult>
-}
-export const AuthenticationContext = createContext<AuthenticationType|null>(null);
+import { ReactNode } from "react";
+import { getServerUrl } from "../web/serverUrlGetter";
+import { AuthenticationContext } from "./authenticationContext";
 
 export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
     const signin = (email: string, password: string) =>
@@ -28,4 +22,3 @@ export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
         {children}
     </AuthenticationContext.Provider>
 }
-export const useAuthentication = (): AuthenticationType|null => useContext(AuthenticationContext);
