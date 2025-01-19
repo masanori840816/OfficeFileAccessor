@@ -1,18 +1,29 @@
 import { ReactNode } from "react";
 import { getServerUrl } from "../web/serverUrlGetter";
 import { AuthenticationContext } from "./authenticationContext";
+import { getCookieValue } from "../web/cookieValues";
+import { hasAnyTexts } from "../texts/hasAnyTexts";
 
 export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
-    const signin = (email: string, password: string) =>
-        fetch(`${getServerUrl()}/api/users/signin`, {
+    const signin = async (email: string, password: string) => {
+        const cookieValue = getCookieValue("XSRF-TOKEN"); 
+        
+        if(!hasAnyTexts(cookieValue)) {
+            throw Error("Invalid token");
+        }
+        //setCookieValue("X-CSRF-TOKEN-HEADERNAME", cookieValue);
+        const res = await fetch(`${getServerUrl()}/api/users/signin`, {
             mode: "cors",
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "X-XSRF-TOKEN": cookieValue,
             },
             body: JSON.stringify({ email, password })
-        })
-        .then(res => res.json());
+        });
+        return await res.json();
+    };
+        
     const signout = () =>
         fetch(`${getServerUrl()}/api/users/signin`, {
             mode: "cors",

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,11 @@ try
     builder.Services.AddDbContext<OfficeFileAccessorContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("OfficeFileAccessor")));
     builder.Services.AddRazorPages();
-    builder.Services.AddAntiforgery();
+    builder.Services.AddAntiforgery(options =>
+    {
+        options.HeaderName = "X-XSRF-TOKEN";
+        options.SuppressXFrameOptionsHeader = false;
+    });
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -114,6 +119,25 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+    var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
+    app.Use((context, next) =>
+    {
+        var requestPath = context.Request.Path.Value;
+
+        if (string.Equals(requestPath, "/api", StringComparison.OrdinalIgnoreCase) == false)
+        {
+            var tokenSet = antiforgery.GetAndStoreTokens(context);
+            if(tokenSet?.RequestToken != null) {
+                context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken,
+                new CookieOptions { 
+                    HttpOnly = false,
+                    SameSite = SameSiteMode.Lax
+                });
+            }
+        }
+
+        return next(context);
+    });
     app.MapWhen(context => context.Request.Path.StartsWithSegments("/api") == false,
         b => {
             b.UseSpa(spa =>

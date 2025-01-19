@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace OfficeFileAccessor.OfficeFiles;
 public class OfficeFileController(ILogger<OfficeFileController> logger, IOfficeFileService officeFiles): Controller
 {
+    [AutoValidateAntiforgeryToken]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("/api/files")]
     public string GetFileNames()

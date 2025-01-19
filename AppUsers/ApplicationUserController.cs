@@ -5,6 +5,7 @@ using OfficeFileAccessor.AppUsers.DTO;
 
 namespace OfficeFileAccessor.AppUsers;
 
+//[AutoValidateAntiforgeryToken]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class ApplicationUserController(IApplicationUserService Users): Controller
 {
