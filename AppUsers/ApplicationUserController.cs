@@ -5,21 +5,22 @@ using OfficeFileAccessor.AppUsers.DTO;
 
 namespace OfficeFileAccessor.AppUsers;
 
-//[AutoValidateAntiforgeryToken]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class ApplicationUserController(IApplicationUserService Users): Controller
 {
+    [AutoValidateAntiforgeryToken]
     [AllowAnonymous]
     [HttpPost("/api/users/signin")]
     public async Task<IActionResult> ApplicationSignIn([FromBody] SignInValue value)
     {
-        return Json(await Users.SignInAsync(value, HttpContext.Response));
+        return Json(await Users.SignInAsync(value, Response));
     }
     [HttpGet("/api/users/signout")]
     public async Task ApplicationSignOut()
     {
-        await Users.SignOutAsync();
+        await Users.SignOutAsync(Response);
     }
+    [AutoValidateAntiforgeryToken]
     [HttpGet("/api/auth")]
     public IActionResult CheckAuthenticationStatus()
     {

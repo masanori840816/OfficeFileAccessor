@@ -26,8 +26,9 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
         }
         return ApplicationResult.GetFailedResult("Invalid e-mail or password");
     }
-    public async Task SignOutAsync()
+    public async Task SignOutAsync(HttpResponse response)
     {
         await SignIn.SignOutAsync();
+        response.Cookies.Delete("User-Token");     
     }
 }

@@ -6,5 +6,5 @@ namespace OfficeFileAccessor.AppUsers;
 public interface IApplicationUserService
 {
     Task<ApplicationResult> SignInAsync(SignInValue value, HttpResponse response);
-    Task SignOutAsync();
+    Task SignOutAsync(HttpResponse response);
 }
