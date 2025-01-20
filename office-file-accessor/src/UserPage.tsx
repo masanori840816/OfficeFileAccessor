@@ -1,24 +1,14 @@
 import { useEffect, useState } from "react";
 import { useAuthentication } from "./auth/authenticationContext";
-import { useNavigate } from "react-router-dom";
+import * as authStatusChecker from "./auth/authenticationStatusChecker";
 
 export function UserPage(): JSX.Element {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const authContext = useAuthentication();
-    const navigate = useNavigate();
     useEffect(() => {
-        authContext?.check()
-            .then(res => {
-                if(res !== true) {
-                    navigate("/signin");
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                navigate("/signin");
-            })
-    }, [authContext, navigate]);
+        authStatusChecker.checkStatus(authContext);
+    }, [authContext]);
     const handleEmailChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(event.target.value);
     };
