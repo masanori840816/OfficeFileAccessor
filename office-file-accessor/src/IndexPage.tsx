@@ -1,23 +1,13 @@
 import { useEffect } from "react"
 import { getServerUrl } from "./web/serverUrlGetter";
 import { useAuthentication } from "./auth/authenticationContext";
-import { useNavigate } from "react-router-dom";
+import * as authStatusChecker from "./auth/authenticationStatusChecker";
 
 export function IndexPage(): JSX.Element {
     const authContext = useAuthentication();
-    const navigate = useNavigate();
     useEffect(() => {
-        authContext?.check()
-            .then(res => {
-                if(res !== true) {
-                    navigate("/signin");
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                navigate("/signin");
-            })
-    }, [authContext, navigate]);
+            authStatusChecker.checkStatus(authContext);
+        }, [authContext]);
     useEffect(() => {
 
         fetch(`${getServerUrl()}/api/files`, {

@@ -18,13 +18,14 @@ function App() {
       <AuthenticationProvider>
         <Router basename='/officefiles'>
         <SignOutButton />
-        <Link to="/">TOP</Link>
+        <Link to="/pages/">TOP</Link>
         <p>|</p>
-        <Link to="/register">Register</Link>
+        <Link to="/pages/register">Register</Link>
         <Routes>
-          <Route path="/signin" element={<SigninPage />} />
+          <Route path="/pages/signin" element={<SigninPage />} />
           <Route path="/" element={<IndexPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/pages/" element={<IndexPage />} />
+          <Route path="/pages/register" element={<RegisterPage />} />
         </Routes  >
         </Router>
       </AuthenticationProvider>

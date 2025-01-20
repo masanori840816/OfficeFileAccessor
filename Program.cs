@@ -124,14 +124,16 @@ try
     {
         var requestPath = context.Request.Path.Value;
 
-        if (string.Equals(requestPath, "/api", StringComparison.OrdinalIgnoreCase) == false)
+        if (requestPath != null &&
+            (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase) ||
+            requestPath.StartsWith("/pages", StringComparison.CurrentCultureIgnoreCase)))
         {
             var tokenSet = antiforgery.GetAndStoreTokens(context);
             if(tokenSet?.RequestToken != null) {
                 context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken,
                 new CookieOptions { 
                     HttpOnly = false,
-                    SameSite = SameSiteMode.Lax
+                    SameSite = SameSiteMode.Lax,
                 });
             }
         }
