@@ -18,7 +18,7 @@ export function SigninPage(): JSX.Element {
             console.error("No Auth context");
             return;
         }
-        authContext.signin(email, password)
+        authContext.signIn(email, password)
             .then(res => {
                 if(res.succeeded) {
                     navigate("/");

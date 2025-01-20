@@ -1,11 +1,12 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { getServerUrl } from "../web/serverUrlGetter";
 import { AuthenticationContext } from "./authenticationContext";
 import { getCookieValue } from "../web/cookieValues";
 import { hasAnyTexts } from "../texts/hasAnyTexts";
 
 export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
-    const signin = async (email: string, password: string) => {
+    const [signedIn, setSignedIn] = useState(false);
+    const signIn = async (email: string, password: string) => {
         const cookieValue = getCookieValue("XSRF-TOKEN"); 
         
         if(!hasAnyTexts(cookieValue)) {
@@ -20,21 +21,36 @@ export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
             },
             body: JSON.stringify({ email, password })
         });
-        return await res.json();
+        if(res.ok) {
+            const result = await res.json();
+            setSignedIn(result?.succeeded === true);
+            return result;
+        }
+        return {
+            succeeded: false,
+            errorMessage: "Something wrong"
+        };
     };
         
-    const signout = () =>
-        fetch(`${getServerUrl()}/api/users/signin`, {
+    const signOut = async () => {
+        const res = await fetch(`${getServerUrl()}/api/users/signout`, {
             mode: "cors",
             method: "GET",
-        }).then(res => res.json());
+        });
+        if(res.ok) {
+            setSignedIn(false);
+            return true;
+        };
+        return false;
+    };
+        
     const check = () => 
         fetch(`${getServerUrl()}/api/auth`, {
             mode: "cors",
             method: "GET",
         })
         .then(res => res.ok);
-    return <AuthenticationContext.Provider value={{ signin, signout, check }}>
+    return <AuthenticationContext.Provider value={{ signedIn, signIn, signOut, check }}>
         {children}
     </AuthenticationContext.Provider>
 }

@@ -9,6 +9,7 @@ import { IndexPage } from './IndexPage';
 import { RegisterPage } from './RegisterPage';
 import { SigninPage } from './SigninPage';
 import { AuthenticationProvider } from './auth/AuthenticationProvider';
+import { SignOutButton } from './components/SignoutButton';
 
 function App() {
 
@@ -16,7 +17,7 @@ function App() {
     <>
       <AuthenticationProvider>
         <Router basename='/officefiles'>
-
+        <SignOutButton />
         <Link to="/">TOP</Link>
         <p>|</p>
         <Link to="/register">Register</Link>
