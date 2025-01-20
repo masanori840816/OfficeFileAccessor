@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace OfficeFileAccessor.AppUsers;
 
 [AutoValidateAntiforgeryToken]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-public class ApplicationUserController(IApplicationUserService Users): Controller
+public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUserService Users): Controller
 {
     [AllowAnonymous]
     [HttpPost("/api/users/signin")]
@@ -23,6 +24,14 @@ public class ApplicationUserController(IApplicationUserService Users): Controlle
     [HttpGet("/api/auth")]
     public IActionResult CheckAuthenticationStatus()
     {
+        var tokenSet = Antiforgery.GetAndStoreTokens(HttpContext);
+        if(tokenSet?.RequestToken != null) {
+            HttpContext.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken,
+            new CookieOptions { 
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax,
+            });
+        }
         return Ok();
     }
 }
