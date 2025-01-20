@@ -11,7 +11,6 @@ export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
         if(!hasAnyTexts(cookieValue)) {
             throw Error("Invalid token");
         }
-        //setCookieValue("X-CSRF-TOKEN-HEADERNAME", cookieValue);
         const res = await fetch(`${getServerUrl()}/api/users/signin`, {
             mode: "cors",
             method: "POST",

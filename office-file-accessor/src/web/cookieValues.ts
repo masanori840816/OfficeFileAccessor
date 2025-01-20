@@ -9,8 +9,3 @@ export function getCookieValue(name: string): string|null {
     }
     return null; 
 };
-export function setCookieValue(key: string, value: string) {
-    const date = new Date();
-    date.setTime(date.getTime() + 1 * 24 * 60 * 60 * 1000);
-    document.cookie = `${key}=${value}; expires=${date.toUTCString()}; path=/`;
-}
