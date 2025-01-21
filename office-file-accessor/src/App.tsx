@@ -9,7 +9,7 @@ import { IndexPage } from './IndexPage';
 import { RegisterPage } from './RegisterPage';
 import { SigninPage } from './SigninPage';
 import { AuthenticationProvider } from './auth/AuthenticationProvider';
-import { SignOutButton } from './components/SignoutButton';
+import { SignOutButton } from './components/SignOutButton';
 
 function App() {
 
