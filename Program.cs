@@ -122,14 +122,14 @@ try
     var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
     app.Use((context, next) =>
     {
-        var requestPath = context.Request.Path.Value;
+        string? requestPath = context.Request.Path.Value;
 
         if (requestPath != null &&
             (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase) ||
             requestPath.StartsWith("/pages", StringComparison.CurrentCultureIgnoreCase)))
         {
-            var tokenSet = antiforgery.GetAndStoreTokens(context);
-            if(tokenSet?.RequestToken != null) {
+            AntiforgeryTokenSet tokenSet = antiforgery.GetAndStoreTokens(context);
+            if(tokenSet.RequestToken != null) {
                 context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken,
                 new CookieOptions { 
                     HttpOnly = false,
