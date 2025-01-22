@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using OfficeFileAccessor.Apps;
 using OfficeFileAccessor.AppUsers.DTO;
@@ -30,5 +31,36 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
     {
         await SignIn.SignOutAsync();
         response.Cookies.Delete("User-Token");     
+    }
+    public async Task<DisplayUser?> GetSignedInUserAsync(ClaimsPrincipal? user)
+    {
+        string? email = GetSignedInUserEmail(user);
+        if(string.IsNullOrEmpty(email))
+        {
+            return null;
+        }
+        ApplicationUser? signedInUser = await Users.GetByEmailForSignInAsync(email);
+        if(signedInUser == null)
+        {
+            return null;
+        }
+        return DisplayUser.Create(signedInUser);
+    }
+    /// <summary>
+    /// Get signed in user email address
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
+    private static string? GetSignedInUserEmail(ClaimsPrincipal? user)
+    {
+        if(user == null)
+        {
+            return null;
+        }
+        if(user.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }        
+        return user.FindFirstValue(ClaimTypes.Email);
     }
 }
