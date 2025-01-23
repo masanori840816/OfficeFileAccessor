@@ -42,6 +42,7 @@ public class OfficeFileService: IOfficeFileService
         return file.ContentType switch
         {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => xlsFileReader,
+            "application/vnd.ms-excel.sheet.macroEnabled.12" => xlsFileReader,
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => docFileReader,
             _ => null,
         };

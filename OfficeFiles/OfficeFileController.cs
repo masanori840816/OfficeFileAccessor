@@ -21,7 +21,7 @@ public class OfficeFileController(ILogger<OfficeFileController> logger, IOfficeF
     public async Task<IActionResult> LoadOfficeFiles([FromForm] IFormFileCollection files)
     {
         DisplayUser? user = await Users.GetSignedInUserAsync(User);
-        logger.LogInformation($"Sign-in User: {user}");
+        logger.LogInformation("Sign-in User: {user}", user);
         return Json(await officeFiles.RegisterAsync(files));
     }
 }

@@ -123,13 +123,14 @@ try
     app.Use((context, next) =>
     {
         string? requestPath = context.Request.Path.Value;
-
         if (requestPath != null &&
             (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase) ||
-            requestPath.StartsWith("/pages", StringComparison.CurrentCultureIgnoreCase)))
+            string.Equals(requestPath, "/officefiles/", StringComparison.OrdinalIgnoreCase) ||
+            requestPath.StartsWith("/officefiles/pages", StringComparison.CurrentCultureIgnoreCase)))
         {
             AntiforgeryTokenSet tokenSet = antiforgery.GetAndStoreTokens(context);
-            if(tokenSet.RequestToken != null) {
+            if(tokenSet.RequestToken != null)
+            {    
                 context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken,
                 new CookieOptions { 
                     HttpOnly = false,
