@@ -1,7 +1,9 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -58,13 +60,6 @@ try
             };
         });
     builder.Services.AddAuthorization();
-    builder.Services.AddSession(options =>
-    {
-        options.IdleTimeout = TimeSpan.FromSeconds(30);
-        options.Cookie.HttpOnly = true;
-        options.Cookie.IsEssential = true;
-        options.Cookie.SameSite = SameSiteMode.Strict;
-    });
     builder.Services.AddSpaStaticFiles(configuration =>
     {
         if (builder.Environment.EnvironmentName == "Development") 
@@ -103,44 +98,59 @@ try
     }
     app.UseCors(AllowOrigins);
     app.UseRouting();
-    app.UseSession();
+    
+    var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
+    app.Use((context, next) =>
+    {
+        string? requestPath = context.Request.Path.Value;
+        if(requestPath == null)
+        {
+            return next(context);
+        }
+        if(requestPath.EndsWith("/") == false)
+        {
+            requestPath += "/";
+        }
+        // The sign-in page needs anti-forgery token before authentication.
+        if (string.Equals(requestPath, "/officefiles/pages/signin/", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(requestPath, "/pages/signin/", StringComparison.OrdinalIgnoreCase))
+        {
+            AntiforgeryTokenSet tokenSet = antiforgery.GetAndStoreTokens(context);
+            if(tokenSet.RequestToken != null)
+            {
+                context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken,
+                new CookieOptions { 
+                    HttpOnly = false,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTime.Now.AddSeconds(30),
+                });
+            }
+        }
+        return next(context);
+    });
     app.Use(async (context, next) =>
     {
-        if(context.Request.Cookies.TryGetValue("User-Token", out string? token))
+        if(context.Request.Path.StartsWithSegments("/api"))
         {
-            if(string.IsNullOrEmpty(token) == false)
-            {            
-                context.Request.Headers.Append("Authorization", $"Bearer {token}");
-            }
-        }        
+            if(context.Request.Cookies.TryGetValue("User-Token", out string? token) &&
+                string.IsNullOrEmpty(token) == false)
+            {
+                if(TokenValidator.Validate(new ExternalTokenValue(builder.Configuration["Jwt:Key"] ?? ""), token))
+                {
+                    context.Request.Headers.Append("Authorization", $"Bearer {token}");
+                }
+                else
+                {
+                    context.Response.Cookies.Delete("User-Token");
+                }
+            } 
+        }      
         await next();
     });
     app.UseStaticFiles();
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
-    var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
-    app.Use((context, next) =>
-    {
-        string? requestPath = context.Request.Path.Value;
-        if (requestPath != null &&
-            (string.Equals(requestPath, "/", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(requestPath, "/officefiles/", StringComparison.OrdinalIgnoreCase) ||
-            requestPath.StartsWith("/officefiles/pages", StringComparison.CurrentCultureIgnoreCase)))
-        {
-            AntiforgeryTokenSet tokenSet = antiforgery.GetAndStoreTokens(context);
-            if(tokenSet.RequestToken != null)
-            {    
-                context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken,
-                new CookieOptions { 
-                    HttpOnly = false,
-                    SameSite = SameSiteMode.Lax,
-                });
-            }
-        }
-
-        return next(context);
-    });
     app.MapWhen(context => context.Request.Path.StartsWithSegments("/api") == false,
         b => {
             b.UseSpa(spa =>
