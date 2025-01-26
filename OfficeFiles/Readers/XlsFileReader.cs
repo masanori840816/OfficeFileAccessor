@@ -32,26 +32,50 @@ public class XlsFileReader: IOfficeFileReader
             }
             foreach(Row row in targetSheet.Descendants<Row>())
             {                
-                logger.Info($"Row CH: {row.CustomHeight} H: {row.Height}");
+                //logger.Info($"Row CH: {row.CustomHeight} H: {row.Height}");
                 foreach(Cell cell in row.Cast<Cell>())
                 {
-
-                    logger.Info($"Cell styleIdx: {cell.StyleIndex} Type: {cell.DataType} Ref: {cell.CellReference}");
-                    string value = cell.InnerText;
-                    if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
-                    {
-                        SharedStringTablePart? stringTablePart = bookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
-                        if (stringTablePart != null)
-                        {
-                            value = stringTablePart.SharedStringTable.ElementAt(int.Parse(value)).InnerText;
-                        }
-                    }
-                    logger.Info($"Cell Val: {value}");
+                    logger.Info("Cell Val: {value}", GetCellValue(bookPart, cell));
                 }
             }
+                break;
         }
        
         logger.Info("OK");
+    }
+    private static string? GetCellValue(WorkbookPart workbookPart, Cell cell)
+    {
+        // Get value
+        string value = cell.InnerText;
+        // if the data type is SharedString, find the value from Shared String Table
+        if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+        {
+            SharedStringTablePart? sharedStringTablePart = workbookPart.GetPartsOfType<SharedStringTablePart>()
+                ?.FirstOrDefault();
+            if (sharedStringTablePart != null)
+            {
+                var sharedStringItem = sharedStringTablePart.SharedStringTable
+                    .ElementAt(int.Parse(value));
+
+                // Concatenate all text except phonetic reading
+                return string.Concat(
+                    sharedStringItem.Descendants<DocumentFormat.OpenXml.Spreadsheet.Text>()
+                                    .Where(t => CheckIsPhonetic(t) == false)
+                                    .Select(t => t.Text)
+                );
+            }
+        }
+
+        return value;
+    }
+    /// <summary>
+    /// Check if the parent element is "PhoneticRun"
+    /// </summary>
+    /// <param name="textElement"></param>
+    /// <returns></returns>
+    private static bool CheckIsPhonetic(DocumentFormat.OpenXml.Spreadsheet.Text textElement)
+    {
+        return textElement.Ancestors<PhoneticRun>().Any();
     }
     private static List<string> GetSheetNameList(WorkbookPart bookPart) => 
         bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false)
