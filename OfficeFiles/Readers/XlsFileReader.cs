@@ -50,12 +50,15 @@ public class XlsFileReader: IOfficeFileReader
     }
     private Worksheets.Cell? GetCellValue(WorkbookPart workbookPart, Cell cell)
     {
-        
+        // Formula
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
         if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
         {
-            logger.Info("Formula Ref:{Ref} F:{f} V:{result}", cell.CellReference, formula, calcResult);
+            if (double.TryParse(calcResult, out double n))
+            {
+                calcResult = n.ToString("G");
+            }
             return new Worksheets.Cell
             {
                 Address = cell.CellReference?.Value ?? "A1",
@@ -66,7 +69,6 @@ public class XlsFileReader: IOfficeFileReader
         }
         // Get value
         string value = cell.InnerText;
-
         // if the data type is SharedString, find the value from Shared String Table
         if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
         {
@@ -95,10 +97,16 @@ public class XlsFileReader: IOfficeFileReader
         {
             return null;
         }
+        Worksheets.CellValueType valueType = Worksheets.CellValueType.Text;
+        if (double.TryParse(value, out double nv))
+        {
+            valueType = Worksheets.CellValueType.Double;
+            value = nv.ToString("G");
+        }
         return new Worksheets.Cell
         {
             Address = cell.CellReference?.Value ?? "A1",
-            Type = Worksheets.CellValueType.Text,
+            Type = valueType,
             Value = value,
         };
     }
