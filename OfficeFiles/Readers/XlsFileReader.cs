@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
@@ -12,7 +13,6 @@ public class XlsFileReader: IOfficeFileReader
     }
     public void Read(IFormFile file)
     {
-        logger.Info("Read Xls");
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
         WorkbookPart? bookPart = spreadsheet.WorkbookPart;
         if(bookPart == null)
@@ -35,7 +35,12 @@ public class XlsFileReader: IOfficeFileReader
                 //logger.Info($"Row CH: {row.CustomHeight} H: {row.Height}");
                 foreach(Cell cell in row.Cast<Cell>())
                 {
-                    logger.Info("Cell Val: {value}", GetCellValue(bookPart, cell));
+                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell);
+                    if(cellValue == null)
+                    {
+                        continue;
+                    }
+                    logger.Info(cellValue.ToString());
                 }
             }
                 break;
@@ -43,10 +48,25 @@ public class XlsFileReader: IOfficeFileReader
        
         logger.Info("OK");
     }
-    private static string? GetCellValue(WorkbookPart workbookPart, Cell cell)
+    private Worksheets.Cell? GetCellValue(WorkbookPart workbookPart, Cell cell)
     {
+        
+        string? formula = cell.CellFormula?.Text;
+        string? calcResult = cell.CellValue?.InnerText;
+        if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
+        {
+            logger.Info("Formula Ref:{Ref} F:{f} V:{result}", cell.CellReference, formula, calcResult);
+            return new Worksheets.Cell
+            {
+                Address = cell.CellReference?.Value ?? "A1",
+                Type = Worksheets.CellValueType.Formula,
+                Value = calcResult,
+                Formula = formula
+            };
+        }
         // Get value
         string value = cell.InnerText;
+
         // if the data type is SharedString, find the value from Shared String Table
         if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
         {
@@ -54,19 +74,33 @@ public class XlsFileReader: IOfficeFileReader
                 ?.FirstOrDefault();
             if (sharedStringTablePart != null)
             {
-                var sharedStringItem = sharedStringTablePart.SharedStringTable
+                OpenXmlElement sharedStringItem = sharedStringTablePart.SharedStringTable
                     .ElementAt(int.Parse(value));
 
                 // Concatenate all text except phonetic reading
-                return string.Concat(
+                string result = string.Concat(
                     sharedStringItem.Descendants<DocumentFormat.OpenXml.Spreadsheet.Text>()
                                     .Where(t => CheckIsPhonetic(t) == false)
                                     .Select(t => t.Text)
                 );
+                return new Worksheets.Cell
+                {
+                    Address = cell.CellReference?.Value ?? "A1",
+                    Type = Worksheets.CellValueType.Text,
+                    Value = result,
+                };
             }
         }
-
-        return value;
+        if(string.IsNullOrEmpty(value))
+        {
+            return null;
+        }
+        return new Worksheets.Cell
+        {
+            Address = cell.CellReference?.Value ?? "A1",
+            Type = Worksheets.CellValueType.Text,
+            Value = value,
+        };
     }
     /// <summary>
     /// Check if the parent element is "PhoneticRun"
