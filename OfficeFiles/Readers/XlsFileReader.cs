@@ -2,6 +2,9 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using Drawing = DocumentFormat.OpenXml.Drawing;
+
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
 public class XlsFileReader: IOfficeFileReader
@@ -30,6 +33,32 @@ public class XlsFileReader: IOfficeFileReader
                 logger.Info($"Failed getting Worksheet Name: {name}");
                 return;
             }
+            var sheetPart = targetSheet.WorksheetPart;
+            var drawingsPart = sheetPart?.DrawingsPart;
+            if (drawingsPart == null)
+            {
+                logger.Info("No drawing elements");
+                return;
+            }
+
+            foreach (var drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
+            {
+                var shape = drawing.Descendants<Shape>().FirstOrDefault();
+                if (shape != null)
+                {
+                    // Get text box
+                    var text = shape.TextBody?.Descendants<Drawing.Paragraph>()
+                                             .Select(p => string.Join("", p.Descendants<Drawing.Text>().Select(t => t.Text)))
+                                             .Aggregate((current, next) => current + Environment.NewLine + next);
+
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        logger.Info("テキストボックスの内容:{txt}", text);
+                    }
+                }
+            }
+
+
             foreach(Row row in targetSheet.Descendants<Row>())
             {                
                 //logger.Info($"Row CH: {row.CustomHeight} H: {row.Height}");
@@ -43,7 +72,7 @@ public class XlsFileReader: IOfficeFileReader
                     logger.Info(cellValue.ToString());
                 }
             }
-                break;
+            break;
         }
        
         logger.Info("OK");
