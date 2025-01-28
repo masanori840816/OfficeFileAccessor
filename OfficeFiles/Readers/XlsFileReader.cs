@@ -43,9 +43,27 @@ public class XlsFileReader: IOfficeFileReader
 
             foreach (var drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
             {
+                var fromMarker = drawing.FromMarker;
+                var toMarker = drawing.ToMarker;
+                
                 var shape = drawing.Descendants<Shape>().FirstOrDefault();
                 if (shape != null)
                 {
+                    
+                    logger.Info("TextBox is from cell RowId: {rowId} ColId: {coId} ToRowID: {torowid} ToColumnID: {tocolid}", fromMarker?.RowId?.Text, fromMarker?.ColumnId?.Text,
+                    toMarker?.RowId?.Text, toMarker?.ColumnId?.Text);
+
+                    var shapeProperties = shape.Descendants<ShapeProperties>().FirstOrDefault();
+                    if (shapeProperties != null)
+                    {
+                        var presetGeometry = shapeProperties.Descendants<Drawing.PresetGeometry>().FirstOrDefault();
+                        if (presetGeometry != null)
+                        {
+                            var shapeType = presetGeometry.Preset;
+                            
+                             logger.Info("Shape type: {shapeType} v: {val} it: {text} string: {str}", shapeType, shapeType?.Value, shapeType?.InnerText, shapeType?.ToString());
+                        }
+                    }
                     // Get text box
                     var text = shape.TextBody?.Descendants<Drawing.Paragraph>()
                                              .Select(p => string.Join("", p.Descendants<Drawing.Text>().Select(t => t.Text)))
