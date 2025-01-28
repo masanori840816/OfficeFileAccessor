@@ -71,7 +71,7 @@ public class XlsFileReader: IOfficeFileReader
 
                     if (!string.IsNullOrEmpty(text))
                     {
-                        logger.Info("テキストボックスの内容:{txt}", text);
+                        logger.Info("TextBox Value:{txt}", text);
                     }
                 }
             }
@@ -87,6 +87,16 @@ public class XlsFileReader: IOfficeFileReader
                     {
                         continue;
                     }
+                    if(cell.StyleIndex?.Value != null)
+                    {
+                        CellFormat? cellFormat = bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
+                        if(cellFormat != null && cellFormat.BorderId?.Value != null)
+                        {
+                            Border? border = bookPart.WorkbookStylesPart?.Stylesheet?.Borders?.ElementAt((int)cellFormat.BorderId.Value) as Border;
+                            logger.Info("Cell: {cell} Border L: {left} T:{top} R:{right} B:{bottom}", cell.CellReference, border?.LeftBorder?.Style?.InnerText, border?.TopBorder?.Style?.InnerText, border?.RightBorder?.Style?.InnerText, border?.BottomBorder?.Style?.InnerText);
+                            
+                        }
+                    }                    
                     logger.Info(cellValue.ToString());
                 }
             }
