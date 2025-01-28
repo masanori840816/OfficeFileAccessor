@@ -97,7 +97,9 @@ public class XlsFileReader: IOfficeFileReader
                             
                         }
                     }                    
-                    logger.Info(cellValue.ToString());
+                    var color = GetCellBackgroundColor(cell, bookPart);
+                    logger.Info("Cell Value:{val} Color:{color}", cellValue.ToString(), color);
+                    
                 }
             }
             break;
@@ -195,5 +197,36 @@ public class XlsFileReader: IOfficeFileReader
             }
         }
         return null;
+    }
+    private static string GetCellBackgroundColor(Cell cell, WorkbookPart workbookPart)
+    {
+        // セルのスタイルインデックスを取得
+        if (cell.StyleIndex == null) return "default";
+        uint styleIndex = cell.StyleIndex.Value;
+
+        // スタイル情報を取得
+        CellFormat cellFormat = workbookPart.WorkbookStylesPart.Stylesheet.CellFormats
+            .Elements<CellFormat>().ElementAt((int)styleIndex);
+
+        // FillIdを取得
+        uint fillId = cellFormat.FillId.Value;
+
+        // Fillsから対応するFillを取得
+        Fill fill = workbookPart.WorkbookStylesPart.Stylesheet.Fills
+            .Elements<Fill>().ElementAt((int)fillId);
+
+        // 背景色を取得
+        PatternFill patternFill = fill.PatternFill;
+        if (patternFill != null && patternFill.ForegroundColor != null)
+        {
+            // RGB値を取得
+            var color = patternFill.ForegroundColor.Rgb;
+            if (color != null)
+            {
+                return color.Value;
+            }
+        }
+
+        return "No background color";
     }
 }
