@@ -79,14 +79,8 @@ public class XlsFileReader: IOfficeFileReader
 
             foreach(Row row in targetSheet.Descendants<Row>())
             {                
-                //logger.Info($"Row CH: {row.CustomHeight} H: {row.Height}");
                 foreach(Cell cell in row.Cast<Cell>())
                 {
-                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell);
-                    if(cellValue == null)
-                    {
-                        continue;
-                    }
                     if(cell.StyleIndex?.Value != null)
                     {
                         CellFormat? cellFormat = bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
@@ -96,18 +90,18 @@ public class XlsFileReader: IOfficeFileReader
                             logger.Info("Cell: {cell} Border L: {left} T:{top} R:{right} B:{bottom}", cell.CellReference, border?.LeftBorder?.Style?.InnerText, border?.TopBorder?.Style?.InnerText, border?.RightBorder?.Style?.InnerText, border?.BottomBorder?.Style?.InnerText);
                             
                         }
-                    }                    
-                    var color = GetCellBackgroundColor(cell, bookPart);
-                    logger.Info("Cell Value:{val} Color:{color}", cellValue.ToString(), color);
+                    }
+                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell);
+                    var color = GetCellColor(cell, bookPart);
+                    logger.Info("Cell Value:{val} Color:{color} Ref:{ref}", cellValue?.ToString(), color, cell.CellReference);
                     
                 }
             }
             break;
-        }
-       
+        }       
         logger.Info("OK");
     }
-    private Worksheets.Cell? GetCellValue(WorkbookPart workbookPart, Cell cell)
+    private static Worksheets.Cell? GetCellValue(WorkbookPart workbookPart, Cell cell)
     {
         // Formula
         string? formula = cell.CellFormula?.Text;
@@ -198,35 +192,64 @@ public class XlsFileReader: IOfficeFileReader
         }
         return null;
     }
-    private static string GetCellBackgroundColor(Cell cell, WorkbookPart workbookPart)
+    private static string? GetCellColor(Cell cell, WorkbookPart bookPart)
     {
-        // セルのスタイルインデックスを取得
-        if (cell.StyleIndex == null) return "default";
-        uint styleIndex = cell.StyleIndex.Value;
-
-        // スタイル情報を取得
-        CellFormat cellFormat = workbookPart.WorkbookStylesPart.Stylesheet.CellFormats
-            .Elements<CellFormat>().ElementAt((int)styleIndex);
-
-        // FillIdを取得
-        uint fillId = cellFormat.FillId.Value;
-
-        // Fillsから対応するFillを取得
-        Fill fill = workbookPart.WorkbookStylesPart.Stylesheet.Fills
-            .Elements<Fill>().ElementAt((int)fillId);
-
-        // 背景色を取得
-        PatternFill patternFill = fill.PatternFill;
-        if (patternFill != null && patternFill.ForegroundColor != null)
+        uint? styleIndex = cell.StyleIndex?.Value;
+        if(styleIndex == null)
         {
-            // RGB値を取得
-            var color = patternFill.ForegroundColor.Rgb;
-            if (color != null)
+            return null;
+        }
+        CellFormat? cellFormat = bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)styleIndex) as CellFormat;
+        if (cellFormat?.FillId != null)
+        {
+            Fill? fill = bookPart.WorkbookStylesPart?.Stylesheet?.Fills?.ElementAt((int)cellFormat.FillId.Value) as Fill;
+            PatternFill? patternFill = fill?.PatternFill;
+            string? rgbColor = GetRgbColor(patternFill?.ForegroundColor?.Rgb);
+            if(string.IsNullOrEmpty(rgbColor) == false)
             {
-                return color.Value;
+                return rgbColor;
+            }
+            string? themeColor = GetThemeColor(bookPart, patternFill?.ForegroundColor?.Theme?.Value);
+            if(string.IsNullOrEmpty(themeColor) == false)
+            {
+                return themeColor;
+            }
+            rgbColor = GetRgbColor(patternFill?.BackgroundColor?.Rgb);
+            if(string.IsNullOrEmpty(rgbColor) == false)
+            {
+                return rgbColor;
+            }
+            themeColor = GetThemeColor(bookPart, patternFill?.BackgroundColor?.Theme?.Value);
+            if(string.IsNullOrEmpty(themeColor) == false)
+            {
+                return themeColor;
             }
         }
-
-        return "No background color";
+    
+        return null;
+    }
+    private static string? GetRgbColor(HexBinaryValue? rgb)
+    {
+        if(rgb?.InnerText == null)
+        {
+            return null;
+        }
+        // Remove alpha value
+        return rgb.InnerText[2..];
+    }
+    private static string? GetThemeColor(WorkbookPart bookPart, uint? themeColorIndex)
+    {
+        if(themeColorIndex == null || themeColorIndex <= 0)
+        {
+            return null;
+        }
+        ThemePart? themePart = bookPart.ThemePart;
+        Drawing.Theme? theme = themePart?.Theme;
+        if(theme != null)
+        {
+            Drawing.Color2Type? color2Type = theme.ThemeElements?.ColorScheme?.ElementAt((int)themeColorIndex) as Drawing.Color2Type;
+            return color2Type?.RgbColorModelHex?.Val;
+        }
+        return null;
     }
 }
