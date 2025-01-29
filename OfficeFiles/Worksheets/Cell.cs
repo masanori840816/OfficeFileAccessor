@@ -7,9 +7,11 @@ public class Cell
     public required CellValueType Type { get; init; }
     public required string Value { get; init; }
     public string? Formula { get; init; }
+    public string? BackgroundColor { get; init; }
+    public required CellBorders Borders { get; init; }
 
     public override string ToString()
     {
-        return $"Cell Address:{Address} Type:{Type} Formula:{Formula} Value:{Value}";
+        return $"Cell Address:{Address} Type:{Type} Formula:{Formula} Value:{Value} BackgroundColor: {BackgroundColor} {Borders}";
     }
 }

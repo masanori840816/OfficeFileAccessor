@@ -81,28 +81,20 @@ public class XlsFileReader: IOfficeFileReader
             {                
                 foreach(Cell cell in row.Cast<Cell>())
                 {
-                    if(cell.StyleIndex?.Value != null)
-                    {
-                        CellFormat? cellFormat = bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
-                        if(cellFormat != null && cellFormat.BorderId?.Value != null)
-                        {
-                            Border? border = bookPart.WorkbookStylesPart?.Stylesheet?.Borders?.ElementAt((int)cellFormat.BorderId.Value) as Border;
-                            logger.Info("Cell: {cell} Border L: {left} T:{top} R:{right} B:{bottom}", cell.CellReference, border?.LeftBorder?.Style?.InnerText, border?.TopBorder?.Style?.InnerText, border?.RightBorder?.Style?.InnerText, border?.BottomBorder?.Style?.InnerText);
-                            
-                        }
-                    }
                     Worksheets.Cell? cellValue = GetCellValue(bookPart, cell);
-                    var color = GetCellColor(cell, bookPart);
-                    logger.Info("Cell Value:{val} Color:{color} Ref:{ref}", cellValue?.ToString(), color, cell.CellReference);
+                    logger.Info("Cell Value:{val}", cellValue?.ToString());
                     
                 }
             }
             break;
-        }       
+        }
         logger.Info("OK");
     }
-    private static Worksheets.Cell? GetCellValue(WorkbookPart workbookPart, Cell cell)
+    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell)
     {
+        // Borders
+        Worksheets.CellBorders borders = GetBorders(bookPart, cell);
+        string? backgroundColor = GetCellColor(cell, bookPart);
         // Formula
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
@@ -117,7 +109,9 @@ public class XlsFileReader: IOfficeFileReader
                 Address = cell.CellReference?.Value ?? "A1",
                 Type = Worksheets.CellValueType.Formula,
                 Value = calcResult,
-                Formula = formula
+                Formula = formula,
+                BackgroundColor = backgroundColor,
+                Borders = borders,
             };
         }
         // Get value
@@ -125,7 +119,7 @@ public class XlsFileReader: IOfficeFileReader
         // if the data type is SharedString, find the value from Shared String Table
         if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
         {
-            SharedStringTablePart? sharedStringTablePart = workbookPart.GetPartsOfType<SharedStringTablePart>()
+            SharedStringTablePart? sharedStringTablePart = bookPart.GetPartsOfType<SharedStringTablePart>()
                 ?.FirstOrDefault();
             if (sharedStringTablePart != null)
             {
@@ -143,15 +137,15 @@ public class XlsFileReader: IOfficeFileReader
                     Address = cell.CellReference?.Value ?? "A1",
                     Type = Worksheets.CellValueType.Text,
                     Value = result,
+                    BackgroundColor = backgroundColor,
+                    Borders = borders,
                 };
             }
         }
-        if(string.IsNullOrEmpty(value))
-        {
-            return null;
-        }
+
         Worksheets.CellValueType valueType = Worksheets.CellValueType.Text;
-        if (double.TryParse(value, out double nv))
+        if (string.IsNullOrEmpty(value) == false &&
+            double.TryParse(value, out double nv))
         {
             valueType = Worksheets.CellValueType.Double;
             value = nv.ToString("G");
@@ -161,6 +155,8 @@ public class XlsFileReader: IOfficeFileReader
             Address = cell.CellReference?.Value ?? "A1",
             Type = valueType,
             Value = value,
+            BackgroundColor = backgroundColor,
+            Borders = borders,
         };
     }
     /// <summary>
@@ -191,6 +187,30 @@ public class XlsFileReader: IOfficeFileReader
             }
         }
         return null;
+    }
+    private static Worksheets.CellBorders GetBorders(WorkbookPart bookPart, Cell cell)
+    {
+        if(cell.StyleIndex?.Value == null)
+        {
+            return Worksheets.CellBorders.GetNoBorders();
+        }
+        CellFormat? cellFormat = bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
+        if(cellFormat?.BorderId?.Value != null)
+        {
+            Border? border = bookPart.WorkbookStylesPart?.Stylesheet?.Borders?.ElementAt(
+                    (int)cellFormat.BorderId.Value) as Border;
+            if(border != null)
+            {
+                return new ()
+                {
+                    Left = Worksheets.BorderTypeFactory.Get(border?.LeftBorder?.Style?.InnerText),
+                    Top = Worksheets.BorderTypeFactory.Get(border?.TopBorder?.Style?.InnerText),
+                    Right = Worksheets.BorderTypeFactory.Get(border?.RightBorder?.Style?.InnerText),
+                    Bottom = Worksheets.BorderTypeFactory.Get(border?.BottomBorder?.Style?.InnerText),
+                };
+            }            
+        }
+        return Worksheets.CellBorders.GetNoBorders();
     }
     private static string? GetCellColor(Cell cell, WorkbookPart bookPart)
     {
