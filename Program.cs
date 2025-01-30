@@ -13,6 +13,7 @@ using OfficeFileAccessor.AppUsers;
 using OfficeFileAccessor.AppUsers.Entities;
 using OfficeFileAccessor.AppUsers.Repositories;
 using OfficeFileAccessor.OfficeFiles;
+using OfficeFileAccessor.OfficeFiles.Readers;
 
 var logger = LogManager.Setup().LoadConfigurationFromFile("Nlog.config").GetCurrentClassLogger();
 
@@ -84,6 +85,7 @@ try
     builder.Services.AddScoped<IApplicationUsers, ApplicationUsers>();
     builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();
     builder.Services.AddScoped<IUserTokens, UserTokens>();
+    builder.Services.AddScoped<IXlsFileReader, XlsFileReader>();
     var app = builder.Build();
     
     if (builder.Environment.EnvironmentName != "Development")
