@@ -17,6 +17,9 @@ function App() {
     <>
       <AuthenticationProvider>
         <Router basename='/officefiles'>
+        <header className='flex  w-full h-[10%] flex-row bg-gray'>
+
+        </header>
         <SignOutButton />
         <Link to="/pages/">TOP</Link>
         <p>|</p>
