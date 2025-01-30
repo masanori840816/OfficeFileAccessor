@@ -63,7 +63,9 @@ public class XlsFileReader: IOfficeFileReader
 
         logger.Info($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
         logger.Info("Cell from: {fC}{fR} to: {tC}{tR}", ConvertIndexToAlphabet(fromColumn), fromRow, ConvertIndexToAlphabet(toColumn), toRow);
-        logger.Info("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", Numbers.ConvertFromEMUToPixel(fromOffsetX), Numbers.ConvertFromEMUToPixel(fromOffsetY), Numbers.ConvertFromEMUToPixel(toOffsetX), Numbers.ConvertFromEMUToPixel(toOffsetY));
+        logger.Info("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", 
+            Numbers.ConvertFromEMUToCentimeter(fromOffsetX), Numbers.ConvertFromEMUToCentimeter(fromOffsetY), 
+            Numbers.ConvertFromEMUToCentimeter(toOffsetX), Numbers.ConvertFromEMUToCentimeter(toOffsetY));
 
                     var shapeProperties = shape.Descendants<ShapeProperties>().FirstOrDefault();
                     if (shapeProperties != null)

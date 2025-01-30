@@ -2,7 +2,8 @@ namespace OfficeFileAccessor.Apps;
 
 public static class Numbers
 {
-    private const double EmuToPixels = 1.0 / 9525.0;
+    private const double EmuToCm = 1.0 / 360000.0;
+
     public static int ParseInt(string? value, int defaultValue)
     {
         if(string.IsNullOrEmpty(value))
@@ -15,8 +16,8 @@ public static class Numbers
         }
         return defaultValue;
     }
-    public static double ConvertFromEMUToPixel(int emuValue)
+    public static double ConvertFromEMUToCentimeter(int emuValue)
     {
-        return EmuToPixels * (double)emuValue;
+        return EmuToCm * (double)emuValue;
     }
 }
