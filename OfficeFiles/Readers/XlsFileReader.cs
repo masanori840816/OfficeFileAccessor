@@ -1,18 +1,23 @@
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
-
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using Drawing = DocumentFormat.OpenXml.Drawing;
+using OfficeFileAccessor.Apps;
+using System.Text.RegularExpressions;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
-public class XlsFileReader: IOfficeFileReader
+public class XlsFileReader: IXlsFileReader
 {
-    private readonly NLog.Logger logger;
-    public XlsFileReader()
+    private readonly ILogger<XlsFileReader> logger;
+    private readonly double DefaultWidth;
+    private readonly double DefaultHeight;
+    public XlsFileReader(ILogger<XlsFileReader> logger)
     {
-        this.logger = NLog.LogManager.GetCurrentClassLogger();
+        this.logger = logger;
+        this.DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
+        this.DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
     }
     public void Read(IFormFile file)
     {
@@ -20,38 +25,52 @@ public class XlsFileReader: IOfficeFileReader
         WorkbookPart? bookPart = spreadsheet.WorkbookPart;
         if(bookPart == null)
         {
-            logger.Info("Failed getting WorkbookPart");
+            logger.LogInformation("Failed getting WorkbookPart");
             return;
         }
         List<string> sheetNames = GetSheetNameList(bookPart);
         foreach(var name in sheetNames)
         {
-            logger.Info($"SheetName: {name}");
+            logger.LogInformation($"SheetName: {name}");
             Worksheet? targetSheet = GetWorkSheet(bookPart, name);
             if(targetSheet == null)
             {
-                logger.Info($"Failed getting Worksheet Name: {name}");
+                logger.LogInformation($"Failed getting Worksheet Name: {name}");
                 return;
             }
-            var sheetPart = targetSheet.WorksheetPart;
-            var drawingsPart = sheetPart?.DrawingsPart;
+            List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet);
+            WorksheetPart? sheetPart = targetSheet.WorksheetPart;
+            DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
             {
-                logger.Info("No drawing elements");
                 return;
             }
 
             foreach (var drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
             {
-                var fromMarker = drawing.FromMarker;
-                var toMarker = drawing.ToMarker;
-                
-                var shape = drawing.Descendants<Shape>().FirstOrDefault();
+                Shape? shape = drawing.Descendants<Shape>().FirstOrDefault();
                 if (shape != null)
                 {
-                    
-                    logger.Info("TextBox is from cell RowId: {rowId} ColId: {coId} ToRowID: {torowid} ToColumnID: {tocolid}", fromMarker?.RowId?.Text, fromMarker?.ColumnId?.Text,
-                    toMarker?.RowId?.Text, toMarker?.ColumnId?.Text);
+                    var fromMarker = drawing.FromMarker;
+                    var toMarker = drawing.ToMarker;
+                    // Start
+                    int fromColumn = Numbers.ParseInt(fromMarker?.ColumnId?.Text, 1) + 1;
+                    int fromRow = Numbers.ParseInt(fromMarker?.RowId?.Text, 1) + 1;
+                    int fromOffsetX = Numbers.ParseInt(fromMarker?.ColumnOffset?.Text, 0);
+                    int fromOffsetY = Numbers.ParseInt(fromMarker?.RowOffset?.Text, 0);
+
+                    // End
+                    int toColumn = Numbers.ParseInt(toMarker?.ColumnId?.Text, 1) + 1;
+                    int toRow = Numbers.ParseInt(toMarker?.RowId?.Text, 1) + 1;
+                    int toOffsetX = Numbers.ParseInt(toMarker?.ColumnOffset?.Text, 0);
+                    int toOffsetY = Numbers.ParseInt(toMarker?.RowOffset?.Text, 0);
+
+
+        logger.LogInformation($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
+        logger.LogInformation("Cell from: {fC}{fR} to: {tC}{tR}", ConvertIndexToAlphabet(fromColumn), fromRow, ConvertIndexToAlphabet(toColumn), toRow);
+        logger.LogInformation("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", 
+            Numbers.ConvertFromEMUToCentimeter(fromOffsetX), Numbers.ConvertFromEMUToCentimeter(fromOffsetY), 
+            Numbers.ConvertFromEMUToCentimeter(toOffsetX), Numbers.ConvertFromEMUToCentimeter(toOffsetY));
 
                     var shapeProperties = shape.Descendants<ShapeProperties>().FirstOrDefault();
                     if (shapeProperties != null)
@@ -60,8 +79,7 @@ public class XlsFileReader: IOfficeFileReader
                         if (presetGeometry != null)
                         {
                             var shapeType = presetGeometry.Preset;
-                            
-                             logger.Info("Shape type: {shapeType} v: {val} it: {text} string: {str}", shapeType, shapeType?.Value, shapeType?.InnerText, shapeType?.ToString());
+                             logger.LogInformation("Shape type: {text}", shapeType?.InnerText);
                         }
                     }
                     // Get text box
@@ -71,33 +89,43 @@ public class XlsFileReader: IOfficeFileReader
 
                     if (!string.IsNullOrEmpty(text))
                     {
-                        logger.Info("TextBox Value:{txt}", text);
+                        logger.LogInformation("TextBox Value:{txt}", text);
                     }
                 }
             }
 
 
             foreach(Row row in targetSheet.Descendants<Row>())
-            {                
+            {
+                double height = DefaultHeight;
+                if(row.Height?.Value != null)
+                {
+                    height = Numbers.ConvertFromPointToCentimeter(row.Height.Value);
+                }
                 foreach(Cell cell in row.Cast<Cell>())
                 {
-                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell);
-                    logger.Info("Cell Value:{val}", cellValue?.ToString());
-                    
+                    string columnName = GetColumnNameFromAddress(cell.CellReference);
+                    double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
+                    width ??= DefaultWidth;
+                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height);
+                    logger.LogInformation("Cell Value:{val}", cellValue?.ToString());                    
                 }
             }
+            // TODO: uncomment after testing
             break;
         }
-        logger.Info("OK");
+        logger.LogInformation("OK");
     }
-    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell)
+    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height)
     {
         // Borders
         Worksheets.CellBorders borders = GetBorders(bookPart, cell);
+        // Background color
         string? backgroundColor = GetCellColor(cell, bookPart);
         // Formula
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
+        
         if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
         {
             if (double.TryParse(calcResult, out double n))
@@ -110,6 +138,8 @@ public class XlsFileReader: IOfficeFileReader
                 Type = Worksheets.CellValueType.Formula,
                 Value = calcResult,
                 Formula = formula,
+                Width = width,
+                Height = height,
                 BackgroundColor = backgroundColor,
                 Borders = borders,
             };
@@ -137,6 +167,8 @@ public class XlsFileReader: IOfficeFileReader
                     Address = cell.CellReference?.Value ?? "A1",
                     Type = Worksheets.CellValueType.Text,
                     Value = result,
+                    Width = width,
+                    Height = height,
                     BackgroundColor = backgroundColor,
                     Borders = borders,
                 };
@@ -154,7 +186,9 @@ public class XlsFileReader: IOfficeFileReader
         {
             Address = cell.CellReference?.Value ?? "A1",
             Type = valueType,
-            Value = value,
+            Value = value,            
+            Width = width,
+            Height = height,
             BackgroundColor = backgroundColor,
             Borders = borders,
         };
@@ -168,9 +202,47 @@ public class XlsFileReader: IOfficeFileReader
     {
         return textElement.Ancestors<PhoneticRun>().Any();
     }
-    private static List<string> GetSheetNameList(WorkbookPart bookPart) => 
-        bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false)
-            .Select(s => s.Name?.Value ?? "").ToList();
+    private List<Worksheets.ColumnWidth> GetColumnWidths(Worksheet sheet)
+    {
+        var colu = sheet.Descendants<Columns>().FirstOrDefault();
+        for (int i = 1; i <= 12; i++)
+        {
+            double columnWidth = DefaultWidth;
+            if (colu != null)
+            {
+                var column = colu.Elements<Column>().FirstOrDefault(c => c.Min <= (uint)i && c.Max >= (uint)i);
+                if (column != null)
+                {
+                    columnWidth = column.Width;
+                }
+            }
+            logger.LogInformation("All W col:{column} w: {w}", ConvertIndexToAlphabet(i), columnWidth);
+        }
+
+
+        Columns? columns = sheet.Descendants<Columns>().FirstOrDefault();
+        if (columns == null)
+        {
+            return [];
+        }
+        List<Worksheets.ColumnWidth> results = [];
+        int index = 1;
+        foreach(var col in columns.Elements<Column>())
+        {
+            double width = DefaultWidth;
+            if(col.Width?.Value != null)
+            {
+                
+                width = Numbers.ConvertFromPixelToCentimeter(col.Width.Value * 7.0);
+            }
+            logger.LogInformation("Width Column: {column} W: {w} Width: {width}", ConvertIndexToAlphabet(index), col.Width?.Value, width);
+            results.Add(new Worksheets.ColumnWidth(index, ConvertIndexToAlphabet(index), width));
+            index += 1;
+        }
+        return results;
+    }
+    private static List<string> GetSheetNameList(WorkbookPart bookPart) =>
+        [.. bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false).Select(s => s.Name?.Value ?? "")];
     private static Worksheet? GetWorkSheet(WorkbookPart bookPart, string sheetName)
     {
         foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
@@ -271,5 +343,35 @@ public class XlsFileReader: IOfficeFileReader
             return color2Type?.RgbColorModelHex?.Val;
         }
         return null;
+    }
+    private static string ConvertIndexToAlphabet(int index)
+    {
+        if (index < 1)
+        {
+            return string.Empty;
+        }
+        string result = string.Empty;
+        
+        while(index > 0)
+        {
+            uint remainder = ((uint)index - 1) % 26;
+            result = Convert.ToChar(remainder + 65) + result;
+            index = (int)((index - remainder)/26);
+        }
+        return result;
+    }
+    private static string GetColumnNameFromAddress(string? address)
+    {
+        if(string.IsNullOrEmpty(address))
+        {
+            return "A";
+        }
+        Regex regex = new ("([a-zA-Z]+)");
+        var match = regex.Matches(address).FirstOrDefault();
+        if(string.IsNullOrEmpty(match?.Value))
+        {
+            return "A";
+        }
+        return match.Value;
     }
 }

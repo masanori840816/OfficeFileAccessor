@@ -7,13 +7,13 @@ namespace OfficeFileAccessor.OfficeFiles;
 public class OfficeFileService: IOfficeFileService
 {
     private readonly ILogger<OfficeFileService> logger;
-    private readonly XlsFileReader xlsFileReader;
+    private readonly IXlsFileReader xlsFileReader;
     private readonly DocFileReader docFileReader;
 
-    public OfficeFileService(ILogger<OfficeFileService> logger)
+    public OfficeFileService(ILogger<OfficeFileService> logger, IXlsFileReader xlsFileReader)
     {
         this.logger = logger;
-        this.xlsFileReader = new XlsFileReader();
+        this.xlsFileReader = xlsFileReader;
         this.docFileReader = new DocFileReader();
 
     }
@@ -27,24 +27,20 @@ public class OfficeFileService: IOfficeFileService
                 logger.LogWarning("File was null");
                 continue;
             }
-            var reader = GetReader(f);
-            if(reader == null)
+            switch(f.ContentType)
             {
-                logger.LogWarning($"Invalid File Type: {f.ContentType}");
-                continue;
+                case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                case "application/vnd.ms-excel.sheet.macroEnabled.12":
+                    xlsFileReader.Read(f);
+                    break;
+                case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    docFileReader.Read(f);
+                    break;
+                default:
+                    logger.LogWarning($"Invalid File Type: {f.ContentType}");
+                    continue;
             }
-            reader.Read(f);
         }
         return ApplicationResult.GetFailedResult("Not implemented");
-    }
-    private IOfficeFileReader? GetReader(IFormFile file)
-    {
-        return file.ContentType switch
-        {
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => xlsFileReader,
-            "application/vnd.ms-excel.sheet.macroEnabled.12" => xlsFileReader,
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => docFileReader,
-            _ => null,
-        };
     }
 }
