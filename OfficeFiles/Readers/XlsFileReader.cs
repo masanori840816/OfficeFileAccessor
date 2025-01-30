@@ -5,15 +5,20 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using Drawing = DocumentFormat.OpenXml.Drawing;
 using OfficeFileAccessor.Apps;
+using System.Text.RegularExpressions;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
 public class XlsFileReader: IOfficeFileReader
 {
     private readonly NLog.Logger logger;
+    private readonly double DefaultWidth;
+    private readonly double DefaultHeight;
     public XlsFileReader()
     {
         this.logger = NLog.LogManager.GetCurrentClassLogger();
+        this.DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
+        this.DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
     }
     public void Read(IFormFile file)
     {
@@ -34,6 +39,7 @@ public class XlsFileReader: IOfficeFileReader
                 logger.Info($"Failed getting Worksheet Name: {name}");
                 return;
             }
+            List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet);
             var sheetPart = targetSheet.WorksheetPart;
             var drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
@@ -91,10 +97,18 @@ public class XlsFileReader: IOfficeFileReader
 
 
             foreach(Row row in targetSheet.Descendants<Row>())
-            {                
+            {
+                double height = DefaultHeight;
+                if(row.Height?.Value != null)
+                {
+                    height = Numbers.ConvertFromPointToCentimeter(row.Height.Value);
+                }
                 foreach(Cell cell in row.Cast<Cell>())
                 {
-                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell);
+                    string columnName = GetColumnNameFromAddress(cell.CellReference);
+                    double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
+                    width ??= DefaultWidth;
+                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height);
                     logger.Info("Cell Value:{val}", cellValue?.ToString());                    
                 }
             }
@@ -103,7 +117,7 @@ public class XlsFileReader: IOfficeFileReader
         }
         logger.Info("OK");
     }
-    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell)
+    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height)
     {
         // Borders
         Worksheets.CellBorders borders = GetBorders(bookPart, cell);
@@ -112,6 +126,7 @@ public class XlsFileReader: IOfficeFileReader
         // Formula
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
+        
         if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
         {
             if (double.TryParse(calcResult, out double n))
@@ -124,6 +139,8 @@ public class XlsFileReader: IOfficeFileReader
                 Type = Worksheets.CellValueType.Formula,
                 Value = calcResult,
                 Formula = formula,
+                Width = width,
+                Height = height,
                 BackgroundColor = backgroundColor,
                 Borders = borders,
             };
@@ -151,6 +168,8 @@ public class XlsFileReader: IOfficeFileReader
                     Address = cell.CellReference?.Value ?? "A1",
                     Type = Worksheets.CellValueType.Text,
                     Value = result,
+                    Width = width,
+                    Height = height,
                     BackgroundColor = backgroundColor,
                     Borders = borders,
                 };
@@ -168,7 +187,9 @@ public class XlsFileReader: IOfficeFileReader
         {
             Address = cell.CellReference?.Value ?? "A1",
             Type = valueType,
-            Value = value,
+            Value = value,            
+            Width = width,
+            Height = height,
             BackgroundColor = backgroundColor,
             Borders = borders,
         };
@@ -181,6 +202,45 @@ public class XlsFileReader: IOfficeFileReader
     private static bool CheckIsPhonetic(DocumentFormat.OpenXml.Spreadsheet.Text textElement)
     {
         return textElement.Ancestors<PhoneticRun>().Any();
+    }
+    private List<Worksheets.ColumnWidth> GetColumnWidths(Worksheet sheet)
+    {
+        var colu = sheet.Descendants<Columns>().FirstOrDefault();
+        for (int i = 1; i <= 12; i++)
+        {
+            double columnWidth = DefaultWidth;
+            if (colu != null)
+            {
+                var column = colu.Elements<Column>().FirstOrDefault(c => c.Min <= (uint)i && c.Max >= (uint)i);
+                if (column != null)
+                {
+                    columnWidth = column.Width;
+                }
+            }
+            logger.Info("All W col:{column} w: {w}", ConvertIndexToAlphabet(i), columnWidth);
+        }
+
+
+        Columns? columns = sheet.Descendants<Columns>().FirstOrDefault();
+        if (columns == null)
+        {
+            return [];
+        }
+        List<Worksheets.ColumnWidth> results = [];
+        int index = 1;
+        foreach(var col in columns.Elements<Column>())
+        {
+            double width = DefaultWidth;
+            if(col.Width?.Value != null)
+            {
+                
+                width = Numbers.ConvertFromPixelToCentimeter(col.Width.Value * 7.0);
+            }
+            logger.Info("Width Column: {column} W: {w} Width: {width}", ConvertIndexToAlphabet(index), col.Width?.Value, width);
+            results.Add(new Worksheets.ColumnWidth(index, ConvertIndexToAlphabet(index), width));
+            index += 1;
+        }
+        return results;
     }
     private static List<string> GetSheetNameList(WorkbookPart bookPart) =>
         [.. bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false).Select(s => s.Name?.Value ?? "")];
@@ -299,7 +359,20 @@ public class XlsFileReader: IOfficeFileReader
             result = Convert.ToChar(remainder + 65) + result;
             index = (int)((index - remainder)/26);
         }
-
         return result;
+    }
+    private static string GetColumnNameFromAddress(string? address)
+    {
+        if(string.IsNullOrEmpty(address))
+        {
+            return "A";
+        }
+        Regex regex = new ("([a-zA-Z]+)");
+        var match = regex.Matches(address).FirstOrDefault();
+        if(string.IsNullOrEmpty(match?.Value))
+        {
+            return "A";
+        }
+        return match.Value;
     }
 }
