@@ -4,6 +4,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using Drawing = DocumentFormat.OpenXml.Drawing;
+using OfficeFileAccessor.Apps;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
@@ -43,15 +44,26 @@ public class XlsFileReader: IOfficeFileReader
 
             foreach (var drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
             {
-                var fromMarker = drawing.FromMarker;
-                var toMarker = drawing.ToMarker;
-                
                 var shape = drawing.Descendants<Shape>().FirstOrDefault();
                 if (shape != null)
                 {
-                    
-                    logger.Info("TextBox is from cell RowId: {rowId} ColId: {coId} ToRowID: {torowid} ToColumnID: {tocolid}", fromMarker?.RowId?.Text, fromMarker?.ColumnId?.Text,
-                    toMarker?.RowId?.Text, toMarker?.ColumnId?.Text);
+                    var fromMarker = drawing.FromMarker;
+                    var toMarker = drawing.ToMarker;
+                    // Start
+                    int fromColumn = Numbers.ParseInt(fromMarker?.ColumnId?.Text, 1);
+                    int fromRow = Numbers.ParseInt(fromMarker?.RowId?.Text, 1);
+                    int fromOffsetX = Numbers.ParseInt(fromMarker?.ColumnOffset?.Text, 0);
+                    int fromOffsetY = Numbers.ParseInt(fromMarker?.RowOffset?.Text, 0);
+
+                    // End
+                    int toColumn = Numbers.ParseInt(toMarker?.ColumnId?.Text, 1);
+                    int toRow = Numbers.ParseInt(toMarker?.RowId?.Text, 1);
+                    int toOffsetX = Numbers.ParseInt(toMarker?.ColumnOffset?.Text, 0);
+                    int toOffsetY = Numbers.ParseInt(toMarker?.RowOffset?.Text, 0);
+
+
+        logger.Info($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
+        logger.Info("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", Numbers.ConvertFromEMUToPixel(fromOffsetX), Numbers.ConvertFromEMUToPixel(fromOffsetY), Numbers.ConvertFromEMUToPixel(toOffsetX), Numbers.ConvertFromEMUToPixel(toOffsetY));
 
                     var shapeProperties = shape.Descendants<ShapeProperties>().FirstOrDefault();
                     if (shapeProperties != null)
@@ -60,8 +72,7 @@ public class XlsFileReader: IOfficeFileReader
                         if (presetGeometry != null)
                         {
                             var shapeType = presetGeometry.Preset;
-                            
-                             logger.Info("Shape type: {shapeType} v: {val} it: {text} string: {str}", shapeType, shapeType?.Value, shapeType?.InnerText, shapeType?.ToString());
+                             logger.Info("Shape type: {text}", shapeType?.InnerText);
                         }
                     }
                     // Get text box
@@ -86,6 +97,7 @@ public class XlsFileReader: IOfficeFileReader
                     
                 }
             }
+            // TODO: uncomment after testing
             break;
         }
         logger.Info("OK");
@@ -94,6 +106,7 @@ public class XlsFileReader: IOfficeFileReader
     {
         // Borders
         Worksheets.CellBorders borders = GetBorders(bookPart, cell);
+        // Background color
         string? backgroundColor = GetCellColor(cell, bookPart);
         // Formula
         string? formula = cell.CellFormula?.Text;
@@ -168,9 +181,8 @@ public class XlsFileReader: IOfficeFileReader
     {
         return textElement.Ancestors<PhoneticRun>().Any();
     }
-    private static List<string> GetSheetNameList(WorkbookPart bookPart) => 
-        bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false)
-            .Select(s => s.Name?.Value ?? "").ToList();
+    private static List<string> GetSheetNameList(WorkbookPart bookPart) =>
+        [.. bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false).Select(s => s.Name?.Value ?? "")];
     private static Worksheet? GetWorkSheet(WorkbookPart bookPart, string sheetName)
     {
         foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
