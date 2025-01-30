@@ -32,7 +32,7 @@ public class XlsFileReader: IXlsFileReader
         foreach(var name in sheetNames)
         {
             logger.LogInformation($"SheetName: {name}");
-            Worksheet? targetSheet = GetWorkSheet(bookPart, name);
+            Worksheet? targetSheet = GetWorksheet(bookPart, name);
             if(targetSheet == null)
             {
                 logger.LogInformation($"Failed getting Worksheet Name: {name}");
@@ -243,7 +243,7 @@ public class XlsFileReader: IXlsFileReader
     }
     private static List<string> GetSheetNameList(WorkbookPart bookPart) =>
         [.. bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false).Select(s => s.Name?.Value ?? "")];
-    private static Worksheet? GetWorkSheet(WorkbookPart bookPart, string sheetName)
+    private static Worksheet? GetWorksheet(WorkbookPart bookPart, string sheetName)
     {
         foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
         {
