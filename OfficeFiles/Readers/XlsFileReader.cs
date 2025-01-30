@@ -38,7 +38,6 @@ public class XlsFileReader: IOfficeFileReader
             var drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
             {
-                logger.Info("No drawing elements");
                 return;
             }
 
@@ -50,19 +49,20 @@ public class XlsFileReader: IOfficeFileReader
                     var fromMarker = drawing.FromMarker;
                     var toMarker = drawing.ToMarker;
                     // Start
-                    int fromColumn = Numbers.ParseInt(fromMarker?.ColumnId?.Text, 1);
-                    int fromRow = Numbers.ParseInt(fromMarker?.RowId?.Text, 1);
+                    int fromColumn = Numbers.ParseInt(fromMarker?.ColumnId?.Text, 1) + 1;
+                    int fromRow = Numbers.ParseInt(fromMarker?.RowId?.Text, 1) + 1;
                     int fromOffsetX = Numbers.ParseInt(fromMarker?.ColumnOffset?.Text, 0);
                     int fromOffsetY = Numbers.ParseInt(fromMarker?.RowOffset?.Text, 0);
 
                     // End
-                    int toColumn = Numbers.ParseInt(toMarker?.ColumnId?.Text, 1);
-                    int toRow = Numbers.ParseInt(toMarker?.RowId?.Text, 1);
+                    int toColumn = Numbers.ParseInt(toMarker?.ColumnId?.Text, 1) + 1;
+                    int toRow = Numbers.ParseInt(toMarker?.RowId?.Text, 1) + 1;
                     int toOffsetX = Numbers.ParseInt(toMarker?.ColumnOffset?.Text, 0);
                     int toOffsetY = Numbers.ParseInt(toMarker?.RowOffset?.Text, 0);
 
 
         logger.Info($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
+        logger.Info("Cell from: {fC}{fR} to: {tC}{tR}", ConvertIndexToAlphabet(fromColumn), fromRow, ConvertIndexToAlphabet(toColumn), toRow);
         logger.Info("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", Numbers.ConvertFromEMUToPixel(fromOffsetX), Numbers.ConvertFromEMUToPixel(fromOffsetY), Numbers.ConvertFromEMUToPixel(toOffsetX), Numbers.ConvertFromEMUToPixel(toOffsetY));
 
                     var shapeProperties = shape.Descendants<ShapeProperties>().FirstOrDefault();
@@ -93,8 +93,7 @@ public class XlsFileReader: IOfficeFileReader
                 foreach(Cell cell in row.Cast<Cell>())
                 {
                     Worksheets.Cell? cellValue = GetCellValue(bookPart, cell);
-                    logger.Info("Cell Value:{val}", cellValue?.ToString());
-                    
+                    logger.Info("Cell Value:{val}", cellValue?.ToString());                    
                 }
             }
             // TODO: uncomment after testing
@@ -283,5 +282,22 @@ public class XlsFileReader: IOfficeFileReader
             return color2Type?.RgbColorModelHex?.Val;
         }
         return null;
+    }
+    private static string ConvertIndexToAlphabet(int index)
+    {
+        if (index < 1)
+        {
+            return string.Empty;
+        }
+        string result = string.Empty;
+        
+        while(index > 0)
+        {
+            uint remainder = ((uint)index - 1) % 26;
+            result = Convert.ToChar(remainder + 65) + result;
+            index = (int)((index - remainder)/26);
+        }
+
+        return result;
     }
 }
