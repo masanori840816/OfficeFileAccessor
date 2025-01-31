@@ -28,6 +28,7 @@ public class XlsFileReader: IXlsFileReader
             logger.LogInformation("Failed getting WorkbookPart");
             return;
         }
+        GetPrintArea(bookPart);
         List<string> sheetNames = GetSheetNameList(bookPart);
         foreach(var name in sheetNames)
         {
@@ -373,5 +374,45 @@ public class XlsFileReader: IXlsFileReader
             return "A";
         }
         return match.Value;
+    }
+    private void GetPrintArea(WorkbookPart bookPart)
+    {
+        DefinedNames? definedNames = bookPart.Workbook.DefinedNames;
+        if(definedNames == null)
+        {
+            logger.LogWarning("No defined names");
+            return;
+        }
+        foreach (DefinedName definedName in definedNames.Elements<DefinedName>())
+        {
+            if(string.IsNullOrEmpty(definedName.Name?.Value))
+            {
+                continue;
+            }
+            if (definedName.Name.Value.StartsWith("_xlnm.Print_Area"))
+            {
+                string sheetName = "default sheet";
+                if(definedName.LocalSheetId != null)
+                {
+                    Sheet? sheet = bookPart.Workbook.Sheets?.Elements<Sheet>()
+                        ?.FirstOrDefault(s => s.SheetId?.Value != null && s.SheetId.Value == definedName.LocalSheetId.Value + 1);
+                    if(sheet?.Name != null)
+                    {
+                        sheetName = sheet.Name!;
+                    }
+                }
+                string printAreaValue = definedName.Text;
+                logger.LogInformation("Sheet: {sheet} defined: {print}", sheetName, printAreaValue);
+                string[] ranges = printAreaValue.Split(',');
+
+                if (ranges.Length >= 1)
+                {
+                    foreach(var r in ranges)
+                    {
+                        logger.LogInformation("Sheet: {sheet} cell:{c}", sheetName, r);
+                    }
+                }
+            }
+        }
     }
 }
