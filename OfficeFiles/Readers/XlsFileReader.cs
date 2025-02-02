@@ -8,35 +8,29 @@ using System.Text.RegularExpressions;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
-public class XlsFileReader: IXlsFileReader
+public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
 {
-    private readonly ILogger<XlsFileReader> logger;
-    private readonly double DefaultWidth;
-    private readonly double DefaultHeight;
-    public XlsFileReader(ILogger<XlsFileReader> logger)
-    {
-        this.logger = logger;
-        this.DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
-        this.DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
-    }
+    private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
+    private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
+
     public void Read(IFormFile file)
     {
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
         WorkbookPart? bookPart = spreadsheet.WorkbookPart;
         if(bookPart == null)
         {
-            logger.LogInformation("Failed getting WorkbookPart");
+            Logger.LogInformation("Failed getting WorkbookPart");
             return;
         }
         GetPrintArea(bookPart);
         List<string> sheetNames = GetSheetNameList(bookPart);
         foreach(var name in sheetNames)
         {
-            logger.LogInformation($"SheetName: {name}");
+            Logger.LogInformation($"SheetName: {name}");
             Worksheet? targetSheet = GetWorksheet(bookPart, name);
             if(targetSheet == null)
             {
-                logger.LogInformation($"Failed getting Worksheet Name: {name}");
+                Logger.LogInformation($"Failed getting Worksheet Name: {name}");
                 return;
             }
             List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet);
@@ -67,9 +61,9 @@ public class XlsFileReader: IXlsFileReader
                     int toOffsetY = Numbers.ParseInt(toMarker?.RowOffset?.Text, 0);
 
 
-        logger.LogInformation($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
-        logger.LogInformation("Cell from: {fC}{fR} to: {tC}{tR}", ConvertIndexToAlphabet(fromColumn), fromRow, ConvertIndexToAlphabet(toColumn), toRow);
-        logger.LogInformation("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", 
+        Logger.LogInformation($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
+        Logger.LogInformation("Cell from: {fC}{fR} to: {tC}{tR}", ConvertIndexToAlphabet(fromColumn), fromRow, ConvertIndexToAlphabet(toColumn), toRow);
+        Logger.LogInformation("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", 
             Numbers.ConvertFromEMUToCentimeter(fromOffsetX), Numbers.ConvertFromEMUToCentimeter(fromOffsetY), 
             Numbers.ConvertFromEMUToCentimeter(toOffsetX), Numbers.ConvertFromEMUToCentimeter(toOffsetY));
 
@@ -80,7 +74,7 @@ public class XlsFileReader: IXlsFileReader
                         if (presetGeometry != null)
                         {
                             var shapeType = presetGeometry.Preset;
-                             logger.LogInformation("Shape type: {text}", shapeType?.InnerText);
+                            Logger.LogInformation("Shape type: {text}", shapeType?.InnerText);
                         }
                     }
                     // Get text box
@@ -90,12 +84,10 @@ public class XlsFileReader: IXlsFileReader
 
                     if (!string.IsNullOrEmpty(text))
                     {
-                        logger.LogInformation("TextBox Value:{txt}", text);
+                        Logger.LogInformation("TextBox Value:{txt}", text);
                     }
                 }
             }
-
-
             foreach(Row row in targetSheet.Descendants<Row>())
             {
                 double height = DefaultHeight;
@@ -109,13 +101,13 @@ public class XlsFileReader: IXlsFileReader
                     double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
                     width ??= DefaultWidth;
                     Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height);
-                    logger.LogInformation("Cell Value:{val}", cellValue?.ToString());                    
+                    Logger.LogInformation("Cell Value:{val}", cellValue?.ToString());                    
                 }
             }
             // TODO: uncomment after testing
             break;
         }
-        logger.LogInformation("OK");
+        Logger.LogInformation("OK");
     }
     private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height)
     {
@@ -217,7 +209,7 @@ public class XlsFileReader: IXlsFileReader
                     columnWidth = column.Width;
                 }
             }
-            logger.LogInformation("All W col:{column} w: {w}", ConvertIndexToAlphabet(i), columnWidth);
+            Logger.LogInformation("All W col:{column} w: {w}", ConvertIndexToAlphabet(i), columnWidth);
         }
 
 
@@ -236,7 +228,7 @@ public class XlsFileReader: IXlsFileReader
                 
                 width = Numbers.ConvertFromPixelToCentimeter(col.Width.Value * 7.0);
             }
-            logger.LogInformation("Width Column: {column} W: {w} Width: {width}", ConvertIndexToAlphabet(index), col.Width?.Value, width);
+            Logger.LogInformation("Width Column: {column} W: {w} Width: {width}", ConvertIndexToAlphabet(index), col.Width?.Value, width);
             results.Add(new Worksheets.ColumnWidth(index, ConvertIndexToAlphabet(index), width));
             index += 1;
         }
@@ -380,7 +372,7 @@ public class XlsFileReader: IXlsFileReader
         DefinedNames? definedNames = bookPart.Workbook.DefinedNames;
         if(definedNames == null)
         {
-            logger.LogWarning("No defined names");
+            Logger.LogWarning("No defined names");
             return;
         }
         foreach (DefinedName definedName in definedNames.Elements<DefinedName>())
@@ -402,14 +394,14 @@ public class XlsFileReader: IXlsFileReader
                     }
                 }
                 string printAreaValue = definedName.Text;
-                logger.LogInformation("Sheet: {sheet} defined: {print}", sheetName, printAreaValue);
+                Logger.LogInformation("Sheet: {sheet} defined: {print}", sheetName, printAreaValue);
                 string[] ranges = printAreaValue.Split(',');
 
                 if (ranges.Length >= 1)
                 {
                     foreach(var r in ranges)
                     {
-                        logger.LogInformation("Sheet: {sheet} cell:{c}", sheetName, r);
+                        Logger.LogInformation("Sheet: {sheet} cell:{c}", sheetName, r);
                     }
                 }
             }
