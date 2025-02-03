@@ -13,6 +13,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
     private static readonly Regex CellAddressRegex = new (@"\$([a-zA-Z]+)\$([0-9]+)");
+    private static readonly Regex ColumnNameRegex = new ("([a-zA-Z]+)");
     public void Read(IFormFile file)
     {
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
@@ -33,11 +34,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                 return;
             }
             List<Worksheets.PageArea> printAreas = GetPrintArea(bookPart, targetSheet);
-            foreach(var p in printAreas)
+            Worksheets.PageArea? target = printAreas.FirstOrDefault();
+            List<Worksheets.ColumnWidth> widths = [];
+            if(target != null)
             {
-                Logger.LogInformation("PA: {p}", p);
+                widths = GetColumnWidths(targetSheet, target.Start.Column, target.End.Column);
             }
-            List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet);
             WorksheetPart? sheetPart = targetSheet.WorksheetPart;
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
@@ -199,42 +201,28 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
     {
         return textElement.Ancestors<PhoneticRun>().Any();
     }
-    private List<Worksheets.ColumnWidth> GetColumnWidths(Worksheet sheet)
+    private List<Worksheets.ColumnWidth> GetColumnWidths(Worksheet sheet, int startColumn, int lastColumn)
     {
-        var colu = sheet.Descendants<Columns>().FirstOrDefault();
-        for (int i = 1; i <= 12; i++)
-        {
-            double columnWidth = DefaultWidth;
-            if (colu != null)
-            {
-                var column = colu.Elements<Column>().FirstOrDefault(c => c.Min <= (uint)i && c.Max >= (uint)i);
-                if (column != null)
-                {
-                    columnWidth = column.Width;
-                }
-            }
-            Logger.LogInformation("All W col:{column} w: {w}", ConvertIndexToAlphabet(i), columnWidth);
-        }
-
-
         Columns? columns = sheet.Descendants<Columns>().FirstOrDefault();
         if (columns == null)
         {
             return [];
         }
         List<Worksheets.ColumnWidth> results = [];
-        int index = 1;
-        foreach(var col in columns.Elements<Column>())
+        for (int i = startColumn; i <= lastColumn; i++)
         {
-            double width = DefaultWidth;
-            if(col.Width?.Value != null)
+            double columnWidth = DefaultWidth;
+            if (columns != null)
             {
-                
-                width = Numbers.ConvertFromPixelToCentimeter(col.Width.Value * 7.0);
+                uint idx = (uint)i;
+                Column? column = columns.Elements<Column>().FirstOrDefault(c => 
+                    c?.Min != null && c.Max != null && c.Min <= idx && c.Max >= idx);
+                if (column?.Width != null)
+                {
+                    columnWidth = Numbers.ConvertFromPixelToCentimeter(column.Width * 7.0);
+                }
             }
-            Logger.LogInformation("Width Column: {column} W: {w} Width: {width}", ConvertIndexToAlphabet(index), col.Width?.Value, width);
-            results.Add(new Worksheets.ColumnWidth(index, ConvertIndexToAlphabet(index), width));
-            index += 1;
+            results.Add(new Worksheets.ColumnWidth(i, ConvertIndexToAlphabet(i), columnWidth));
         }
         return results;
     }
@@ -357,21 +345,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         }
         return result;
     }
-    private static string GetColumnNameFromAddress(string? address)
-    {
-        if(string.IsNullOrEmpty(address))
-        {
-            return "A";
-        }
-        Regex regex = new ("([a-zA-Z]+)");
-        Match? match = regex.Matches(address).FirstOrDefault();
-        if(string.IsNullOrEmpty(match?.Value))
-        {
-            return "A";
-        }
-        return match.Value;
-    }
-    private static int GetColumnIndex(string columnName)
+    private static int ConvertAlphabetToIndex(string columnName)
     {
         int columnIndex = 0;
         int factor = 1;
@@ -383,6 +357,19 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         }
 
         return columnIndex;
+    }
+    private static string GetColumnNameFromAddress(string? address)
+    {
+        if(string.IsNullOrEmpty(address))
+        {
+            return "A";
+        }
+        Match? match = ColumnNameRegex.Matches(address).FirstOrDefault();
+        if(string.IsNullOrEmpty(match?.Value))
+        {
+            return "A";
+        }
+        return match.Value;
     }
     private List<Worksheets.PageArea> GetPrintArea(WorkbookPart bookPart, Worksheet worksheet)
     {
@@ -412,6 +399,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     }
                 }
                 string printAreaValue = definedName.Text;
+                // SheetName is like SheetName!$A$1:$Z$20
                 string[] ranges = printAreaValue.Split('!');                
                 foreach(var r in ranges)
                 {
@@ -425,14 +413,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     {
                         continue;
                     }
-                    Worksheets.CellAddress startAddress = new (columnNameStart, GetColumnIndex(columnNameStart),
+                    Worksheets.CellAddress startAddress = new (columnNameStart, ConvertAlphabetToIndex(columnNameStart),
                         rowStart);
                     (string columnNameEnd, int rowEnd) = GetCellAddress(addresses[1]);
                     if(string.IsNullOrEmpty(columnNameEnd) || rowEnd <= 0)
                     {
                         continue;
                     }
-                    Worksheets.CellAddress endAddress = new (columnNameEnd, GetColumnIndex(columnNameEnd),
+                    Worksheets.CellAddress endAddress = new (columnNameEnd, ConvertAlphabetToIndex(columnNameEnd),
                         rowEnd);
                     
                     results.Add(new (startAddress, endAddress)); 
