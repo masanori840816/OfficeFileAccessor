@@ -12,7 +12,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
 {
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
-
+    private static readonly Regex CellAddressRegex = new (@"\$([a-zA-Z]+)\$([0-9]+)");
     public void Read(IFormFile file)
     {
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
@@ -22,7 +22,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             Logger.LogInformation("Failed getting WorkbookPart");
             return;
         }
-        GetPrintArea(bookPart);
         List<string> sheetNames = GetSheetNameList(bookPart);
         foreach(var name in sheetNames)
         {
@@ -32,6 +31,11 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             {
                 Logger.LogInformation($"Failed getting Worksheet Name: {name}");
                 return;
+            }
+            List<Worksheets.PageArea> printAreas = GetPrintArea(bookPart, targetSheet);
+            foreach(var p in printAreas)
+            {
+                Logger.LogInformation("PA: {p}", p);
             }
             List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet);
             WorksheetPart? sheetPart = targetSheet.WorksheetPart;
@@ -360,21 +364,35 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             return "A";
         }
         Regex regex = new ("([a-zA-Z]+)");
-        var match = regex.Matches(address).FirstOrDefault();
+        Match? match = regex.Matches(address).FirstOrDefault();
         if(string.IsNullOrEmpty(match?.Value))
         {
             return "A";
         }
         return match.Value;
     }
-    private void GetPrintArea(WorkbookPart bookPart)
+    private static int GetColumnIndex(string columnName)
+    {
+        int columnIndex = 0;
+        int factor = 1;
+        
+        for (int i = columnName.Length - 1; i >= 0; i--)
+        {
+            columnIndex += (columnName[i] - 'A' + 1) * factor;
+            factor *= 26;
+        }
+
+        return columnIndex;
+    }
+    private List<Worksheets.PageArea> GetPrintArea(WorkbookPart bookPart, Worksheet worksheet)
     {
         DefinedNames? definedNames = bookPart.Workbook.DefinedNames;
         if(definedNames == null)
         {
             Logger.LogWarning("No defined names");
-            return;
+            return [];
         }
+        List<Worksheets.PageArea> results = [];
         foreach (DefinedName definedName in definedNames.Elements<DefinedName>())
         {
             if(string.IsNullOrEmpty(definedName.Name?.Value))
@@ -394,17 +412,50 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     }
                 }
                 string printAreaValue = definedName.Text;
-                Logger.LogInformation("Sheet: {sheet} defined: {print}", sheetName, printAreaValue);
-                string[] ranges = printAreaValue.Split(',');
-
-                if (ranges.Length >= 1)
+                string[] ranges = printAreaValue.Split('!');                
+                foreach(var r in ranges)
                 {
-                    foreach(var r in ranges)
+                    string[] addresses = r.Split(":");
+                    if(addresses.Length < 2)
                     {
-                        Logger.LogInformation("Sheet: {sheet} cell:{c}", sheetName, r);
+                        continue;
                     }
+                    (string columnNameStart, int rowStart) = GetCellAddress(addresses[0]);
+                    if(string.IsNullOrEmpty(columnNameStart) || rowStart <= 0)
+                    {
+                        continue;
+                    }
+                    Worksheets.CellAddress startAddress = new (columnNameStart, GetColumnIndex(columnNameStart),
+                        rowStart);
+                    (string columnNameEnd, int rowEnd) = GetCellAddress(addresses[1]);
+                    if(string.IsNullOrEmpty(columnNameEnd) || rowEnd <= 0)
+                    {
+                        continue;
+                    }
+                    Worksheets.CellAddress endAddress = new (columnNameEnd, GetColumnIndex(columnNameEnd),
+                        rowEnd);
+                    
+                    results.Add(new (startAddress, endAddress)); 
                 }
             }
         }
+        return results;
+    }
+    private static (string columnName, int row) GetCellAddress(string address)
+    {
+        Match? match = CellAddressRegex.Matches(address).FirstOrDefault();
+        if(match == null || match.Groups.Count < 3)
+        {
+            return new ("", -1);
+        }
+        string columnName = match.Groups[1].Value;
+        string rowText = match.Groups[2].Value;
+                
+        if(string.IsNullOrEmpty(columnName) ||
+            int.TryParse(rowText, out var row) == false)
+        {
+            return new ("", -1);
+        }
+        return new (columnName, row);
     }
 }
