@@ -17,8 +17,32 @@ function App() {
     <>
       <AuthenticationProvider>
         <Router basename='/officefiles'>
-        <header className='flex  w-full h-[10%] flex-row bg-gray'>
-
+        <header className='w-full h-[14%] min-h-[100px] shadow-xl'>
+          <div className='flex flex-row w-full justify-between h-[60%]'>
+            <div className='text-3xl p-[1%] font-bold'>OfficeFileAccessor</div>
+            <div className='flex flex-col items-center justify-around h-full pr-[1%]'>
+              <div>
+                Hello UserName!
+              </div>
+              <div className='h-[50%]'>
+                <button className='h-[90%] p-[0em_1.0em]'>Signout</button>
+              </div>
+            </div>
+          </div>
+          <div className='w-full h-[38%] flex flex-row items-center justify-center'>
+            <input type='radio' radioGroup='1' id='header-tab-file' className='hidden'></input>
+            <label htmlFor='header-tab-file'>
+              <div className='header-tab mr-[2%]'>File</div>
+            </label>
+            <input type='radio' radioGroup='1' id='header-tab-output' className='hidden'></input>
+            <label htmlFor='header-tab-output'>
+              <div className='header-tab mr-[2%]'>Output</div>
+            </label>
+            <input type='radio' radioGroup='1' id='header-tab-user' className='hidden'></input>
+            <label htmlFor='header-tab-use'>
+              <div className='header-tab'>User</div>
+            </label>
+          </div>
         </header>
         <SignOutButton />
         <Link to="/pages/">TOP</Link>

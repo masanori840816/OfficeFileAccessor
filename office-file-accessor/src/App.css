@@ -2,3 +2,25 @@
   width: 100vw;
   height: 100vh;
 }
+.header-tab {
+  width: 18%;
+  height: 100%;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+#header-tab-file:checked ~ .header-tab {
+  border-color: #646cff;
+}
+.header-tab:hover {
+  border-color: #646cff;
+}
+.header-tab:focus,
+.header-tab:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
