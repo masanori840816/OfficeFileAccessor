@@ -1,7 +1,7 @@
 import { AuthenticationType } from "./authenticationType";
 
 export async function checkStatus(authContext: AuthenticationType|null): Promise<void> {
-    if(authContext == null || authContext?.signedIn !== true) {        
+    if(authContext == null || authContext?.signedIn == null) {        
         location.href = "/officefiles/pages/signin/";
         return;
     }

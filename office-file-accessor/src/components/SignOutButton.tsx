@@ -20,8 +20,8 @@ export function SignOutButton(): JSX.Element {
             .catch(err => console.error(err));
     };
     return <>
-        <div>{authContext?.signedIn === true ? (
-            <button onClick={signOut}>Sign Out</button>
+        <div className='h-[90%]'>{authContext?.signedIn != null ? (
+            <button className="h-full p-[0em_1.0em]" onClick={signOut}>Sign Out</button>
         ):(
             <div></div>
         )}</div>

@@ -3,9 +3,10 @@ import { getServerUrl } from "../web/serverUrlGetter";
 import { AuthenticationContext } from "./authenticationContext";
 import { getCookieValue } from "../web/cookieValues";
 import { hasAnyTexts } from "../texts/hasAnyTexts";
+import { SignedInUser } from "./authenticationType";
 
 export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
-    const [signedIn, setSignedIn] = useState(false);
+    const [signedIn, setSignedIn] = useState<SignedInUser|null>(null);
     const signIn = async (email: string, password: string) => {
         const cookieValue = getCookieValue("XSRF-TOKEN"); 
         
@@ -23,8 +24,14 @@ export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
         });
         if(res.ok) {
             const result = await res.json();
-            setSignedIn(result?.succeeded === true);
-            return result;
+            if(result?.result?.succeeded === true &&
+                hasAnyTexts(result?.user?.userName)) {
+                setSignedIn(result.user);
+                return result.result;
+            } else if(result?.result != null) {
+                setSignedIn(null);
+                return result.result;
+            }            
         }
         return {
             succeeded: false,
@@ -38,7 +45,7 @@ export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
             method: "GET",
         });
         if(res.ok) {
-            setSignedIn(false);
+            setSignedIn(null);
             return true;
         };
         return false;

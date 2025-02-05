@@ -1,0 +1,27 @@
+
+.header-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: rgba(5, 5, 5, 0.87);
+    font-size: 1.1em;
+    font-weight: 500;
+    font-family: inherit;
+    transition: border-color 0.25s;
+  }
+  .header-tab:hover {
+    border-color: #646cff;
+  }
+  .header-tab:focus,
+  .header-tab:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+  .header-selected-tab {
+    background-color: #646cff99;
+    border-color: #646cff;
+  }

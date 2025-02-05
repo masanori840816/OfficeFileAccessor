@@ -28,12 +28,24 @@ export function SigninPage(): JSX.Element {
             })
             .catch(err => console.error(err));
     };
-    return <div>
-        <h1>Signin</h1>
-        <input type="text" placeholder="Email" value={email}
-            onChange={handleEmailChanged}></input>
-        <input type="password" value={password}
-            onChange={handlePasswordChanged}></input>
-        <button onClick={signin}>Signin</button>
+    return <div className="flex justify-center items-center h-full w-full">
+        <div className="flex flex-col justify-around items-center h-[46%]  w-[40%] rounded-lg shadow-xl max-w-[700px] max-h-[600px] border">
+            <h1>Sign In</h1>
+            <div className="flex flex-col justify-around items-center h-[70%] w-full">
+                <div className="h-[26%] w-[60%]">
+                    <div>Mail</div>
+                    <input type="email" className="border h-[40%] w-full mt-[1%]" placeholder="Email" value={email}
+                        onChange={handleEmailChanged}></input>
+                </div>
+                <div className="h-[26%] w-[60%]">
+                    <div>Password</div>
+                    <input type="password" className="border h-[40%] w-full mt-[1%]" value={password}
+                        onChange={handlePasswordChanged}></input>
+                </div>
+                <div className="flex flex-col justify-end items-end h-[20%] w-[60%]">
+                    <button className="w-[30%]" onClick={signin}>Sign in</button>
+                </div>
+            </div>        
+        </div>
     </div>
 }
