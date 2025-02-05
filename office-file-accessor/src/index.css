@@ -33,6 +33,11 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+.page-title {
+  font-size: 2em;
+  line-height: 1;
+  margin-bottom: 1em;
+}
 
 button {
   border-radius: 8px;

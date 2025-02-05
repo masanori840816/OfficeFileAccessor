@@ -28,7 +28,7 @@ export function GlobalHeader(): JSX.Element {
                 <Link to='/pages/' className='h-full w-[18%]'>
                     <div className='header-tab mr-[2%]'>Output</div>
                 </Link>
-                <Link to='/pages/' className='h-full w-[18%]'>
+                <Link to='/pages/user' className='h-full w-[18%]'>
                     <div className='header-tab'>User</div>
                 </Link>                
             </div>

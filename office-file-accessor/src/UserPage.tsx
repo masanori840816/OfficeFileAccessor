@@ -18,14 +18,26 @@ export function UserPage(): JSX.Element {
     const createUser = () => {
 
     };
-    return <div>
-        <h1>User</h1>
-        <div>
-        <input type="text" placeholder="Email" value={email}
-            onChange={handleEmailChanged}></input>
-        <input type="password" value={password}
-            onChange={handlePasswordChanged}></input>
-            <button onClick={createUser}>Create</button>
+    return <div className="flex justify-center items-start mt-[2%] h-[80%] w-full">
+            <div className="h-[80%] w-[96%] max-w-[2048px] max-h-[800px]">
+                <h1 className="page-title">Create User</h1>
+                <div className="flex flex-col justify-around items-start w-[80%] h-[60%] border rounded-lg shadow-lg pl-[3%]">
+                    <div className="flex flex-row justify-start items-center w-[70%] h-[30%]">
+                        <div className="w-[30%] h-full mr-[2%]">
+                            <div>E-Mail</div>
+                            <input type="text" className="border w-full h-[40%] mt-[2%] pl-[0.5em]" placeholder="E-Mail"
+                                value={email} onChange={handleEmailChanged}></input>
+                        </div>
+                        <div className="w-[30%] h-full mr-[2%]">
+                            <div>Password</div>
+                            <input type="password" className="border w-full h-[40%] mt-[2%] pl-[0.5em]" placeholder="Password"
+                                value={password} onChange={handlePasswordChanged}></input>
+                        </div>
+                    </div>
+                    <div className="flex flex-row justify-end items-center w-[90%] h-[30%]">
+                        <button className="min-w-[120px]" onClick={createUser}>Create</button>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 }
