@@ -41,10 +41,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
             List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet, printArea.Start.Column, printArea.End.Column);
             List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
-            foreach(var m in mergedCells)
-            {
-                Logger.LogInformation("Merged Start: {m} End: {m}", m.Start, m.End);
-            }                
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
             {
@@ -88,7 +84,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                         }
                     }
                     // Get text box
-                    var text = shape.TextBody?.Descendants<Drawing.Paragraph>()
+                    string? text = shape.TextBody?.Descendants<Drawing.Paragraph>()
                                              .Select(p => string.Join("", p.Descendants<Drawing.Text>().Select(t => t.Text)))
                                              .Aggregate((current, next) => current + Environment.NewLine + next);
 
@@ -110,7 +106,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     string columnName = SheetFunc.AddressConverter.GetColumnNameFromAddress(cell.CellReference);
                     double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
                     width ??= DefaultWidth;
-                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height);
+                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height, mergedCells);
                     Logger.LogInformation("Cell Value:{val}", cellValue?.ToString());                    
                 }
             }
@@ -119,7 +115,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         }
         Logger.LogInformation("OK");
     }
-    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height)
+    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height,
+        List<Worksheets.MergedCell> mergedCells)
     {
         // Borders
         Worksheets.CellBorders borders = GetBorders(bookPart, cell);
@@ -129,6 +126,24 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
         Worksheets.CellAddress address = Worksheets.CellAddress.GenerateFromAddress(cell.CellReference?.Value);
+        bool merged = false;
+        Worksheets.MergedCell? mergedCell = null;
+        foreach(var m in mergedCells)
+        {
+            if(m.Start.Column <= address.Column &&
+                m.End.Column >= address.Column &&
+                m.Start.Row <= address.Row &&
+                m.End.Row >= address.Row)
+            {
+                merged = true;
+                if(address.Column == m.Start.Column &&
+                    address.Row == m.Start.Row)
+                {
+                    mergedCell = m;
+                }
+                break;
+            }
+        }
         if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
         {
             if (double.TryParse(calcResult, out double n))
@@ -145,6 +160,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                 Height = height,
                 BackgroundColor = backgroundColor,
                 Borders = borders,
+                Merged = merged,
+                MergedCell = mergedCell,
             };
         }
         // Get value
@@ -174,6 +191,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     Height = height,
                     BackgroundColor = backgroundColor,
                     Borders = borders,
+                    Merged = merged,
+                    MergedCell = mergedCell,
                 };
             }
         }
@@ -194,6 +213,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             Height = height,
             BackgroundColor = backgroundColor,
             Borders = borders,
+            Merged = merged,
+            MergedCell = mergedCell,
         };
     }
     /// <summary>
