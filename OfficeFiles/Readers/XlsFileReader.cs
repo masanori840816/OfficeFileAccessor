@@ -13,7 +13,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
 {
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
-    private static readonly Regex CellAddressRegex = new (@"\$([a-zA-Z]+)\$([0-9]+)");
     
     public void Read(IFormFile file)
     {
