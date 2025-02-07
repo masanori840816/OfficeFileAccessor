@@ -129,7 +129,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         // Formula
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
-        
+        Worksheets.CellAddress address = Worksheets.CellAddress.GenerateFromAddress(cell.CellReference?.Value);
         if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
         {
             if (double.TryParse(calcResult, out double n))
@@ -138,7 +138,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             }
             return new Worksheets.Cell
             {
-                Address = cell.CellReference?.Value ?? "A1",
+                Address = address,
                 Type = Worksheets.CellValueType.Formula,
                 Value = calcResult,
                 Formula = formula,
@@ -168,7 +168,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                 );
                 return new Worksheets.Cell
                 {
-                    Address = cell.CellReference?.Value ?? "A1",
+                    Address = address,
                     Type = Worksheets.CellValueType.Text,
                     Value = result,
                     Width = width,
@@ -188,7 +188,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         }
         return new Worksheets.Cell
         {
-            Address = cell.CellReference?.Value ?? "A1",
+            Address = address,
             Type = valueType,
             Value = value,            
             Width = width,
@@ -222,13 +222,9 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             {
                 continue;
             }
-            string startColumnName = SheetFunc.AddressConverter.GetColumnNameFromAddress(cellReferences[0]);
-            string endColumnName = SheetFunc.AddressConverter.GetColumnNameFromAddress(cellReferences[1]);
             results.Add(new (
-                Start: new (ColumnName: startColumnName, Column: SheetFunc.AddressConverter.ConvertAlphabetToIndex(startColumnName),
-                    Row: SheetFunc.AddressConverter.GetRowFromAddress(cellReferences[0])),
-                End: new (ColumnName: endColumnName, Column: SheetFunc.AddressConverter.ConvertAlphabetToIndex(endColumnName),
-                    Row: SheetFunc.AddressConverter.GetRowFromAddress(cellReferences[1]))
+                Start: Worksheets.CellAddress.GenerateFromAddress(cellReferences[0]),
+                End: Worksheets.CellAddress.GenerateFromAddress(cellReferences[1])
             ));
         }
         return results;
@@ -380,43 +376,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     if(addresses.Length < 2)
                     {
                         continue;
-                    }
-                    (string columnNameStart, int rowStart) = GetCellAddress(addresses[0]);
-                    if(string.IsNullOrEmpty(columnNameStart) || rowStart <= 0)
-                    {
-                        continue;
-                    }
-                    Worksheets.CellAddress startAddress = new (columnNameStart, SheetFunc.AddressConverter.ConvertAlphabetToIndex(columnNameStart),
-                        rowStart);
-                    (string columnNameEnd, int rowEnd) = GetCellAddress(addresses[1]);
-                    if(string.IsNullOrEmpty(columnNameEnd) || rowEnd <= 0)
-                    {
-                        continue;
-                    }
-                    Worksheets.CellAddress endAddress = new (columnNameEnd, SheetFunc.AddressConverter.ConvertAlphabetToIndex(columnNameEnd),
-                        rowEnd);
-                    
-                    return new (){ Start = startAddress, End = endAddress }; 
+                    }                                        
+                    return new (){
+                        Start = Worksheets.CellAddress.GenerateFromAddress(addresses[0]),
+                        End = Worksheets.CellAddress.GenerateFromAddress(addresses[1]),
+                    }; 
                 }
             }
         }
         return Worksheets.PrintArea.DefaultPrintArea();
-    }
-    private static (string columnName, int row) GetCellAddress(string address)
-    {
-        Match? match = CellAddressRegex.Matches(address).FirstOrDefault();
-        if(match == null || match.Groups.Count < 3)
-        {
-            return new ("", -1);
-        }
-        string columnName = match.Groups[1].Value;
-        string rowText = match.Groups[2].Value;
-                
-        if(string.IsNullOrEmpty(columnName) ||
-            int.TryParse(rowText, out var row) == false)
-        {
-            return new ("", -1);
-        }
-        return new (columnName, row);
     }
 }

@@ -9,8 +9,16 @@ public record PrintArea
     {
         return new ()
         {
-            Start = new (ColumnName: "A", Column: 1, Row: 1),
-            End = new (ColumnName: "IV", Column: 256, Row: 2000),
+            Start = new () {
+                ColumnName = "A",
+                Column = 1,
+                Row = 1,
+            },
+            End = new () {
+                ColumnName = "IV",
+                Column = 256,
+                Row = 2000,
+            }
         };
     }
 };
