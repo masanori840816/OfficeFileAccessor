@@ -23,24 +23,23 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             Logger.LogInformation("Failed getting WorkbookPart");
             return;
         }
-        List<string> sheetNames = GetSheetNameList(bookPart);
-        foreach(var name in sheetNames)
+        foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
         {
-            Logger.LogInformation($"SheetName: {name}");
-            Worksheet? targetSheet = GetWorksheet(bookPart, name);
+            string? sheetName = s.Name?.Value;
+            if(string.IsNullOrEmpty(sheetName) ||
+                string.IsNullOrEmpty(s.Id) ||
+                bookPart.TryGetPartById(s.Id!, out var part) == false ||
+                (part is WorksheetPart sheetPart) == false)
+            {
+                continue;
+            }
+            Worksheet? targetSheet = sheetPart.Worksheet;
             if(targetSheet == null)
             {
-                Logger.LogInformation($"Failed getting Worksheet Name: {name}");
-                return;
+                continue;
             }
-            List<Worksheets.PageArea> printAreas = GetPrintArea(bookPart, targetSheet);
-            Worksheets.PageArea? target = printAreas.FirstOrDefault();
-            List<Worksheets.ColumnWidth> widths = [];
-            if(target != null)
-            {
-                widths = GetColumnWidths(targetSheet, target.Start.Column, target.End.Column);
-            }
-            WorksheetPart? sheetPart = targetSheet.WorksheetPart;
+            Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
+            List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet, printArea.Start.Column, printArea.End.Column);                    
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
             {
@@ -226,25 +225,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         }
         return results;
     }
-    private static List<string> GetSheetNameList(WorkbookPart bookPart) =>
-        [.. bookPart.Workbook.Descendants<Sheet>().Where(s => string.IsNullOrEmpty(s.Name) == false).Select(s => s.Name?.Value ?? "")];
-    private static Worksheet? GetWorksheet(WorkbookPart bookPart, string sheetName)
-    {
-        foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
-        {
-            if(s.Name == sheetName && string.IsNullOrEmpty(s.Id) == false)
-            {
-                if(bookPart.TryGetPartById(s.Id!, out var part))
-                {
-                    if (part is WorksheetPart result)
-                    {
-                        return result.Worksheet;
-                    }
-                }
-            }
-        }
-        return null;
-    }
     private static Worksheets.CellBorders GetBorders(WorkbookPart bookPart, Cell cell)
     {
         if(cell.StyleIndex?.Value == null)
@@ -371,15 +351,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         }
         return match.Value;
     }
-    private List<Worksheets.PageArea> GetPrintArea(WorkbookPart bookPart, Worksheet worksheet)
+    private static Worksheets.PrintArea GetPrintArea(WorkbookPart bookPart, string sheetName)
     {
         DefinedNames? definedNames = bookPart.Workbook.DefinedNames;
         if(definedNames == null)
         {
-            Logger.LogWarning("No defined names");
-            return [];
+            return Worksheets.PrintArea.DefaultPrintArea();
         }
-        List<Worksheets.PageArea> results = [];
+        List<Worksheets.PrintArea> results = [];
         foreach (DefinedName definedName in definedNames.Elements<DefinedName>())
         {
             if(string.IsNullOrEmpty(definedName.Name?.Value))
@@ -388,19 +367,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
             }
             if (definedName.Name.Value.StartsWith("_xlnm.Print_Area"))
             {
-                string sheetName = "default sheet";
-                if(definedName.LocalSheetId != null)
+                if(definedName.Text.Contains(sheetName) == false)
                 {
-                    Sheet? sheet = bookPart.Workbook.Sheets?.Elements<Sheet>()
-                        ?.FirstOrDefault(s => s.SheetId?.Value != null && s.SheetId.Value == definedName.LocalSheetId.Value + 1);
-                    if(sheet?.Name != null)
-                    {
-                        sheetName = sheet.Name!;
-                    }
+                    continue;
                 }
-                string printAreaValue = definedName.Text;
                 // SheetName is like SheetName!$A$1:$Z$20
-                string[] ranges = printAreaValue.Split('!');                
+                string[] ranges = definedName.Text.Split('!');                
                 foreach(var r in ranges)
                 {
                     string[] addresses = r.Split(":");
@@ -423,11 +395,11 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     Worksheets.CellAddress endAddress = new (columnNameEnd, ConvertAlphabetToIndex(columnNameEnd),
                         rowEnd);
                     
-                    results.Add(new (startAddress, endAddress)); 
+                    return new (){ Start = startAddress, End = endAddress }; 
                 }
             }
         }
-        return results;
+        return Worksheets.PrintArea.DefaultPrintArea();
     }
     private static (string columnName, int row) GetCellAddress(string address)
     {
