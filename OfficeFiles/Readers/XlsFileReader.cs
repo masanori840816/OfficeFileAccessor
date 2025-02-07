@@ -5,6 +5,7 @@ using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using Drawing = DocumentFormat.OpenXml.Drawing;
 using OfficeFileAccessor.Apps;
 using System.Text.RegularExpressions;
+using SheetFunc = OfficeFileAccessor.OfficeFiles.Worksheets.Functions;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
@@ -13,7 +14,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
     private static readonly Regex CellAddressRegex = new (@"\$([a-zA-Z]+)\$([0-9]+)");
-    private static readonly Regex ColumnNameRegex = new ("([a-zA-Z]+)");
+    
     public void Read(IFormFile file)
     {
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
@@ -39,7 +40,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                 continue;
             }
             Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
-            List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet, printArea.Start.Column, printArea.End.Column);                    
+            List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet, printArea.Start.Column, printArea.End.Column);
+            List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
+            foreach(var m in mergedCells)
+            {
+                Logger.LogInformation("Merged Start: {m} End: {m}", m.Start, m.End);
+            }                
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
             {
@@ -67,7 +73,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
 
 
         Logger.LogInformation($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
-        Logger.LogInformation("Cell from: {fC}{fR} to: {tC}{tR}", ConvertIndexToAlphabet(fromColumn), fromRow, ConvertIndexToAlphabet(toColumn), toRow);
+        Logger.LogInformation("Cell from: {fC}{fR} to: {tC}{tR}", SheetFunc.AddressConverter.ConvertIndexToAlphabet(fromColumn), fromRow, SheetFunc.AddressConverter.ConvertIndexToAlphabet(toColumn), toRow);
         Logger.LogInformation("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", 
             Numbers.ConvertFromEMUToCentimeter(fromOffsetX), Numbers.ConvertFromEMUToCentimeter(fromOffsetY), 
             Numbers.ConvertFromEMUToCentimeter(toOffsetX), Numbers.ConvertFromEMUToCentimeter(toOffsetY));
@@ -102,7 +108,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                 }
                 foreach(Cell cell in row.Cast<Cell>())
                 {
-                    string columnName = GetColumnNameFromAddress(cell.CellReference);
+                    string columnName = SheetFunc.AddressConverter.GetColumnNameFromAddress(cell.CellReference);
                     double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
                     width ??= DefaultWidth;
                     Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height);
@@ -192,6 +198,42 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         };
     }
     /// <summary>
+    /// Get merged cells from Worksheet
+    /// </summary>
+    /// <param name="sheetPart"></param>
+    /// <returns></returns>
+    public List<Worksheets.MergedCell> GetMergedCells(WorksheetPart sheetPart)
+    {
+        MergeCells? mergeCells = sheetPart.Worksheet.Elements<MergeCells>().FirstOrDefault();
+        if(mergeCells == null)
+        {
+            return [];
+        }
+        List<Worksheets.MergedCell> results = [];
+        foreach (MergeCell mergeCell in mergeCells.Cast<MergeCell>())
+        {
+            string? reference = mergeCell.Reference;
+            if(string.IsNullOrEmpty(reference))
+            {
+                continue;
+            }
+            string[] cellReferences = reference.Split(':');
+            if(cellReferences.Length < 2)
+            {
+                continue;
+            }
+            string startColumnName = SheetFunc.AddressConverter.GetColumnNameFromAddress(cellReferences[0]);
+            string endColumnName = SheetFunc.AddressConverter.GetColumnNameFromAddress(cellReferences[1]);
+            results.Add(new (
+                Start: new (ColumnName: startColumnName, Column: SheetFunc.AddressConverter.ConvertAlphabetToIndex(startColumnName),
+                    Row: SheetFunc.AddressConverter.GetRowFromAddress(cellReferences[0])),
+                End: new (ColumnName: endColumnName, Column: SheetFunc.AddressConverter.ConvertAlphabetToIndex(endColumnName),
+                    Row: SheetFunc.AddressConverter.GetRowFromAddress(cellReferences[1]))
+            ));
+        }
+        return results;
+    }
+    /// <summary>
     /// Check if the parent element is "PhoneticRun"
     /// </summary>
     /// <param name="textElement"></param>
@@ -221,7 +263,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     columnWidth = Numbers.ConvertFromPixelToCentimeter(column.Width * 7.0);
                 }
             }
-            results.Add(new Worksheets.ColumnWidth(i, ConvertIndexToAlphabet(i), columnWidth));
+            results.Add(new Worksheets.ColumnWidth(i, SheetFunc.AddressConverter.ConvertIndexToAlphabet(i), columnWidth));
         }
         return results;
     }
@@ -309,48 +351,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
         }
         return null;
     }
-    private static string ConvertIndexToAlphabet(int index)
-    {
-        if (index < 1)
-        {
-            return string.Empty;
-        }
-        string result = string.Empty;
-        
-        while(index > 0)
-        {
-            uint remainder = ((uint)index - 1) % 26;
-            result = Convert.ToChar(remainder + 65) + result;
-            index = (int)((index - remainder)/26);
-        }
-        return result;
-    }
-    private static int ConvertAlphabetToIndex(string columnName)
-    {
-        int columnIndex = 0;
-        int factor = 1;
-        
-        for (int i = columnName.Length - 1; i >= 0; i--)
-        {
-            columnIndex += (columnName[i] - 'A' + 1) * factor;
-            factor *= 26;
-        }
-
-        return columnIndex;
-    }
-    private static string GetColumnNameFromAddress(string? address)
-    {
-        if(string.IsNullOrEmpty(address))
-        {
-            return "A";
-        }
-        Match? match = ColumnNameRegex.Matches(address).FirstOrDefault();
-        if(string.IsNullOrEmpty(match?.Value))
-        {
-            return "A";
-        }
-        return match.Value;
-    }
+    
     private static Worksheets.PrintArea GetPrintArea(WorkbookPart bookPart, string sheetName)
     {
         DefinedNames? definedNames = bookPart.Workbook.DefinedNames;
@@ -385,14 +386,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     {
                         continue;
                     }
-                    Worksheets.CellAddress startAddress = new (columnNameStart, ConvertAlphabetToIndex(columnNameStart),
+                    Worksheets.CellAddress startAddress = new (columnNameStart, SheetFunc.AddressConverter.ConvertAlphabetToIndex(columnNameStart),
                         rowStart);
                     (string columnNameEnd, int rowEnd) = GetCellAddress(addresses[1]);
                     if(string.IsNullOrEmpty(columnNameEnd) || rowEnd <= 0)
                     {
                         continue;
                     }
-                    Worksheets.CellAddress endAddress = new (columnNameEnd, ConvertAlphabetToIndex(columnNameEnd),
+                    Worksheets.CellAddress endAddress = new (columnNameEnd, SheetFunc.AddressConverter.ConvertAlphabetToIndex(columnNameEnd),
                         rowEnd);
                     
                     return new (){ Start = startAddress, End = endAddress }; 
