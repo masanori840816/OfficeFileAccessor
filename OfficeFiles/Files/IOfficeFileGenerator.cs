@@ -2,5 +2,6 @@ namespace OfficeFileAccessor.OfficeFiles.Files;
 
 public interface IOfficeFileGenerator
 {
-    OfficeFile? Generate(string name, string fileName, string mimeType, List<Worksheets.Cell> cells);
+    List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
+        List<Worksheets.Cell> cells);
 }

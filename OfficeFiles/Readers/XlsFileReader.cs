@@ -4,12 +4,13 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using Drawing = DocumentFormat.OpenXml.Drawing;
 using OfficeFileAccessor.Apps;
-using System.Text.RegularExpressions;
 using SheetFunc = OfficeFileAccessor.OfficeFiles.Worksheets.Functions;
+using OfficeFileAccessor.OfficeFiles.Files;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
-public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
+public class XlsFileReader(ILogger<XlsFileReader> Logger,
+    IOfficeFileGenerator FileGenerator) : IXlsFileReader
 {
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
@@ -94,6 +95,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     }
                 }
             }
+            List<Worksheets.Cell> cells = [];
             foreach(Row row in targetSheet.Descendants<Row>())
             {
                 double height = DefaultHeight;
@@ -107,9 +109,21 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger) : IXlsFileReader
                     double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
                     width ??= DefaultWidth;
                     Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height, mergedCells);
-                    Logger.LogInformation("Cell Value:{val}", cellValue?.ToString());                    
+                    if(cellValue != null)
+                    {
+                        cells.Add(cellValue);
+                    }                    
                 }
             }
+            List<OfficeFileTableGroup> groups = FileGenerator.Generate(sheetName, printArea, cells);
+            foreach(var g in groups)
+            {
+                foreach(var c in g.Cells)
+                {
+                    Logger.LogInformation("CellValue: V:{v}", c);
+                }
+            }
+            
             // TODO: uncomment after testing
             break;
         }

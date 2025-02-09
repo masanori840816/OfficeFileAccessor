@@ -13,4 +13,5 @@ public record OfficeFileTableCell
     public required string ValueType { get; init; }
     public required string Value { get; init; }
     public string? Formula { get; init; }
+    public required CellBorders Borders { get; init; }
 }
