@@ -19,4 +19,16 @@ public class Cell
     {
         return $"Cell Address:{Address} Type:{Type} Formula:{Formula} Value:{Value} W: {Width} H: {Height} BackgroundColor: {BackgroundColor} {Borders} Merged?: {Merged} {MergedCell}";
     }
+    public static Cell Default(string? address, double width, double height)
+    {
+        return new ()
+        {
+            Address = CellAddress.GenerateFromAddress(address),
+            Type = CellValueType.Text,
+            Value = "",
+            Width = width,
+            Height = height,
+            Borders = CellBorders.GetNoBorders(),
+        };
+    }
 }

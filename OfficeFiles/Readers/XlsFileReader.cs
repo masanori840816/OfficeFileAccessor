@@ -103,16 +103,27 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 {
                     height = Numbers.ConvertFromPointToCentimeter(row.Height.Value);
                 }
-                foreach(Cell cell in row.Cast<Cell>())
+                uint? rowIndex = row.RowIndex?.Value;
+                if(rowIndex == null)
                 {
-                    string columnName = SheetFunc.AddressConverter.GetColumnNameFromAddress(cell.CellReference);
+                    continue;
+                }
+                for(int column = printArea.Start.Column; column <= printArea.End.Column; column++)
+                {
+                    string columnName = SheetFunc.AddressConverter.ConvertIndexToAlphabet(column);
+                    string cellReference = columnName + rowIndex;
+                    Cell? cell = row.Elements<Cell>()?.FirstOrDefault(c => 
+                        c.CellReference?.Value != null && c.CellReference.Value == cellReference);
                     double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
                     width ??= DefaultWidth;
-                    Worksheets.Cell? cellValue = GetCellValue(bookPart, cell, (double)width, height, mergedCells);
-                    if(cellValue != null)
+                    if(cell == null)
                     {
-                        cells.Add(cellValue);
-                    }                    
+                        cells.Add(Worksheets.Cell.Default(cellReference, (double)width, height));
+                    }
+                    else
+                    {
+                        cells.Add(GetCellValue(bookPart, cell, (double)width, height, mergedCells));
+                    }
                 }
             }
             List<OfficeFileTableGroup> groups = FileGenerator.Generate(sheetName, printArea, cells);
