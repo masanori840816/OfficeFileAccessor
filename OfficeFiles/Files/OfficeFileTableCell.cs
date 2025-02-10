@@ -14,4 +14,6 @@ public record OfficeFileTableCell
     public required string Value { get; init; }
     public string? Formula { get; init; }
     public required CellBorders Borders { get; init; }
+    public string? BackgroudColor { get; init; }
+    public bool Editabled { get; init; }
 }
