@@ -54,7 +54,7 @@ public static class AddressConverter
         {
             return 1;
         }
-        Match? match = RowRegex.Matches(address).FirstOrDefault();
+        Match? match = RowRegex.Matches(address.Replace("$", "")).FirstOrDefault();
         GroupCollection? matchGroups = match?.Groups;
         if(matchGroups != null &&
             matchGroups.Count > 0 &&
