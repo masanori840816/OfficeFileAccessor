@@ -11,32 +11,21 @@ public class OfficeFileGenerator: IOfficeFileGenerator
         List<OfficeFileTableGroup> results = [];        
         OfficeFileTableGroup lastGroup = new ()
         {
+            StartColumn = printArea.Start.Column,
             DisplayOrder = 0,
             SheetName = sheetName,
         };
         results.Add(lastGroup);
         List<int> startColumns = [];
         
-        int nextColumn = -1;
         for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
         {
             bool groupEnded = false;
+            int nextColumn = printArea.Start.Column;
             if(startColumns.Count <= 1)
             {
-                startColumns = GetStartGroupColumns(cells, row, printArea);
-                nextColumn = printArea.Start.Column;
-                foreach(int c in startColumns)
-                {
-                    if(nextColumn < c)
-                    {
-                        nextColumn = c;
-                        break;
-                    }
-                }
-                if(nextColumn == printArea.Start.Column)
-                {
-                    nextColumn = printArea.End.Column;
-                }
+                startColumns = GetStartGroupColumns(cells, row, printArea);                
+                nextColumn = GetNextColumn(printArea, startColumns, nextColumn);
             }
             else if(CheckIsEndGroupRow(cells, row, printArea, startColumns))
             {
@@ -53,13 +42,13 @@ public class OfficeFileGenerator: IOfficeFileGenerator
                 }
                 int column = cell.Address.Column;
                 if(column >= nextColumn)
-                {
-                    OfficeFileTableGroup? nextGroup = results.FirstOrDefault(g => g.Cells.Any(c => 
-                        c.CellAddress.Column == column));                    
+                {                    
+                    OfficeFileTableGroup? nextGroup = results.FirstOrDefault(g => g.StartColumn == column);
                     if(nextGroup == null)
                     {
                         nextGroup = new ()
                         {
+                            StartColumn = column,
                             DisplayOrder = results.Count,
                             SheetName = sheetName,
                         };
@@ -70,28 +59,18 @@ public class OfficeFileGenerator: IOfficeFileGenerator
                     {
                         lastGroup = nextGroup;
                     }
-                    int lastColumn = nextColumn;
-                    foreach(int c in startColumns)
-                    {
-                        if(nextColumn < c)
-                        {
-                            nextColumn = c;
-                            break;
-                        }
-                        if(lastColumn == nextColumn)
-                        {
-                            nextColumn = printArea.End.Column;
-                        }                      
-                    }
-                    lastGroup.Cells.Add(OfficeFileTableCell.Create(cell));
+                    nextColumn = GetNextColumn(printArea, startColumns, nextColumn);
                 }
+                lastGroup.Cells.Add(OfficeFileTableCell.Create(cell));
             }
             if(groupEnded)
             {
                 groupEnded = false;
                 startColumns.Clear();
+                nextColumn = printArea.Start.Column;
                 OfficeFileTableGroup nextGroup = new ()
                 {
+                    StartColumn = printArea.Start.Column,
                     DisplayOrder = results.Count,
                     SheetName = sheetName,
                 };
@@ -178,5 +157,23 @@ public class OfficeFileGenerator: IOfficeFileGenerator
         }
 
         return false;
+    }
+    private static int GetNextColumn(Worksheets.PrintArea printArea, List<int> startColumns, int nextColumn)
+    {
+        int result = nextColumn;
+        int lastColumn = nextColumn;
+        foreach(int c in startColumns)
+        {
+            if(result < c)
+            {
+                result = c;
+                break;
+            }
+        }
+        if(lastColumn == result)
+        {
+            result = printArea.End.Column + 1;
+        }
+        return result;
     }
 }
