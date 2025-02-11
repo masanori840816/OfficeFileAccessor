@@ -1,6 +1,6 @@
 namespace OfficeFileAccessor.OfficeFiles.Files;
 
-public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFileGenerator
+public class OfficeFileGenerator: IOfficeFileGenerator
 {
     public List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
         List<Worksheets.Cell> cells)
@@ -8,29 +8,100 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         var ordered = cells.OrderBy(c => c.Address.Row)
             .ThenBy(c => c.Address.Column)
             .ToArray();
-        List<OfficeFileTableGroup> results = [];
-        results.Add(new OfficeFileTableGroup
+        List<OfficeFileTableGroup> results = [];        
+        OfficeFileTableGroup lastGroup = new ()
         {
             DisplayOrder = 0,
             SheetName = sheetName,
-        });
+        };
+        results.Add(lastGroup);
         List<int> startColumns = [];
+        
+        int nextColumn = -1;
         for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
         {
+            bool groupEnded = false;
             if(startColumns.Count <= 1)
             {
                 startColumns = GetStartGroupColumns(cells, row, printArea);
+                nextColumn = printArea.Start.Column;
+                foreach(int c in startColumns)
+                {
+                    if(nextColumn < c)
+                    {
+                        nextColumn = c;
+                        break;
+                    }
+                }
+                if(nextColumn == printArea.Start.Column)
+                {
+                    nextColumn = printArea.End.Column;
+                }
             }
             else if(CheckIsEndGroupRow(cells, row, printArea, startColumns))
             {
-                Logger.LogInformation("Next Gropp {row}", row);
+                groupEnded = true;
+            }
+            int currentRow = row;
+            foreach(Worksheets.Cell cell in cells.Where(c => c.Address.Row == currentRow)
+                .OrderBy(c => c.Address.Column))
+            {
+                if(startColumns.Count <= 1)
+                {
+                    lastGroup.Cells.Add(OfficeFileTableCell.Create(cell));
+                    continue;
+                }
+                int column = cell.Address.Column;
+                if(column >= nextColumn)
+                {
+                    OfficeFileTableGroup? nextGroup = results.FirstOrDefault(g => g.Cells.Any(c => 
+                        c.CellAddress.Column == column));                    
+                    if(nextGroup == null)
+                    {
+                        nextGroup = new ()
+                        {
+                            DisplayOrder = results.Count,
+                            SheetName = sheetName,
+                        };
+                        results.Add(nextGroup);
+                        lastGroup = nextGroup;
+                    }
+                    else
+                    {
+                        lastGroup = nextGroup;
+                    }
+                    int lastColumn = nextColumn;
+                    foreach(int c in startColumns)
+                    {
+                        if(nextColumn < c)
+                        {
+                            nextColumn = c;
+                            break;
+                        }
+                        if(lastColumn == nextColumn)
+                        {
+                            nextColumn = printArea.End.Column;
+                        }                      
+                    }
+                    lastGroup.Cells.Add(OfficeFileTableCell.Create(cell));
+                }
+            }
+            if(groupEnded)
+            {
+                groupEnded = false;
                 startColumns.Clear();
+                OfficeFileTableGroup nextGroup = new ()
+                {
+                    DisplayOrder = results.Count,
+                    SheetName = sheetName,
+                };
+                results.Add(nextGroup);
+                lastGroup = nextGroup;
             }
         }
-        Logger.LogWarning("Not implemented");
         return results;
     }
-    private List<int> GetStartGroupColumns(List<Worksheets.Cell> cells, int row, Worksheets.PrintArea printArea)
+    private static List<int> GetStartGroupColumns(List<Worksheets.Cell> cells, int row, Worksheets.PrintArea printArea)
     {
         List<int> results = [];
         bool hasBorders = false;
@@ -51,7 +122,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     (cells[i].Address.Column >= printArea.End.Column || cells[i + 1].Borders.Top == Worksheets.BorderType.None))
                 {
                     hasBorders = false;
-                    Logger.LogInformation("Group End column: {co} row: {r}", cells[i].Address.Column, row);
                 }
             }
             else 
@@ -61,11 +131,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 {
                     hasBorders = true;
                     results.Add(cells[i].Address.Column);
-                    Logger.LogInformation("Group Start column: {co} row: {r}", cells[i].Address.Column, row);
                 }
                 else if(results.Count <= 0)
                 {
-                    Logger.LogInformation("Group Start empty column: {co} row: {r}", cells[i].Address.Column, row);
                     results.Add(cells[i].Address.Column);
                 }
             }

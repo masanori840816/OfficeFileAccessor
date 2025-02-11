@@ -129,9 +129,10 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             List<OfficeFileTableGroup> groups = FileGenerator.Generate(sheetName, printArea, cells);
             foreach(var g in groups)
             {
+                Logger.LogWarning("-----------Group---------");
                 foreach(var c in g.Cells)
                 {
-                    Logger.LogInformation("CellValue: V:{v}", c);
+                    Logger.LogWarning("CellValue: V:{v}", c);
                 }
             }
             

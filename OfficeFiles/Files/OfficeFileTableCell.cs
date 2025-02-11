@@ -16,4 +16,28 @@ public record OfficeFileTableCell
     public required CellBorders Borders { get; init; }
     public string? BackgroudColor { get; init; }
     public bool Editabled { get; init; }
+
+    public static OfficeFileTableCell Create(Worksheets.Cell cell)
+    {
+        int horizontalLength = 1;
+        int verticalLength = 1;
+        if(cell.Merged && cell.MergedCell != null)
+        {
+            horizontalLength = cell.MergedCell.End.Column - cell.MergedCell.Start.Column + 1;
+            verticalLength = cell.MergedCell.End.Row - cell.MergedCell.Start.Row + 1;
+        }
+
+        return new ()
+        {
+            CellAddress = cell.Address,
+            HorizontalLength = horizontalLength,
+            VerticalLength = verticalLength,
+            ValueType = cell.Type.ToString(),
+            Value = cell.Value,
+            Formula = cell.Formula,
+            Borders = cell.Borders,
+            BackgroudColor = cell.BackgroundColor,
+            Editabled = cell.BackgroundColor == "FFFF00"
+        };
+    }
 }
