@@ -4,6 +4,7 @@ import { getCookieValue } from "./web/cookieValues";
 import { useAuthentication } from "./auth/authenticationContext";
 import * as authStatusChecker from "./auth/authenticationStatusChecker";
 import { hasAnyTexts } from "./texts/hasAnyTexts";
+import { RegisterFileResult } from "./officeFileAccessor.type";
 
 export function RegisterPage(): JSX.Element {
   const [files, setFiles] = useState<FileList|null>(null);
@@ -43,8 +44,19 @@ export function RegisterPage(): JSX.Element {
         },
         body: formData,
       });
-      console.log(await res.json());
-
+      const result = JSON.parse(JSON.stringify(await res.json())) as RegisterFileResult;
+      if(result?.result?.succeeded === true) {
+        if(hasAnyTexts(result.file?.fileName)) {
+          console.log("OK");
+        } else {
+          console.log("No file data");
+        }
+        
+      } else if(hasAnyTexts(result?.result?.errorMessage)){
+        console.log(result?.result?.errorMessage);
+      } else {
+        console.error("something wrong");
+      }
     } catch(err) {
       console.error("Upload failed", err);
     }

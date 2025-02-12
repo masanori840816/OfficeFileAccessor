@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeFileAccessor.AppUsers;
 using OfficeFileAccessor.AppUsers.DTO;
+using OfficeFileAccessor.Files.DTO;
 
 namespace OfficeFileAccessor.OfficeFiles;
 
@@ -21,7 +22,7 @@ public class OfficeFileController(ILogger<OfficeFileController> logger, IOfficeF
     public async Task<IActionResult> LoadOfficeFiles([FromForm] IFormFileCollection files)
     {
         DisplayUser? user = await Users.GetSignedInUserAsync(User);
-        logger.LogInformation("Sign-in User: {user}", user);
-        return Json(await officeFiles.RegisterAsync(files));
+        DownloadFile file = await officeFiles.RegisterAsync(files);
+        return File(file.FileData, file.MimeType, file.FileName);
     }
 }
