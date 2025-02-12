@@ -1,23 +1,56 @@
 namespace OfficeFileAccessor.OfficeFiles.Files;
 
-public class OfficeFileGenerator: IOfficeFileGenerator
+public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFileGenerator
 {
+    private record GroupedCells
+    {
+        public required int StartColumn { get; init; }
+        public required int DisplayOrder { get; init; }
+        public List<Worksheets.Cell> Cells { get; init; } = [];
+    }
     public List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
         List<Worksheets.Cell> cells)
     {
-        var ordered = cells.OrderBy(c => c.Address.Row)
-            .ThenBy(c => c.Address.Column)
-            .ToArray();
-        List<OfficeFileTableGroup> results = [];        
-        OfficeFileTableGroup lastGroup = new ()
+        List<GroupedCells> groupedCells = GroupCells(printArea, cells);
+        
+        // TODO: for all groups
+        GroupedCells firstGroup = groupedCells.First(g => g.Cells.Any(c => c.Borders.Left != Worksheets.BorderType.None));
+        List<Worksheets.CellAddress> addedAddresses = [];
+        List<OfficeFileTableCell> tableCells = [];
+        for(int i = 0; i < firstGroup.Cells.Count; i++)
+        {
+            Worksheets.CellAddress address = firstGroup.Cells[i].Address;
+            if(addedAddresses.Any(a => address == a))
+            {
+                continue;
+            }
+            if(firstGroup.Cells[i].Borders.Left != Worksheets.BorderType.None &&
+                firstGroup.Cells[i].Borders.Top != Worksheets.BorderType.None &&
+                firstGroup.Cells[i].Borders.Right != Worksheets.BorderType.None &&
+                firstGroup.Cells[i].Borders.Bottom != Worksheets.BorderType.None)
+            {
+                if(firstGroup.Cells[i].Merged)
+                {
+                    
+                }
+            }
+        }
+        Logger.LogWarning("Cell {c}", firstGroup.Cells.First());
+
+        List<OfficeFileTableGroup> results = [];
+        return results;
+    }
+    private static List<GroupedCells> GroupCells(Worksheets.PrintArea printArea, List<Worksheets.Cell> cells)
+    {
+        Worksheets.Cell[] ordered = [.. cells.OrderBy(c => c.Address.Row).ThenBy(c => c.Address.Column)];
+        List<GroupedCells> results = [];
+        GroupedCells lastGroup = new ()
         {
             StartColumn = printArea.Start.Column,
             DisplayOrder = 0,
-            SheetName = sheetName,
         };
         results.Add(lastGroup);
         List<int> startColumns = [];
-        
         for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
         {
             bool groupEnded = false;
@@ -37,20 +70,19 @@ public class OfficeFileGenerator: IOfficeFileGenerator
             {
                 if(startColumns.Count <= 1)
                 {
-                    lastGroup.Cells.Add(OfficeFileTableCell.Create(cell));
+                    lastGroup.Cells.Add(cell);
                     continue;
                 }
                 int column = cell.Address.Column;
                 if(column >= nextColumn)
                 {                    
-                    OfficeFileTableGroup? nextGroup = results.FirstOrDefault(g => g.StartColumn == column);
+                    GroupedCells? nextGroup = results.FirstOrDefault(g => g.StartColumn == column);
                     if(nextGroup == null)
                     {
                         nextGroup = new ()
                         {
                             StartColumn = column,
                             DisplayOrder = results.Count,
-                            SheetName = sheetName,
                         };
                         results.Add(nextGroup);
                         lastGroup = nextGroup;
@@ -61,18 +93,17 @@ public class OfficeFileGenerator: IOfficeFileGenerator
                     }
                     nextColumn = GetNextColumn(printArea, startColumns, nextColumn);
                 }
-                lastGroup.Cells.Add(OfficeFileTableCell.Create(cell));
+                lastGroup.Cells.Add(cell);
             }
             if(groupEnded)
             {
                 groupEnded = false;
                 startColumns.Clear();
                 nextColumn = printArea.Start.Column;
-                OfficeFileTableGroup nextGroup = new ()
+                GroupedCells nextGroup = new ()
                 {
                     StartColumn = printArea.Start.Column,
                     DisplayOrder = results.Count,
-                    SheetName = sheetName,
                 };
                 results.Add(nextGroup);
                 lastGroup = nextGroup;

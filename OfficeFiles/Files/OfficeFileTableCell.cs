@@ -16,6 +16,8 @@ public record OfficeFileTableCell
     public required CellBorders Borders { get; init; }
     public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
+    public double Width { get; init; }
+    public double Height { get; init; }
 
     public static OfficeFileTableCell Create(Worksheets.Cell cell)
     {
