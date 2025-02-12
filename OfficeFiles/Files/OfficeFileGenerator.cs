@@ -17,28 +17,46 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         GroupedCells firstGroup = groupedCells.First(g => g.Cells.Any(c => c.Borders.Left != Worksheets.BorderType.None));
         List<Worksheets.CellAddress> addedAddresses = [];
         List<OfficeFileTableCell> tableCells = [];
-        for(int i = 0; i < firstGroup.Cells.Count; i++)
+        foreach(Worksheets.Cell cell in firstGroup.Cells)
         {
-            Worksheets.CellAddress address = firstGroup.Cells[i].Address;
+            Worksheets.CellAddress address = cell.Address;
             if(addedAddresses.Any(a => address == a))
             {
                 continue;
             }
-            if(firstGroup.Cells[i].Borders.Left != Worksheets.BorderType.None &&
-                firstGroup.Cells[i].Borders.Top != Worksheets.BorderType.None &&
-                firstGroup.Cells[i].Borders.Right != Worksheets.BorderType.None &&
-                firstGroup.Cells[i].Borders.Bottom != Worksheets.BorderType.None)
+
+            if(cell.Borders.Left == Worksheets.BorderType.None ||
+                cell.Borders.Top == Worksheets.BorderType.None)
             {
-                if(firstGroup.Cells[i].Merged)
-                {
-                    
-                }
+                continue;
+            }
+            List<Worksheets.Cell> c = [cell];
+            List<Worksheets.Cell> rightTop = GetRightTop(cell.Address, c, firstGroup.Cells);
+            foreach(var cel in rightTop)
+            {
+                Logger.LogWarning("CEll c: {c} right: {cel}", c, cel);
             }
         }
-        Logger.LogWarning("Cell {c}", firstGroup.Cells.First());
+        
 
         List<OfficeFileTableGroup> results = [];
         return results;
+    }
+    private static List<Worksheets.Cell> GetRightTop(Worksheets.CellAddress baseAddress,
+        List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
+    {
+        if(current.Any(ce => ce.Borders.Right != Worksheets.BorderType.None &&
+                ce.Borders.Top != Worksheets.BorderType.None))
+        {
+            return current;
+        }
+        Worksheets.CellAddress rightAddress = Worksheets.CellAddress.Move(baseAddress, 1, 0);
+        Worksheets.Cell? right = allCells.FirstOrDefault(c => c.Address == rightAddress);
+        if(right == null)
+        {
+            return current;
+        }
+        return GetRightTop(rightAddress, current, allCells);
     }
     private static List<GroupedCells> GroupCells(Worksheets.PrintArea printArea, List<Worksheets.Cell> cells)
     {
