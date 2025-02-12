@@ -42,6 +42,6 @@ export type OfficeFileTableCell = {
     value: string,
     formula: string|null,
     borders: CellBorders,
-    backgroudColor: string|null,
+    backgroundColor: string|null,
     editabled: boolean,
 };

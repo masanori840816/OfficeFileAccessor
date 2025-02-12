@@ -14,7 +14,7 @@ public record OfficeFileTableCell
     public required string Value { get; init; }
     public string? Formula { get; init; }
     public required CellBorders Borders { get; init; }
-    public string? BackgroudColor { get; init; }
+    public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
 
     public static OfficeFileTableCell Create(Worksheets.Cell cell)
@@ -36,7 +36,7 @@ public record OfficeFileTableCell
             Value = cell.Value,
             Formula = cell.Formula,
             Borders = cell.Borders,
-            BackgroudColor = cell.BackgroundColor,
+            BackgroundColor = cell.BackgroundColor,
             Editabled = cell.BackgroundColor == "FFFF00"
         };
     }
