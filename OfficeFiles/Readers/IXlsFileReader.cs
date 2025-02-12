@@ -1,6 +1,8 @@
+using OfficeFileAccessor.OfficeFiles.Files;
+
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
 public interface IXlsFileReader
 {
-    void Read(IFormFile file);
+    OfficeFile? Read(IFormFile file);
 }

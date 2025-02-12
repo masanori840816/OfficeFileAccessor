@@ -15,15 +15,22 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
     
-    public void Read(IFormFile file)
+    public OfficeFile? Read(IFormFile file)
     {
+        
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
         WorkbookPart? bookPart = spreadsheet.WorkbookPart;
         if(bookPart == null)
         {
-            Logger.LogInformation("Failed getting WorkbookPart");
-            return;
+            Logger.LogWarning("Failed getting WorkbookPart");
+            return null;
         }
+        OfficeFile result = new ()
+        {
+            Name = file.FileName,
+            FileName = file.FileName,
+            MimeType = file.ContentType,
+        };
         foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
         {
             string? sheetName = s.Name?.Value;
@@ -45,7 +52,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
             {
-                return;
+                continue;
             }
 
             foreach (var drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
@@ -96,6 +103,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 }
             }
             List<Worksheets.Cell> cells = [];
+            
             foreach(Row row in targetSheet.Descendants<Row>())
             {
                 double height = DefaultHeight;
@@ -127,19 +135,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 }
             }
             List<OfficeFileTableGroup> groups = FileGenerator.Generate(sheetName, printArea, cells);
-            foreach(var g in groups)
-            {
-                Logger.LogWarning("-----------Group---------");
-                foreach(var c in g.Cells)
-                {
-                    Logger.LogWarning("CellValue: V:{v}", c);
-                }
-            }
-            
+            result.TableGroups.AddRange(groups);
+                        
             // TODO: uncomment after testing
             break;
         }
-        Logger.LogInformation("OK");
+        return result;
     }
     private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height,
         List<Worksheets.MergedCell> mergedCells)
