@@ -6,7 +6,6 @@ export interface TableGroupAreaProps {
 }
 export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group}) => {
     return <>
-        <h2>SheetName: {group?.sheetName}</h2>
         {group.cells.map((c, index) => (
             <TableCell key={index} cell={c} />
         ))}
