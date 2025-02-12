@@ -14,12 +14,14 @@ export const TableCell: React.FC<TableCellProps> = ({ cell }) => {
         backgroudColor = `#${cell.backgroundColor}`;
     }
     const cellStyle = {
-        "backgroundColor": backgroudColor,
-        "border-left": (cell.borders.left == 1)? borderThin: borderNone,
-        "border-top": (cell.borders.top == 1)? borderThin: borderNone,
-        "border-right": (cell.borders.right == 1)? borderThin: borderNone,
-        "border-bottom": (cell.borders.bottom == 1)? borderThin: borderNone,
-
+        'backgroundColor': backgroudColor,
+        'borderLeft': (cell.borders.left == 1)? borderThin: borderNone,
+        'borderTop': (cell.borders.top == 1)? borderThin: borderNone,
+        'borderRight': (cell.borders.right == 1)? borderThin: borderNone,
+        'borderBottom': (cell.borders.bottom == 1)? borderThin: borderNone,
+        // TODO: set by OfficeFileTableCell
+        'width': '120px',
+        'height': '120px',
     }
     return <>
 

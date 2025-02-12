@@ -6,8 +6,10 @@ export interface TableGroupAreaProps {
 }
 export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group}) => {
     return <>
-        {group.cells.map((c, index) => (
-            <TableCell key={index} cell={c} />
-        ))}
+        <div className="flex flex-row items-center ">
+            {group.cells.map((c, index) => (
+                <TableCell key={index} cell={c} />
+            ))}
+        </div>
     </>
 };
