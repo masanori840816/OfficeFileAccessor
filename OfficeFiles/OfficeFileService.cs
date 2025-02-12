@@ -1,46 +1,63 @@
 
 using OfficeFileAccessor.Apps;
+using OfficeFileAccessor.Files;
+using OfficeFileAccessor.Files.DTO;
+using OfficeFileAccessor.OfficeFiles.DTO;
+using OfficeFileAccessor.OfficeFiles.Files;
 using OfficeFileAccessor.OfficeFiles.Readers;
 
 namespace OfficeFileAccessor.OfficeFiles;
 
 public class OfficeFileService: IOfficeFileService
 {
-    private readonly ILogger<OfficeFileService> logger;
-    private readonly IXlsFileReader xlsFileReader;
+    private readonly ILogger<OfficeFileService> Logger;
+    private readonly IXlsFileReader XlsFileReader;
     private readonly DocFileReader docFileReader;
+    private readonly IJsonCamelCaseOption JsonOption;
 
-    public OfficeFileService(ILogger<OfficeFileService> logger, IXlsFileReader xlsFileReader)
+    public OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader XlsFileReader,
+        IJsonCamelCaseOption JsonOption)
     {
-        this.logger = logger;
-        this.xlsFileReader = xlsFileReader;
+        this.Logger = Logger;
+        this.XlsFileReader = XlsFileReader;
         this.docFileReader = new DocFileReader();
-
+        this.JsonOption = JsonOption;
     }
-    public async Task<ApplicationResult> RegisterAsync(IFormFileCollection files)
+    public async Task<DownloadFile> RegisterAsync(IFormFileCollection files)
     {
+        OfficeFile? file = null;
         foreach(var f in files!)
         {
-            logger.LogInformation($"FileName: {f?.FileName} Type: {f?.ContentType} Desc:{f?.ContentDisposition}");
             if(f == null)
             {
-                logger.LogWarning("File was null");
+                Logger.LogWarning("File was null");
                 continue;
             }
             switch(f.ContentType)
             {
                 case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                 case "application/vnd.ms-excel.sheet.macroEnabled.12":
-                    xlsFileReader.Read(f);
+                    file = XlsFileReader.Read(f);
                     break;
                 case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                     docFileReader.Read(f);
                     break;
                 default:
-                    logger.LogWarning($"Invalid File Type: {f.ContentType}");
+                    Logger.LogWarning($"Invalid File Type: {f.ContentType}");
                     continue;
             }
+            break;
         }
-        return ApplicationResult.GetFailedResult("Not implemented");
+        if(file == null)
+        {
+            return RegisterFileResult.GenerateFailedResult("Failed loading file", JsonOption.Get());
+        }
+        RegisterFileResult result = new ()
+        {
+            Result = ApplicationResult.GetSucceededResult(),
+            File = file,
+        };
+
+        return result.GenerateDownloadFile(JsonOption.Get());
     }
 }

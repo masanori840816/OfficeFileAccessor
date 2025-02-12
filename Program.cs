@@ -12,6 +12,7 @@ using OfficeFileAccessor;
 using OfficeFileAccessor.AppUsers;
 using OfficeFileAccessor.AppUsers.Entities;
 using OfficeFileAccessor.AppUsers.Repositories;
+using OfficeFileAccessor.Files;
 using OfficeFileAccessor.OfficeFiles;
 using OfficeFileAccessor.OfficeFiles.Files;
 using OfficeFileAccessor.OfficeFiles.Readers;
@@ -88,6 +89,7 @@ try
     builder.Services.AddScoped<IUserTokens, UserTokens>();
     builder.Services.AddScoped<IXlsFileReader, XlsFileReader>();
     builder.Services.AddScoped<IOfficeFileGenerator, OfficeFileGenerator>();
+    builder.Services.AddSingleton<IJsonCamelCaseOption, JsonCamelCaseOption>();
     var app = builder.Build();
     
     if (builder.Environment.EnvironmentName != "Development")

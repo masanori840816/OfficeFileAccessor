@@ -1,4 +1,3 @@
-
 namespace OfficeFileAccessor.OfficeFiles.Files;
 
 public record OfficeFile
@@ -9,5 +8,5 @@ public record OfficeFile
     public required string FileName { get; init; }
     public required string MimeType { get; init; }
     public List<OfficeFileTableGroup> TableGroups { get; init; } = [];
-
+    
 }

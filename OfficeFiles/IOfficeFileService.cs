@@ -1,9 +1,10 @@
 
 using OfficeFileAccessor.Apps;
+using OfficeFileAccessor.Files.DTO;
 
 namespace OfficeFileAccessor.OfficeFiles;
 
 public interface IOfficeFileService
 {
-    Task<ApplicationResult> RegisterAsync(IFormFileCollection files);
+    Task<DownloadFile> RegisterAsync(IFormFileCollection files);
 }

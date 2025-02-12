@@ -43,7 +43,7 @@ export function RegisterPage(): JSX.Element {
         },
         body: formData,
       });
-      console.log(await res.text());
+      console.log(await res.json());
 
     } catch(err) {
       console.error("Upload failed", err);
