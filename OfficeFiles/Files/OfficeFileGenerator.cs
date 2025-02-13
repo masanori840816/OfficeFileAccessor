@@ -30,15 +30,13 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 continue;
             }
             Logger.LogWarning("-----------------");
-            List<Worksheets.Cell> c = [cell];
-            AddMergedCells(cell, c, firstGroup.Cells);
-            AddRightTop(cell.Address, c, firstGroup.Cells);
-            AddLeftBottom(cell.Address, c, firstGroup.Cells);
-            AddRestCells(c, firstGroup.Cells);
-            foreach(var cel in c)
-            {
-                Logger.LogWarning("LCEll c: {c} right: {cel}", cell.Address, cel.Address);
-            }
+            List<Worksheets.Cell> mergedCell = [cell];
+            AddMergedCells(cell, mergedCell, firstGroup.Cells);
+            AddRightTop(cell.Address, mergedCell, firstGroup.Cells);
+            AddLeftBottom(cell.Address, mergedCell, firstGroup.Cells);
+            AddRestCells(mergedCell, firstGroup.Cells);
+            string value = MergeCellValues(mergedCell);
+            Logger.LogWarning("LCEll Value: {c} c: {cel}", value, cell.Address);
         }
         
 
@@ -95,6 +93,47 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         current.Add(bottom);
         AddMergedCells(bottom, current, allCells);
         AddLeftBottom(bottomAddress, current, allCells);
+    }
+    private static string MergeCellValues(List<Worksheets.Cell> cells)
+    {
+        bool first = true;
+        int startColumn = cells.Min(c => c.Address.Column);
+        int lastRow = -1;
+        string result = "";
+        string currentRowText = "";
+        foreach(Worksheets.Cell cell in cells.OrderBy(ce => ce.Address.Column).ThenBy(ce => ce.Address.Row))
+        {
+            
+            if(first)
+            {
+                lastRow = cell.Address.Row;
+                first = false;
+            }
+            if(lastRow != cell.Address.Row)
+            {
+                if(string.IsNullOrEmpty(result) == false)
+                {
+                    result += "[NEW-LINE]";
+                }
+                result += currentRowText;
+                currentRowText = "[NEW-LINE]";
+                lastRow = cell.Address.Row;
+            }
+            if(string.IsNullOrEmpty(cell.Value) == false)
+            {
+                if(string.IsNullOrEmpty(currentRowText))
+                {
+                    for(int i = 0; i < (cell.Address.Column - startColumn); i++)
+                    {
+                        currentRowText += "[TAB]";
+                    }
+                }
+                currentRowText += cell.Value;
+                currentRowText += " ";
+            }
+        }
+        result += currentRowText;
+        return result;
     }
     private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
     {
