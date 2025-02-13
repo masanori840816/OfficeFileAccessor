@@ -19,8 +19,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         List<OfficeFileTableCell> tableCells = [];
         foreach(Worksheets.Cell cell in firstGroup.Cells)
         {
-            Worksheets.CellAddress address = cell.Address;
-            if(addedAddresses.Any(a => address == a))
+            if(addedAddresses.Any(a => cell.Address == a))
             {
                 continue;
             }
@@ -30,17 +29,36 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 continue;
             }
+            Logger.LogWarning("-----------------");
             List<Worksheets.Cell> c = [cell];
-            List<Worksheets.Cell> rightTop = GetRightTop(cell.Address, c, firstGroup.Cells);
-            foreach(var cel in rightTop)
+            AddMergedCells(cell, c, firstGroup.Cells);
+            c = GetRightTop(cell.Address, c, firstGroup.Cells);
+            c = GetLeftBottom(cell.Address, c, firstGroup.Cells);
+            foreach(var cel in c)
             {
-                Logger.LogWarning("CEll c: {c} right: {cel}", c, cel);
+                Logger.LogWarning("LCEll c: {c} right: {cel}", cell.Address, cel.Address);
             }
         }
         
 
         List<OfficeFileTableGroup> results = [];
         return results;
+    }
+    private static void AddMergedCells(Worksheets.Cell cell, List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
+    {
+        if(cell.Merged == false || cell.MergedCell == null)
+        {
+            return;
+        }
+        foreach(Worksheets.Cell c in allCells.Where(c => c.Address.Column >= cell.MergedCell.Start.Column && c.Address.Column <= cell.MergedCell.End.Column &&
+                c.Address.Row >= cell.MergedCell.Start.Row && c.Address.Row <= cell.MergedCell.End.Row))
+        {
+            Worksheets.CellAddress address = c.Address;
+            if(current.Any(cu => cu.Address == address) == false)
+            {
+                current.Add(c);
+            }
+        }        
     }
     private static List<Worksheets.Cell> GetRightTop(Worksheets.CellAddress baseAddress,
         List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
@@ -56,7 +74,27 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         {
             return current;
         }
+        current.Add(right);
+        AddMergedCells(right, current, allCells);
         return GetRightTop(rightAddress, current, allCells);
+    }
+    private static List<Worksheets.Cell> GetLeftBottom(Worksheets.CellAddress baseAddress,
+        List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
+    {
+        if(current.Any(ce => ce.Borders.Left != Worksheets.BorderType.None &&
+                ce.Borders.Bottom != Worksheets.BorderType.None))
+        {
+            return current;
+        }
+        Worksheets.CellAddress bottomAddress = Worksheets.CellAddress.Move(baseAddress, 0, 1);
+        Worksheets.Cell? bottom = allCells.FirstOrDefault(c => c.Address == bottomAddress);
+        if(bottom == null)
+        {
+            return current;
+        }
+        current.Add(bottom);
+        AddMergedCells(bottom, current, allCells);
+        return GetLeftBottom(bottomAddress, current, allCells);
     }
     private static List<GroupedCells> GroupCells(Worksheets.PrintArea printArea, List<Worksheets.Cell> cells)
     {
