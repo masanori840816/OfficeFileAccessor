@@ -269,10 +269,10 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             {
                 continue;
             }
-            results.Add(new (
-                Start: Worksheets.CellAddress.GenerateFromAddress(cellReferences[0]),
-                End: Worksheets.CellAddress.GenerateFromAddress(cellReferences[1])
-            ));
+            results.Add(new () {
+                Start = Worksheets.CellAddress.GenerateFromAddress(cellReferences[0]),
+                End = Worksheets.CellAddress.GenerateFromAddress(cellReferences[1])
+            });
         }
         return results;
     }

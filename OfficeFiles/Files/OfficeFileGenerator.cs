@@ -12,9 +12,19 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         List<Worksheets.Cell> cells)
     {
         List<GroupedCells> groupedCells = GroupCells(printArea, cells);
+        Worksheets.CellBorders noBorders = Worksheets.CellBorders.GetNoBorders();
+        Worksheets.CellBorders allThin = Worksheets.CellBorders.GetAllThin();
         
+        List<OfficeFileTableGroup> results = [];
+
         // TODO: for all groups
         GroupedCells firstGroup = groupedCells.First(g => g.Cells.Any(c => c.Borders.Left != Worksheets.BorderType.None));
+        OfficeFileTableGroup group = new ()
+        {
+            DisplayOrder = results.Count,
+            SheetName = sheetName,
+        };
+        results.Add(group);
         List<Worksheets.CellAddress> addedAddresses = [];
         List<OfficeFileTableCell> tableCells = [];
         foreach(Worksheets.Cell cell in firstGroup.Cells)
@@ -29,18 +39,29 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 continue;
             }
-            Logger.LogWarning("-----------------");
             List<Worksheets.Cell> mergedCell = [cell];
             AddMergedCells(cell, mergedCell, firstGroup.Cells);
             AddRightTop(cell.Address, mergedCell, firstGroup.Cells);
             AddLeftBottom(cell.Address, mergedCell, firstGroup.Cells);
             AddRestCells(mergedCell, firstGroup.Cells);
-            string value = MergeCellValues(mergedCell);
-            Logger.LogWarning("LCEll Value: {c} c: {cel}", value, cell.Address);
-        }
-        
+            string? backgroundColor = null;
+            foreach(Worksheets.Cell c in mergedCell)
+            {
+                if(c.BackgroundColor == "FFFF00")
+                {
+                    backgroundColor = c.BackgroundColor;
+                    break;
+                }
+                if(string.IsNullOrEmpty(c.BackgroundColor) == false)
+                {
+                    backgroundColor = c.BackgroundColor;
+                }
+            }
+            group.Cells.Add(
+                OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
+                    backgroundColor, Worksheets.MergedCell.Generate(mergedCell)));
+        }        
 
-        List<OfficeFileTableGroup> results = [];
         return results;
     }
     private static void AddMergedCells(Worksheets.Cell cell, List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)

@@ -7,6 +7,5 @@ public record OfficeFileTableGroup
     public long OfficeFileId { get; init; }
     public required int DisplayOrder { get; init; }
     public required string SheetName { get; init; }
-    public required int StartColumn { get; init; }
     public List<OfficeFileTableCell> Cells { get; init; } = [];
 }

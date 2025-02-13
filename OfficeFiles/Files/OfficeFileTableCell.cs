@@ -10,36 +10,30 @@ public record OfficeFileTableCell
 
     public int VerticalLength { get; init; } = 1;
     public int HorizontalLength { get; init;} = 1;
-    public required string ValueType { get; init; }
     public required string Value { get; init; }
-    public string? Formula { get; init; }
     public required CellBorders Borders { get; init; }
     public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
-    public double Width { get; init; }
-    public double Height { get; init; }
 
-    public static OfficeFileTableCell Create(Worksheets.Cell cell)
+    public static OfficeFileTableCell Generate(CellAddress baseAddress, string mergedValue, CellBorders borders,
+        string? backgroundColor, MergedCell? mergedCell)
     {
         int horizontalLength = 1;
         int verticalLength = 1;
-        if(cell.Merged && cell.MergedCell != null)
+        if(mergedCell != null)
         {
-            horizontalLength = cell.MergedCell.End.Column - cell.MergedCell.Start.Column + 1;
-            verticalLength = cell.MergedCell.End.Row - cell.MergedCell.Start.Row + 1;
+            horizontalLength = mergedCell.End.Column - mergedCell.Start.Column + 1;
+            verticalLength = mergedCell.End.Row - mergedCell.Start.Row + 1;
         }
-
         return new ()
         {
-            CellAddress = cell.Address,
+            CellAddress = baseAddress,
             HorizontalLength = horizontalLength,
             VerticalLength = verticalLength,
-            ValueType = cell.Type.ToString(),
-            Value = cell.Value,
-            Formula = cell.Formula,
-            Borders = cell.Borders,
-            BackgroundColor = cell.BackgroundColor,
-            Editabled = cell.BackgroundColor == "FFFF00"
+            Value = mergedValue,
+            Borders = borders,
+            BackgroundColor = backgroundColor,
+            Editabled = backgroundColor == "FFFF00"
         };
     }
 }
