@@ -32,8 +32,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             Logger.LogWarning("-----------------");
             List<Worksheets.Cell> c = [cell];
             AddMergedCells(cell, c, firstGroup.Cells);
-            c = GetRightTop(cell.Address, c, firstGroup.Cells);
-            c = GetLeftBottom(cell.Address, c, firstGroup.Cells);
+            AddRightTop(cell.Address, c, firstGroup.Cells);
+            AddLeftBottom(cell.Address, c, firstGroup.Cells);
+            AddRestCells(c, firstGroup.Cells);
             foreach(var cel in c)
             {
                 Logger.LogWarning("LCEll c: {c} right: {cel}", cell.Address, cel.Address);
@@ -60,41 +61,52 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             }
         }        
     }
-    private static List<Worksheets.Cell> GetRightTop(Worksheets.CellAddress baseAddress,
+    private static void AddRightTop(Worksheets.CellAddress baseAddress,
         List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
     {
         if(current.Any(ce => ce.Borders.Right != Worksheets.BorderType.None &&
                 ce.Borders.Top != Worksheets.BorderType.None))
         {
-            return current;
+            return;
         }
         Worksheets.CellAddress rightAddress = Worksheets.CellAddress.Move(baseAddress, 1, 0);
         Worksheets.Cell? right = allCells.FirstOrDefault(c => c.Address == rightAddress);
         if(right == null)
         {
-            return current;
+            return;
         }
         current.Add(right);
         AddMergedCells(right, current, allCells);
-        return GetRightTop(rightAddress, current, allCells);
+        AddRightTop(rightAddress, current, allCells);
     }
-    private static List<Worksheets.Cell> GetLeftBottom(Worksheets.CellAddress baseAddress,
+    private static void AddLeftBottom(Worksheets.CellAddress baseAddress,
         List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
     {
-        if(current.Any(ce => ce.Borders.Left != Worksheets.BorderType.None &&
-                ce.Borders.Bottom != Worksheets.BorderType.None))
+        if(current.Any(ce => ce.Borders.Bottom != Worksheets.BorderType.None))
         {
-            return current;
+            return;
         }
         Worksheets.CellAddress bottomAddress = Worksheets.CellAddress.Move(baseAddress, 0, 1);
         Worksheets.Cell? bottom = allCells.FirstOrDefault(c => c.Address == bottomAddress);
         if(bottom == null)
         {
-            return current;
+            return;
         }
         current.Add(bottom);
         AddMergedCells(bottom, current, allCells);
-        return GetLeftBottom(bottomAddress, current, allCells);
+        AddLeftBottom(bottomAddress, current, allCells);
+    }
+    private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
+    {
+        int[] columns = [.. current.Select(c => c.Address.Column).Distinct()];
+        int[] rows = [.. current.Select(c => c.Address.Row).Distinct()];
+        foreach(Worksheets.Cell cell in allCells.Where(c => columns.Contains(c.Address.Column) && rows.Contains(c.Address.Row)))
+        {
+            if(current.Any(cu => cu.Address == cell.Address) == false)
+            {
+                current.Add(cell);
+            }
+        }
     }
     private static List<GroupedCells> GroupCells(Worksheets.PrintArea printArea, List<Worksheets.Cell> cells)
     {
