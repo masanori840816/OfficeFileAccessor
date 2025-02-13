@@ -94,16 +94,15 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         AddMergedCells(bottom, current, allCells);
         AddLeftBottom(bottomAddress, current, allCells);
     }
-    private static string MergeCellValues(List<Worksheets.Cell> cells)
+    private string MergeCellValues(List<Worksheets.Cell> cells)
     {
         bool first = true;
         int startColumn = cells.Min(c => c.Address.Column);
         int lastRow = -1;
         string result = "";
         string currentRowText = "";
-        foreach(Worksheets.Cell cell in cells.OrderBy(ce => ce.Address.Column).ThenBy(ce => ce.Address.Row))
+        foreach(Worksheets.Cell cell in cells.OrderBy(ce => ce.Address.Row).ThenBy(ce => ce.Address.Column))
         {
-            
             if(first)
             {
                 lastRow = cell.Address.Row;
@@ -115,8 +114,11 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 {
                     result += "[NEW-LINE]";
                 }
-                result += currentRowText;
-                currentRowText = "[NEW-LINE]";
+                if(string.IsNullOrEmpty(currentRowText) == false)
+                {
+                    result += currentRowText;
+                    currentRowText = "";
+                }
                 lastRow = cell.Address.Row;
             }
             if(string.IsNullOrEmpty(cell.Value) == false)
@@ -131,8 +133,15 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 currentRowText += cell.Value;
                 currentRowText += " ";
             }
+        }        
+        if(string.IsNullOrEmpty(currentRowText) == false)
+        {        
+            if(string.IsNullOrEmpty(result) == false)
+            {
+                result += "[NEW-LINE]";
+            }
+            result += currentRowText;
         }
-        result += currentRowText;
         return result;
     }
     private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
