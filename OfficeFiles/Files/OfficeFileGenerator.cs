@@ -163,7 +163,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             }
             result += currentRowText;
         }
-        return result;
+        return result.Replace("\n", "[NEW-LINE]");
     }
     private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
     {
