@@ -86,7 +86,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         }
         Worksheets.CellAddress bottomAddress = Worksheets.CellAddress.Move(baseAddress, 0, 1);
         Worksheets.Cell? bottom = allCells.FirstOrDefault(c => c.Address == bottomAddress);
-        if(bottom == null)
+        if(bottom == null || bottom.Borders.Top != Worksheets.BorderType.None)
         {
             return;
         }
@@ -94,7 +94,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         AddMergedCells(bottom, current, allCells);
         AddLeftBottom(bottomAddress, current, allCells);
     }
-    private string MergeCellValues(List<Worksheets.Cell> cells)
+    private static string MergeCellValues(List<Worksheets.Cell> cells)
     {
         bool first = true;
         int startColumn = cells.Min(c => c.Address.Column);
