@@ -30,7 +30,6 @@ export type OfficeFileTableGroup = {
     officeFileId: number,
     displayOrder: number,
     sheetName: string,
-    startColumn: number,
     cells: OfficeFileTableCell[],
 }
 export type OfficeFileTableCell = {
@@ -38,9 +37,9 @@ export type OfficeFileTableCell = {
     cellAddress: CellAddress
     verticalLength: number,
     horizontalLength: number,
-    valueType: string,
     value: string,
-    formula: string|null,
+    width: number,
+    height: number,
     borders: CellBorders,
     backgroundColor: string|null,
     editabled: boolean,

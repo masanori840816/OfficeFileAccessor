@@ -6,11 +6,16 @@ import * as authStatusChecker from "./auth/authenticationStatusChecker";
 import { hasAnyTexts } from "./texts/hasAnyTexts";
 import { OfficeFile, RegisterFileResult } from "./officeFileAccessor.type";
 import { OfficeFileArea } from "./components/OfficeFileArea";
+import * as pixels from './numbers/pixelConverter';
 
 export function RegisterPage(): JSX.Element {
   const [files, setFiles] = useState<FileList|null>(null);
   const [officeFile, setOfficeFile] = useState<OfficeFile|null>(null);
   const authContext = useAuthentication();
+  const [dpi, setDpi] = useState(96);
+  useEffect(() => {
+      setDpi(pixels.getDPI())
+  }, []);
   useEffect(() => {
           authStatusChecker.checkStatus(authContext);
       }, [authContext]);
@@ -76,7 +81,7 @@ export function RegisterPage(): JSX.Element {
         <div></div>
       ):
       (
-        <OfficeFileArea file={officeFile} />
+        <OfficeFileArea file={officeFile} dpi={dpi} />
       )}      
     </div>
   );
