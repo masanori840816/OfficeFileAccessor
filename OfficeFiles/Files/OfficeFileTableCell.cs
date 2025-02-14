@@ -11,12 +11,14 @@ public record OfficeFileTableCell
     public int VerticalLength { get; init; } = 1;
     public int HorizontalLength { get; init;} = 1;
     public required string Value { get; init; }
+    public required double Width { get; init; }
+    public required double Height { get; init; }
     public required CellBorders Borders { get; init; }
     public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
 
     public static OfficeFileTableCell Generate(CellAddress baseAddress, string mergedValue, CellBorders borders,
-        string? backgroundColor, MergedCell? mergedCell)
+        string? backgroundColor, MergedCell? mergedCell, double mergedWidth, double mergedHeight)
     {
         int horizontalLength = 1;
         int verticalLength = 1;
@@ -31,6 +33,8 @@ public record OfficeFileTableCell
             HorizontalLength = horizontalLength,
             VerticalLength = verticalLength,
             Value = mergedValue,
+            Width = mergedWidth,
+            Height = mergedHeight,
             Borders = borders,
             BackgroundColor = backgroundColor,
             Editabled = backgroundColor == "FFFF00"

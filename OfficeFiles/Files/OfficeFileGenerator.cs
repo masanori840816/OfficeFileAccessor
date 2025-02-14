@@ -8,6 +8,16 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         public required int DisplayOrder { get; init; }
         public List<Worksheets.Cell> Cells { get; init; } = [];
     }
+    private record TableColumnWidth
+    {
+        public required int Column { get; init; }
+        public required double Width { get; init; }
+    }
+    private record TableRowHeight
+    {
+        public required int Row { get; init; }
+        public required double Height { get; init; }
+    }
     public List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
         List<Worksheets.Cell> cells)
     {
@@ -27,6 +37,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         results.Add(group);
         List<Worksheets.CellAddress> addedAddresses = [];
         List<OfficeFileTableCell> tableCells = [];
+        
+        List<TableColumnWidth> widths = GetWidths(firstGroup.Cells);
+        List<TableRowHeight> heights = GetHeights(firstGroup.Cells);
         foreach(Worksheets.Cell cell in firstGroup.Cells)
         {
             if(addedAddresses.Any(a => cell.Address == a))
@@ -43,7 +56,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             AddMergedCells(cell, mergedCell, firstGroup.Cells);
             AddRightTop(cell.Address, mergedCell, firstGroup.Cells);
             AddLeftBottom(cell.Address, mergedCell, firstGroup.Cells);
-            AddRestCells(mergedCell, firstGroup.Cells);
+            int[] columns = [.. mergedCell.Select(c => c.Address.Column).Distinct()];
+            int[] rows = [.. mergedCell.Select(c => c.Address.Row).Distinct()];
+            AddRestCells(mergedCell, firstGroup.Cells, columns, rows);
             string? backgroundColor = null;
             foreach(Worksheets.Cell c in mergedCell)
             {
@@ -59,9 +74,38 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             }
             group.Cells.Add(
                 OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
-                    backgroundColor, Worksheets.MergedCell.Generate(mergedCell)));
+                    backgroundColor, Worksheets.MergedCell.Generate(mergedCell), 
+                    MergeWidths(mergedCell, columns), MergeHeights(mergedCell, rows)));
         }        
 
+        return results;
+    }
+    private static List<TableColumnWidth> GetWidths(List<Worksheets.Cell> current)
+    {
+        List<TableColumnWidth> results = [];
+        int[] columns = [.. current.Select(c => c.Address.Column).Distinct()];
+        foreach(int column in columns)
+        {
+            Worksheets.Cell cell = current.First(c => c.Address.Column == column);
+            results.Add(new () {
+                Column = cell.Address.Column,
+                Width = cell.Width,
+            });
+        }
+        return results;
+    }
+    private static List<TableRowHeight> GetHeights(List<Worksheets.Cell> current)
+    {
+        List<TableRowHeight> results = [];
+        int[] rows = [.. current.Select(c => c.Address.Row).Distinct()];
+        foreach(int row in rows)
+        {
+            Worksheets.Cell cell = current.First(c => c.Address.Row == row);
+            results.Add(new () {
+                Row = cell.Address.Row,
+                Height = cell.Height,
+            });
+        }
         return results;
     }
     private static void AddMergedCells(Worksheets.Cell cell, List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
@@ -165,10 +209,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         }
         return result.Replace("\n", "[NEW-LINE]");
     }
-    private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
+    private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells,
+        int[] columns, int[] rows)
     {
-        int[] columns = [.. current.Select(c => c.Address.Column).Distinct()];
-        int[] rows = [.. current.Select(c => c.Address.Row).Distinct()];
         foreach(Worksheets.Cell cell in allCells.Where(c => columns.Contains(c.Address.Column) && rows.Contains(c.Address.Row)))
         {
             if(current.Any(cu => cu.Address == cell.Address) == false)
@@ -176,6 +219,26 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 current.Add(cell);
             }
         }
+    }
+    private static double MergeWidths(List<Worksheets.Cell> cells, int[] columns)
+    {
+        double result = 0d;
+        foreach(int column in columns)
+        {
+            Worksheets.Cell cell = cells.First(c => c.Address.Column == column);
+            result += cell.Width;
+        }
+        return result;
+    }
+    private static double MergeHeights(List<Worksheets.Cell> cells, int[] rows)
+    {
+        double result = 0d;
+        foreach(int row in rows)
+        {
+            Worksheets.Cell cell = cells.First(c => c.Address.Row == row);
+            result += cell.Height;
+        }
+        return result;
     }
     private static List<GroupedCells> GroupCells(Worksheets.PrintArea printArea, List<Worksheets.Cell> cells)
     {
