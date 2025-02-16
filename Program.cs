@@ -126,7 +126,7 @@ try
                 new CookieOptions { 
                     HttpOnly = false,
                     SameSite = SameSiteMode.Lax,
-                    Expires = DateTime.Now.AddSeconds(30),
+                    Expires = DateTime.Now.AddMinutes(180),
                 });
             }
         }

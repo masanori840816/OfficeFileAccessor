@@ -17,7 +17,7 @@ public class UserTokens(IConfiguration Config): IUserTokens
                     [
                         new Claim(ClaimTypes.Email, user?.Email ?? "-_-")
                     ],
-                    expires: DateTime.Now.AddSeconds(30),
+                    expires: DateTime.Now.AddMinutes(180),
                     signingCredentials: new SigningCredentials(
                         new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Config["Jwt:Key"] ?? "")),
                         SecurityAlgorithms.HmacSha256)));
