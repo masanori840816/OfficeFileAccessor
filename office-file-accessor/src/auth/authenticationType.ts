@@ -4,7 +4,8 @@ export type AuthenticationType = {
     signedIn: SignedInUser|null,
     signIn: (email: string, password: string) => Promise<ApplicationResult>,
     signOut: () => Promise<boolean>,
-    check: () => Promise<boolean>
+    check: () => Promise<boolean>,
+    getSignedinUser: () => Promise<boolean>,
 }
 export type SignInResult = {
     result: ApplicationResult,

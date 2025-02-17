@@ -57,7 +57,22 @@ export const AuthenticationProvider = ({children}: { children: ReactNode }) => {
             method: "GET",
         })
         .then(res => res.ok);
-    return <AuthenticationContext.Provider value={{ signedIn, signIn, signOut, check }}>
+    const getSignedinUser = async (): Promise<boolean> => {
+        const res = await fetch(`${getServerUrl()}/api/users/`, {
+            mode: "cors",
+            method: "GET",
+        });
+        if(res.ok) {
+            const result = await res.json();
+            if(hasAnyTexts(result?.userName)) {
+                setSignedIn(result);
+                return true;
+            }
+        }
+        setSignedIn(null);
+        return false;
+    };
+    return <AuthenticationContext.Provider value={{ signedIn, signIn, signOut, check, getSignedinUser }}>
         {children}
     </AuthenticationContext.Provider>
 }

@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -33,5 +34,10 @@ public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUse
             });
         }
         return Ok();
+    }
+    [HttpGet("/api/users")]
+    public async Task<IActionResult> GetSignedInUser()
+    {
+        return Json(await Users.GetSignedInUserAsync(User));
     }
 }
