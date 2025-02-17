@@ -3,7 +3,7 @@ import {
   BrowserRouter as Router,
   Route,
   Routes
-} from "react-router-dom";
+} from 'react-router-dom';
 import { IndexPage } from './IndexPage';
 import { RegisterPage } from './RegisterPage';
 import { SigninPage } from './SigninPage';
@@ -16,14 +16,14 @@ function App() {
   return (
     <>
       <AuthenticationProvider>
-        <Router basename='/officefiles'>
+        <Router basename='/officefiles/'>
         <GlobalHeader />
         <Routes>
-          <Route path="/pages/signin" element={<SigninPage />} />
-          <Route path="/" element={<IndexPage />} />
-          <Route path="/pages/" element={<IndexPage />} />
-          <Route path="/pages/register" element={<RegisterPage />} />
-          <Route path="/pages/user" element={<UserPage />} />
+          <Route path='/pages/signin/' element={<SigninPage />} />
+          <Route path='/' element={<SigninPage />} />
+          <Route path='/pages/' element={<IndexPage />} />
+          <Route path='/pages/register/' element={<RegisterPage />} />
+          <Route path='/pages/user/' element={<UserPage />} />
         </Routes  >
         </Router>
       </AuthenticationProvider>
