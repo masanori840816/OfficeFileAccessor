@@ -119,6 +119,8 @@ try
         if (string.Equals(requestPath, "/officefiles/pages/signin/", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(requestPath, "/pages/signin/", StringComparison.OrdinalIgnoreCase))
         {
+            // Remove last token
+            context.Response.Cookies.Delete("User-Token");
             AntiforgeryTokenSet tokenSet = antiforgery.GetAndStoreTokens(context);
             if(tokenSet.RequestToken != null)
             {
