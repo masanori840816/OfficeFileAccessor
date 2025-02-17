@@ -30,4 +30,11 @@ public record CellBorders
             Bottom = BorderType.Thin,
         };
     }
+    public bool CheckIsBordered()
+    {
+        return Left != BorderType.None ||
+                    Top != BorderType.None ||
+                    Right != BorderType.None ||
+                    Bottom != BorderType.None;
+    }
 }

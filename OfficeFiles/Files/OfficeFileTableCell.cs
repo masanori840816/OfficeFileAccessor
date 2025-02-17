@@ -16,7 +16,21 @@ public record OfficeFileTableCell
     public required CellBorders Borders { get; init; }
     public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
-
+    public static OfficeFileTableCell Generate(Cell cell)
+    {
+        return new ()
+        {
+            CellAddress = cell.Address,
+            HorizontalLength = 1,
+            VerticalLength = 1,
+            Value = cell.Value,
+            Width = cell.Width,
+            Height = cell.Height,
+            Borders = cell.Borders,
+            BackgroundColor = cell.BackgroundColor,
+            Editabled = cell.BackgroundColor == "FFFF00"
+        };
+    }
     public static OfficeFileTableCell Generate(CellAddress baseAddress, string mergedValue, CellBorders borders,
         string? backgroundColor, MergedCell? mergedCell, double mergedWidth, double mergedHeight)
     {

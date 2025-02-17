@@ -26,58 +26,66 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         Worksheets.CellBorders allThin = Worksheets.CellBorders.GetAllThin();
         
         List<OfficeFileTableGroup> results = [];
-
-        // TODO: for all groups
-        GroupedCells firstGroup = groupedCells.First(g => g.Cells.Any(c => c.Borders.Left != Worksheets.BorderType.None));
-        OfficeFileTableGroup group = new ()
+        foreach(GroupedCells g in groupedCells)
         {
-            DisplayOrder = results.Count,
-            SheetName = sheetName,
-        };
-        results.Add(group);
-        List<Worksheets.CellAddress> addedAddresses = [];
-        List<OfficeFileTableCell> tableCells = [];
+            OfficeFileTableGroup group = new ()
+            {
+                DisplayOrder = results.Count,
+                SheetName = sheetName,
+            };
+            results.Add(group);
+            List<Worksheets.CellAddress> addedAddresses = [];
+            List<OfficeFileTableCell> tableCells = [];
+            
+            List<TableColumnWidth> widths = GetWidths(g.Cells);
+            List<TableRowHeight> heights = GetHeights(g.Cells);
+
+            if(g.Cells.Any(c => c.Borders.CheckIsBordered()) == false)
+            {
+                foreach(Worksheets.Cell c in g.Cells)
+                {
+                    group.Cells.Add(OfficeFileTableCell.Generate(c));
+                }
+                continue;
+            }
+            foreach(Worksheets.Cell cell in g.Cells)
+            {
+                if(addedAddresses.Any(a => cell.Address == a))
+                {
+                    continue;
+                }
+                if(cell.Borders.Left == Worksheets.BorderType.None ||
+                    cell.Borders.Top == Worksheets.BorderType.None)
+                {
+                    continue;
+                }
+                List<Worksheets.Cell> mergedCell = [cell];
+                AddMergedCells(cell, mergedCell, g.Cells);
+                AddRightTop(cell.Address, mergedCell, g.Cells);
+                AddLeftBottom(cell.Address, mergedCell, g.Cells);
+                int[] columns = [.. mergedCell.Select(c => c.Address.Column).Distinct()];
+                int[] rows = [.. mergedCell.Select(c => c.Address.Row).Distinct()];
+                AddRestCells(mergedCell, g.Cells, columns, rows);
+                string? backgroundColor = null;
+                foreach(Worksheets.Cell c in mergedCell)
+                {
+                    if(c.BackgroundColor == "FFFF00")
+                    {
+                        backgroundColor = c.BackgroundColor;
+                        break;
+                    }
+                    if(string.IsNullOrEmpty(c.BackgroundColor) == false)
+                    {
+                        backgroundColor = c.BackgroundColor;
+                    }
+                }
+                group.Cells.Add(
+                    OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
+                        backgroundColor, Worksheets.MergedCell.Generate(mergedCell), 
+                        MergeWidths(mergedCell, columns), MergeHeights(mergedCell, rows)));
+            }
+        }
         
-        List<TableColumnWidth> widths = GetWidths(firstGroup.Cells);
-        List<TableRowHeight> heights = GetHeights(firstGroup.Cells);
-        foreach(Worksheets.Cell cell in firstGroup.Cells)
-        {
-            if(addedAddresses.Any(a => cell.Address == a))
-            {
-                continue;
-            }
-
-            if(cell.Borders.Left == Worksheets.BorderType.None ||
-                cell.Borders.Top == Worksheets.BorderType.None)
-            {
-                continue;
-            }
-            List<Worksheets.Cell> mergedCell = [cell];
-            AddMergedCells(cell, mergedCell, firstGroup.Cells);
-            AddRightTop(cell.Address, mergedCell, firstGroup.Cells);
-            AddLeftBottom(cell.Address, mergedCell, firstGroup.Cells);
-            int[] columns = [.. mergedCell.Select(c => c.Address.Column).Distinct()];
-            int[] rows = [.. mergedCell.Select(c => c.Address.Row).Distinct()];
-            AddRestCells(mergedCell, firstGroup.Cells, columns, rows);
-            string? backgroundColor = null;
-            foreach(Worksheets.Cell c in mergedCell)
-            {
-                if(c.BackgroundColor == "FFFF00")
-                {
-                    backgroundColor = c.BackgroundColor;
-                    break;
-                }
-                if(string.IsNullOrEmpty(c.BackgroundColor) == false)
-                {
-                    backgroundColor = c.BackgroundColor;
-                }
-            }
-            group.Cells.Add(
-                OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
-                    backgroundColor, Worksheets.MergedCell.Generate(mergedCell), 
-                    MergeWidths(mergedCell, columns), MergeHeights(mergedCell, rows)));
-        }        
-
         return results;
     }
     private static List<TableColumnWidth> GetWidths(List<Worksheets.Cell> current)
@@ -244,12 +252,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     {
         Worksheets.Cell[] ordered = [.. cells.OrderBy(c => c.Address.Row).ThenBy(c => c.Address.Column)];
         List<GroupedCells> results = [];
-        GroupedCells lastGroup = new ()
-        {
-            StartColumn = printArea.Start.Column,
-            DisplayOrder = 0,
-        };
-        results.Add(lastGroup);
+        GroupedCells? lastGroup = null;
         List<int> startColumns = [];
         for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
         {
@@ -270,6 +273,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 if(startColumns.Count <= 1)
                 {
+                    lastGroup = GetOrCreateGroup(lastGroup, cell, results);
                     lastGroup.Cells.Add(cell);
                     continue;
                 }
@@ -293,23 +297,30 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     }
                     nextColumn = GetNextColumn(printArea, startColumns, nextColumn);
                 }
+                lastGroup = GetOrCreateGroup(lastGroup, cell, results);
                 lastGroup.Cells.Add(cell);
             }
             if(groupEnded)
             {
                 groupEnded = false;
                 startColumns.Clear();
-                nextColumn = printArea.Start.Column;
-                GroupedCells nextGroup = new ()
-                {
-                    StartColumn = printArea.Start.Column,
-                    DisplayOrder = results.Count,
-                };
-                results.Add(nextGroup);
-                lastGroup = nextGroup;
+                lastGroup = null;
             }
         }
         return results;
+    }
+    private static GroupedCells GetOrCreateGroup(GroupedCells? currentGroup, Worksheets.Cell currentCell, List<GroupedCells> groupedCells)
+    {
+        if(currentGroup == null)
+        {
+            currentGroup = new ()
+            {
+                StartColumn = currentCell.Address.Column,
+                DisplayOrder = groupedCells.Count,
+            };
+            groupedCells.Add(currentGroup);
+        }
+        return currentGroup;
     }
     private static List<int> GetStartGroupColumns(List<Worksheets.Cell> cells, int row, Worksheets.PrintArea printArea)
     {
