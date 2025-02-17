@@ -20,7 +20,7 @@ function App() {
         <GlobalHeader />
         <Routes>
           <Route path='/pages/signin/' element={<SigninPage />} />
-          <Route path='/' element={<SigninPage />} />
+          <Route path='/' element={<RegisterPage />} />
           <Route path='/pages/' element={<IndexPage />} />
           <Route path='/pages/register/' element={<RegisterPage />} />
           <Route path='/pages/user/' element={<UserPage />} />
