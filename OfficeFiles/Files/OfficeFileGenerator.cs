@@ -8,16 +8,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         public required int DisplayOrder { get; init; }
         public List<Worksheets.Cell> Cells { get; init; } = [];
     }
-    private record TableColumnWidth
-    {
-        public required int Column { get; init; }
-        public required double Width { get; init; }
-    }
-    private record TableRowHeight
-    {
-        public required int Row { get; init; }
-        public required double Height { get; init; }
-    }
     public List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
         List<Worksheets.Cell> cells)
     {
@@ -37,14 +27,14 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             List<Worksheets.CellAddress> addedAddresses = [];
             List<OfficeFileTableCell> tableCells = [];
             
-            List<TableColumnWidth> widths = GetWidths(g.Cells);
-            List<TableRowHeight> heights = GetHeights(g.Cells);
+            List<OfficeFileTableColumnWidth> widths = GetWidths(g.Cells);
+            List<OfficeFileTableRowHeight> heights = GetHeights(g.Cells);
 
             if(g.Cells.Any(c => c.Borders.CheckIsBordered()) == false)
             {
                 foreach(Worksheets.Cell c in g.Cells)
                 {
-                    group.Cells.Add(OfficeFileTableCell.Generate(c));
+                    group.Cells.Add(OfficeFileTableCell.Generate(c, widths, heights));
                 }
                 continue;
             }
@@ -88,31 +78,29 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         
         return results;
     }
-    private static List<TableColumnWidth> GetWidths(List<Worksheets.Cell> current)
+    private static List<OfficeFileTableColumnWidth> GetWidths(List<Worksheets.Cell> current)
     {
-        List<TableColumnWidth> results = [];
+        List<OfficeFileTableColumnWidth> results = [];
         int[] columns = [.. current.Select(c => c.Address.Column).Distinct()];
         foreach(int column in columns)
         {
             Worksheets.Cell cell = current.First(c => c.Address.Column == column);
-            results.Add(new () {
-                Column = cell.Address.Column,
-                Width = cell.Width,
-            });
+            results.Add(new (
+                Column: cell.Address.Column,
+                Width: cell.Width));
         }
         return results;
     }
-    private static List<TableRowHeight> GetHeights(List<Worksheets.Cell> current)
+    private static List<OfficeFileTableRowHeight> GetHeights(List<Worksheets.Cell> current)
     {
-        List<TableRowHeight> results = [];
+        List<OfficeFileTableRowHeight> results = [];
         int[] rows = [.. current.Select(c => c.Address.Row).Distinct()];
         foreach(int row in rows)
         {
             Worksheets.Cell cell = current.First(c => c.Address.Row == row);
-            results.Add(new () {
-                Row = cell.Address.Row,
-                Height = cell.Height,
-            });
+            results.Add(new (
+                Row: cell.Address.Row,
+                Height: cell.Height));
         }
         return results;
     }

@@ -16,16 +16,45 @@ public record OfficeFileTableCell
     public required CellBorders Borders { get; init; }
     public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
-    public static OfficeFileTableCell Generate(Cell cell)
+    public static OfficeFileTableCell Generate(Cell cell, List<OfficeFileTableColumnWidth> widths, List<OfficeFileTableRowHeight> heights)
     {
+        int horizontalLength = 1;
+        int verticalLength = 1;
+        double width = 0d;
+        double height = 0d;
+        if(cell.MergedCell == null)
+        {
+            width = cell.Width;
+            height = cell.Height;
+        }
+        else
+        {
+            horizontalLength = cell.MergedCell.End.Column - cell.MergedCell.Start.Column + 1;
+            verticalLength = cell.MergedCell.End.Row - cell.MergedCell.Start.Row + 1;
+            foreach(OfficeFileTableColumnWidth w in widths)
+            {
+                if(cell.MergedCell.Start.Column <= w.Column && cell.MergedCell.End.Column >= w.Column)
+                {
+                    width += w.Width;
+                }
+            }
+            foreach(OfficeFileTableRowHeight h in heights)
+            {
+                if(cell.MergedCell.Start.Row <= h.Row && cell.MergedCell.End.Row >= h.Row)
+                {
+                    height += h.Height;
+                }
+            }
+        }
+
         return new ()
         {
             CellAddress = cell.Address,
-            HorizontalLength = 1,
-            VerticalLength = 1,
+            HorizontalLength = horizontalLength,
+            VerticalLength = verticalLength,
             Value = cell.Value,
-            Width = cell.Width,
-            Height = cell.Height,
+            Width = width,
+            Height = height,
             Borders = cell.Borders,
             BackgroundColor = cell.BackgroundColor,
             Editabled = cell.BackgroundColor == "FFFF00"
