@@ -2,6 +2,7 @@ namespace OfficeFileAccessor.OfficeFiles.Files;
 
 public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFileGenerator
 {
+    private record TitleCellAddresses(string Title, List<Worksheets.CellAddress> Addresses);
     private record GroupedCells
     {
         public required int StartColumn { get; init; }
@@ -32,9 +33,36 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
 
             if(g.Cells.Any(c => c.Borders.CheckIsBordered()) == false)
             {
-                foreach(Worksheets.Cell c in g.Cells)
+                if(results.Count <= 1)
                 {
-                    group.Cells.Add(OfficeFileTableCell.Generate(c, widths, heights));
+                    TitleCellAddresses? titles = null;
+                    foreach(Worksheets.Cell c in g.Cells)
+                    {
+                        if(titles == null)
+                        {
+                            titles = GetTitle(c, g.Cells);
+                            if(titles != null)
+                            {
+                                group.Title = titles.Title;
+                            }
+                            continue;
+                        }
+                        if(string.IsNullOrEmpty(c.Value) == false &&
+                            titles.Addresses.Any(a => a == c.Address) == false)
+                        {
+                            group.Cells.Add(OfficeFileTableCell.Generate(c, widths, heights));
+                        }
+                    }
+                }
+                else
+                {
+                    foreach(Worksheets.Cell c in g.Cells)
+                    {
+                        if(string.IsNullOrEmpty(c.Value) == false)
+                        {
+                            group.Cells.Add(OfficeFileTableCell.Generate(c, widths, heights));
+                        }
+                    }
                 }
                 continue;
             }
@@ -77,6 +105,29 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         }
         
         return results;
+    }
+    private static TitleCellAddresses? GetTitle(Worksheets.Cell cell, List<Worksheets.Cell> cells)
+    {
+        if(string.IsNullOrEmpty(cell.Value))
+        {
+            return null;
+        }
+        string title = cell.Value;
+        List<Worksheets.CellAddress> addresses = [cell.Address];
+        int offset = 1;
+        while(true)
+        {
+            Worksheets.CellAddress next = Worksheets.CellAddress.Move(cell.Address, offset, 0);
+            Worksheets.Cell? nextCell = cells.FirstOrDefault(c => c.Address == next);
+            if(string.IsNullOrEmpty(nextCell?.Value))
+            {
+                break;
+            }
+            title += nextCell.Value;
+            addresses.Add(next);
+            offset += 1;
+        }
+        return new (Title: title, Addresses: addresses);
     }
     private static List<OfficeFileTableColumnWidth> GetWidths(List<Worksheets.Cell> current)
     {
