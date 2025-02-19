@@ -44,11 +44,11 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                             if(titles != null)
                             {
                                 group.Title = titles.Title;
+                                continue;
                             }
-                            continue;
                         }
                         if(string.IsNullOrEmpty(c.Value) == false &&
-                            titles.Addresses.Any(a => a == c.Address) == false)
+                            (titles == null || titles.Addresses.Any(a => a == c.Address) == false))
                         {
                             group.Cells.Add(OfficeFileTableCell.Generate(c, widths, heights));
                         }
@@ -109,6 +109,10 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     private static TitleCellAddresses? GetTitle(Worksheets.Cell cell, List<Worksheets.Cell> cells)
     {
         if(string.IsNullOrEmpty(cell.Value))
+        {
+            return null;
+        }
+        if(cell.FontFormat?.Bold != true)
         {
             return null;
         }

@@ -7,7 +7,7 @@ public record OfficeFileTableCell
 {
     public long? Id { get; init; }
     public required CellAddress CellAddress { get; init; }
-
+    public CellFontFormat? FontFormat { get; init; }
     public int VerticalLength { get; init; } = 1;
     public int HorizontalLength { get; init;} = 1;
     public required string Value { get; init; }
@@ -50,6 +50,7 @@ public record OfficeFileTableCell
         return new ()
         {
             CellAddress = cell.Address,
+            FontFormat = cell.FontFormat,
             HorizontalLength = horizontalLength,
             VerticalLength = verticalLength,
             Value = cell.Value,
