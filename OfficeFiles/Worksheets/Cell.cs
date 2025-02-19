@@ -10,6 +10,7 @@ public class Cell
     public required double Width { get; init; }
     public required double Height { get; init; }
     public string? BackgroundColor { get; init; }
+    public CellFontFormat? FontFormat { get; init; }
     public required CellBorders Borders { get; init; }
     // Only the start cell of a merged cell has this value.
     public MergedCell? MergedCell { get; init; }
@@ -17,7 +18,7 @@ public class Cell
 
     public override string ToString()
     {
-        return $"Cell Address:{Address} Type:{Type} Formula:{Formula} Value:{Value} W: {Width} H: {Height} BackgroundColor: {BackgroundColor} {Borders} Merged?: {Merged} {MergedCell}";
+        return $"Cell Address:{Address} Type:{Type} Formula:{Formula} Value:{Value} W: {Width} H: {Height} BackgroundColor: {BackgroundColor} {FontFormat} {Borders} Merged?: {Merged} {MergedCell}";
     }
     public static Cell Default(string? address, double width, double height)
     {

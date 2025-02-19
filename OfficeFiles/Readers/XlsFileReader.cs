@@ -145,10 +145,13 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height,
         List<Worksheets.MergedCell> mergedCells)
     {
+        CellFormat? cellFormat = GetCellFormat(bookPart, cell);
         // Borders
-        Worksheets.CellBorders borders = GetBorders(bookPart, cell);
+        Worksheets.CellBorders borders = GetBorders(bookPart, cellFormat);
         // Background color
-        string? backgroundColor = GetCellColor(cell, bookPart);
+        string? backgroundColor = GetCellColor(bookPart, cellFormat);
+        Worksheets.CellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
+        
         // Formula
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
@@ -186,6 +189,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 Width = width,
                 Height = height,
                 BackgroundColor = backgroundColor,
+                FontFormat = cellFontFormat,
                 Borders = borders,
                 Merged = merged,
                 MergedCell = mergedCell,
@@ -217,6 +221,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     Width = width,
                     Height = height,
                     BackgroundColor = backgroundColor,
+                    FontFormat = cellFontFormat,
                     Borders = borders,
                     Merged = merged,
                     MergedCell = mergedCell,
@@ -239,6 +244,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             Width = width,
             Height = height,
             BackgroundColor = backgroundColor,
+            FontFormat = cellFontFormat,
             Borders = borders,
             Merged = merged,
             MergedCell = mergedCell,
@@ -310,38 +316,47 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return results;
     }
-    private static Worksheets.CellBorders GetBorders(WorkbookPart bookPart, Cell cell)
+    private static CellFormat? GetCellFormat(WorkbookPart bookPart, Cell cell)
     {
         if(cell.StyleIndex?.Value == null)
         {
-            return Worksheets.CellBorders.GetNoBorders();
+            return null;
         }
-        CellFormat? cellFormat = bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
+        return bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
+    }
+    private static Worksheets.CellFontFormat? GetFontFormat(WorkbookPart bookPart, CellFormat? cellFormat)
+    {
+        if(cellFormat?.FontId?.Value == null)
+        {
+            return null;
+        }
+        if (bookPart.WorkbookStylesPart?.Stylesheet?.Fonts?.ElementAt((int)cellFormat.FontId.Value) is Font font)
+        {
+            return new (FontName: font.FontName?.Val, FontSize: font.FontSize?.Val?.Value,
+                FontColor: font.Color?.Rgb, Bold: font?.Bold != null);
+        }
+        return null;
+    }
+    private static Worksheets.CellBorders GetBorders(WorkbookPart bookPart, CellFormat? cellFormat)
+    {
         if(cellFormat?.BorderId?.Value != null)
         {
-            Border? border = bookPart.WorkbookStylesPart?.Stylesheet?.Borders?.ElementAt(
-                    (int)cellFormat.BorderId.Value) as Border;
-            if(border != null)
+            if (bookPart.WorkbookStylesPart?.Stylesheet?.Borders?.ElementAt(
+                    (int)cellFormat.BorderId.Value) is Border border)
             {
-                return new ()
+                return new()
                 {
                     Left = Worksheets.BorderTypeFactory.Get(border?.LeftBorder?.Style?.InnerText),
                     Top = Worksheets.BorderTypeFactory.Get(border?.TopBorder?.Style?.InnerText),
                     Right = Worksheets.BorderTypeFactory.Get(border?.RightBorder?.Style?.InnerText),
                     Bottom = Worksheets.BorderTypeFactory.Get(border?.BottomBorder?.Style?.InnerText),
                 };
-            }            
+            }
         }
         return Worksheets.CellBorders.GetNoBorders();
     }
-    private static string? GetCellColor(Cell cell, WorkbookPart bookPart)
+    private static string? GetCellColor(WorkbookPart bookPart, CellFormat? cellFormat)
     {
-        uint? styleIndex = cell.StyleIndex?.Value;
-        if(styleIndex == null)
-        {
-            return null;
-        }
-        CellFormat? cellFormat = bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)styleIndex) as CellFormat;
         if (cellFormat?.FillId != null)
         {
             Fill? fill = bookPart.WorkbookStylesPart?.Stylesheet?.Fills?.ElementAt((int)cellFormat.FillId.Value) as Fill;
@@ -366,8 +381,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             {
                 return themeColor;
             }
-        }
-    
+        }    
         return null;
     }
     private static string? GetRgbColor(HexBinaryValue? rgb)
