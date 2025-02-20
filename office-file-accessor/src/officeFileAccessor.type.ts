@@ -30,11 +30,13 @@ export type OfficeFileTableGroup = {
     officeFileId: number,
     displayOrder: number,
     sheetName: string,
+    title: string|null,
     cells: OfficeFileTableCell[],
 }
 export type OfficeFileTableCell = {
     id: number,
-    cellAddress: CellAddress
+    cellAddress: CellAddress,
+    fontFormat: CellFontFormat|null,
     verticalLength: number,
     horizontalLength: number,
     value: string,
@@ -43,4 +45,10 @@ export type OfficeFileTableCell = {
     borders: CellBorders,
     backgroundColor: string|null,
     editabled: boolean,
+};
+export type CellFontFormat = {
+    fontName: string|null,
+    fontSize: number|null,
+    fontColor: string|null,
+    bold: boolean,
 };
