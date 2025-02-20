@@ -97,6 +97,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         backgroundColor = c.BackgroundColor;
                     }
                 }
+                addedAddresses.AddRange(mergedCell.Select(c => c.Address));
                 group.Cells.Add(
                     OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell), 
