@@ -1,6 +1,6 @@
 import React from "react";
 import { OfficeFile } from "../officeFileAccessor.type";
-import { TableGroupArea } from "./TableGroupArea";
+import { OfficeFileSheetArea } from "./OfficeFileSheetArea";
 
 export interface OfficeFileAreaProps {
     file: OfficeFile,
@@ -10,12 +10,9 @@ export const OfficeFileArea: React.FC<OfficeFileAreaProps> = ({file, dpi}) => {
     
     return <>
         <h2>{file.fileName}</h2>
-        {file.tableGroups.map((g, index) => (
+        {file.sheets.map((s, index) => (
             <React.Fragment key={index}>
-                {index === 0 || file.tableGroups[index - 1].sheetName !== g.sheetName ? (
-                    <div>{g.sheetName}</div>           
-                ) : null}
-                <div><TableGroupArea key={index} group={g} dpi={dpi} /></div>
+                <div><OfficeFileSheetArea key={index} sheet={s} dpi={dpi} /></div>
             </React.Fragment>
         ))}
     </>;

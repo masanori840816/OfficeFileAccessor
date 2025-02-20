@@ -1,10 +1,12 @@
-import { OfficeFileTableGroup } from "../officeFileAccessor.type";
+import { OfficeFileTableColumnWidth, OfficeFileTableGroup, OfficeFileTableRowHeight } from "../officeFileAccessor.type";
 import { hasAnyTexts } from "../texts/hasAnyTexts";
 import { TableCell } from "./TableCell";
 
 export interface TableGroupAreaProps {
     group: OfficeFileTableGroup,
     dpi: number,
+    widths: OfficeFileTableColumnWidth[],
+    heights: OfficeFileTableRowHeight[],
 }
 export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi}) => {
     return <>

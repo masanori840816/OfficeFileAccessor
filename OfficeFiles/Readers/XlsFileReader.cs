@@ -27,7 +27,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         OfficeFile result = new ()
         {
-            Name = file.FileName,
             FileName = file.FileName,
             MimeType = file.ContentType,
         };
@@ -134,8 +133,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     }
                 }
             }
-            List<OfficeFileTableGroup> groups = FileGenerator.Generate(sheetName, printArea, cells);
-            result.TableGroups.AddRange(groups);
+            OfficeFileSheet sheet = new ()
+            {
+                Name = sheetName,
+                TableGroups = FileGenerator.Generate(sheetName, printArea, cells),
+                Widths = GetWidths(cells),
+                Heights = GetHeights(cells),
+            };
+            result.Sheets.Add(sheet);
                         
             // TODO: uncomment after testing
             break;
@@ -446,5 +451,31 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             }
         }
         return Worksheets.PrintArea.DefaultPrintArea();
+    }
+    private static List<OfficeFileTableColumnWidth> GetWidths(List<Worksheets.Cell> cells)
+    {
+        List<OfficeFileTableColumnWidth> results = [];
+        int[] columns = [.. cells.Select(c => c.Address.Column).Distinct()];
+        foreach(int column in columns)
+        {
+            Worksheets.Cell cell = cells.First(c => c.Address.Column == column);
+            results.Add(new (
+                Column: cell.Address.Column,
+                Width: cell.Width));
+        }
+        return results;
+    }
+    private static List<OfficeFileTableRowHeight> GetHeights(List<Worksheets.Cell> cells)
+    {
+        List<OfficeFileTableRowHeight> results = [];
+        int[] rows = [.. cells.Select(c => c.Address.Row).Distinct()];
+        foreach(int row in rows)
+        {
+            Worksheets.Cell cell = cells.First(c => c.Address.Row == row);
+            results.Add(new (
+                Row: cell.Address.Row,
+                Height: cell.Height));
+        }
+        return results;
     }
 }

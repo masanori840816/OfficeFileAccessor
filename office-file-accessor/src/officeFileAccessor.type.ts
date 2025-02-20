@@ -23,13 +23,20 @@ export type OfficeFile = {
     name: string,
     fileName: string,
     mimeType: string,
-    tableGroups: OfficeFileTableGroup[],    
+    sheets: OfficeFileSheet[],
 }
-export type OfficeFileTableGroup = {
+export type OfficeFileSheet = {
     id: number,
     officeFileId: number,
+    name: string,
+    widths: OfficeFileTableColumnWidth[],
+    heights: OfficeFileTableRowHeight[],
+    tableGroups: OfficeFileTableGroup[],
+};
+export type OfficeFileTableGroup = {
+    id: number,
+    sheetId: number,
     displayOrder: number,
-    sheetName: string,
     title: string|null,
     cells: OfficeFileTableCell[],
 }
@@ -40,8 +47,6 @@ export type OfficeFileTableCell = {
     verticalLength: number,
     horizontalLength: number,
     value: string,
-    width: number,
-    height: number,
     borders: CellBorders,
     backgroundColor: string|null,
     editabled: boolean,
@@ -51,4 +56,12 @@ export type CellFontFormat = {
     fontSize: number|null,
     fontColor: string|null,
     bold: boolean,
+};
+export type OfficeFileTableColumnWidth = {
+    column: number,
+    width: number,
+};
+export type OfficeFileTableRowHeight = {
+    row: number,
+    height: number,
 };
