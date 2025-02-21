@@ -7,6 +7,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     {
         public required int StartColumn { get; init; }
         public required int DisplayOrder { get; init; }
+        public required bool Ended { get; set; }
         public List<Worksheets.Cell> Cells { get; init; } = [];
     }
     public List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
@@ -228,6 +229,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             }
             result += currentRowText;
         }
+        result = result.Replace("\r\n", "[NEW-LINE]");
         return result.Replace("\n", "[NEW-LINE]");
     }
     private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells,
@@ -255,6 +257,14 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 startColumns = GetStartGroupColumns(cells, row, printArea);                
                 nextColumn = GetNextColumn(printArea, startColumns, nextColumn);
+                if(startColumns.Count > 1)
+                {
+                    if(lastGroup != null)
+                    {
+                        lastGroup.Ended = true;
+                    }
+                    lastGroup = null;
+                }
             }
             else if(CheckIsEndGroupRow(cells, row, printArea, startColumns))
             {
@@ -273,13 +283,14 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 int column = cell.Address.Column;
                 if(column >= nextColumn)
                 {                    
-                    GroupedCells? nextGroup = results.FirstOrDefault(g => g.StartColumn == column);
+                    GroupedCells? nextGroup = results.FirstOrDefault(g => g.Ended == false && g.StartColumn == column);
                     if(nextGroup == null)
                     {
                         nextGroup = new ()
                         {
                             StartColumn = column,
                             DisplayOrder = results.Count,
+                            Ended = false,
                         };
                         results.Add(nextGroup);
                         lastGroup = nextGroup;
@@ -298,6 +309,13 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 groupEnded = false;
                 startColumns.Clear();
                 lastGroup = null;
+                for(int i = 0; i < results.Count; i++)
+                {
+                    if(results[i].Cells.Any(c => c.Address.Row == row))
+                    {
+                        results[i].Ended = true;
+                    }
+                }
             }
         }
         return results;
@@ -310,6 +328,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 StartColumn = currentCell.Address.Column,
                 DisplayOrder = groupedCells.Count,
+                Ended = false,
             };
             groupedCells.Add(currentGroup);
         }
@@ -377,11 +396,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 continue;
             }
-            if(cells[i].Borders.Left == Worksheets.BorderType.None ||
-                    cells[i].Borders.Bottom == Worksheets.BorderType.None)
-            {
-                continue;
-            }
             int nextRow = row + 1;
             if(cells.Any(c => c.Address.Row == nextRow &&
                 (c.Borders.Left != Worksheets.BorderType.None ||
@@ -391,7 +405,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 return true;
             }
         }
-
         return false;
     }
     private static int GetNextColumn(Worksheets.PrintArea printArea, List<int> startColumns, int nextColumn)
