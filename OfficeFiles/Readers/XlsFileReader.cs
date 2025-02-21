@@ -105,33 +105,22 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             }
             List<Worksheets.Cell> cells = [];
             
-            foreach(Row row in targetSheet.Descendants<Row>())
+            for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
             {
-                double height = DefaultHeight;
-                if(row.Height?.Value != null)
-                {
-                    height = Numbers.ConvertFromPointToCentimeter(row.Height.Value);
-                }
-                uint? rowIndex = row.RowIndex?.Value;
-                if(rowIndex == null)
-                {
-                    continue;
-                }
                 for(int column = printArea.Start.Column; column <= printArea.End.Column; column++)
                 {
                     string columnName = SheetFunc.AddressConverter.ConvertIndexToAlphabet(column);
-                    string cellReference = columnName + rowIndex;
-                    Cell? cell = row.Elements<Cell>()?.FirstOrDefault(c => 
+                    string cellReference = columnName + row;
+                    Cell? cell = targetSheet.Descendants<Cell>()?.FirstOrDefault(c => 
                         c.CellReference?.Value != null && c.CellReference.Value == cellReference);
-                    double? width = allWidths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
-                    width ??= DefaultWidth;
+                    
                     if(cell == null)
                     {
-                        cells.Add(Worksheets.Cell.Default(cellReference, (double)width, height));
+                        cells.Add(Worksheets.Cell.Default(cellReference));
                     }
                     else
                     {
-                        cells.Add(GetCellValue(bookPart, cell, (double)width, height, mergedCells));
+                        cells.Add(GetCellValue(bookPart, cell, mergedCells));
                     }
                 }
             }
@@ -151,7 +140,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return result;
     }
-    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell, double width, double height,
+    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell,
         List<Worksheets.MergedCell> mergedCells)
     {
         CellFormat? cellFormat = GetCellFormat(bookPart, cell);
@@ -195,8 +184,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 Type = Worksheets.CellValueType.Formula,
                 Value = calcResult,
                 Formula = formula,
-                Width = width,
-                Height = height,
                 BackgroundColor = backgroundColor,
                 FontFormat = cellFontFormat,
                 Borders = borders,
@@ -227,8 +214,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     Address = address,
                     Type = Worksheets.CellValueType.Text,
                     Value = result,
-                    Width = width,
-                    Height = height,
                     BackgroundColor = backgroundColor,
                     FontFormat = cellFontFormat,
                     Borders = borders,
@@ -249,9 +234,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         {
             Address = address,
             Type = valueType,
-            Value = value,            
-            Width = width,
-            Height = height,
+            Value = value,
             BackgroundColor = backgroundColor,
             FontFormat = cellFontFormat,
             Borders = borders,
