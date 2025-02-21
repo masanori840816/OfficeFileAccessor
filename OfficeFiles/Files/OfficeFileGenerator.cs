@@ -14,8 +14,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     {
         List<GroupedCells> groupedCells = GroupCells(printArea, cells);
         Worksheets.CellBorders noBorders = Worksheets.CellBorders.GetNoBorders();
-        Worksheets.CellBorders allThin = Worksheets.CellBorders.GetAllThin();
-        
+        Worksheets.CellBorders allThin = Worksheets.CellBorders.GetAllThin();        
         List<OfficeFileTableGroup> results = [];
         foreach(GroupedCells g in groupedCells)
         {
@@ -27,7 +26,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             List<Worksheets.CellAddress> addedAddresses = [];
             List<OfficeFileTableCell> tableCells = [];
             
-
             if(g.Cells.Any(c => c.Borders.CheckIsBordered()) == false)
             {
                 if(results.Count <= 1)
@@ -338,6 +336,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     (cells[i].Address.Column >= printArea.End.Column || cells[i + 1].Borders.Top == Worksheets.BorderType.None))
                 {
                     hasBorders = false;
+                    results.Add(cells[i].Address.Column + 1);
                 }
             }
             else 
