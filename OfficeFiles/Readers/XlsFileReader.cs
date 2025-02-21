@@ -46,7 +46,9 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 continue;
             }
             Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
-            List<Worksheets.ColumnWidth> widths = GetColumnWidths(targetSheet, printArea.Start.Column, printArea.End.Column);
+            List<OfficeFileTableColumnWidth> allWidths = GetColumnWidths(targetSheet, printArea);
+            List<OfficeFileTableRowHeight> allHeights = GetRowHeights(targetSheet, printArea);
+            
             List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
@@ -121,7 +123,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     string cellReference = columnName + rowIndex;
                     Cell? cell = row.Elements<Cell>()?.FirstOrDefault(c => 
                         c.CellReference?.Value != null && c.CellReference.Value == cellReference);
-                    double? width = widths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
+                    double? width = allWidths.FirstOrDefault(w => w.ColumnName == columnName)?.Width;
                     width ??= DefaultWidth;
                     if(cell == null)
                     {
@@ -133,12 +135,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     }
                 }
             }
+            List<OfficeFileTableGroup> groups = FileGenerator.Generate(sheetName, printArea, cells);
+            List<OfficeFileTableCell> groupedCells = [.. groups.SelectMany(g => g.Cells)];
             OfficeFileSheet sheet = new ()
             {
                 Name = sheetName,
-                TableGroups = FileGenerator.Generate(sheetName, printArea, cells),
-                Widths = GetWidths(cells),
-                Heights = GetHeights(cells),
+                TableGroups = groups,
+                Widths = GetMergedWidths(allWidths, groupedCells),
+                Heights = GetMergedHeights(allHeights, groupedCells),
             };
             result.Sheets.Add(sheet);
                         
@@ -296,15 +300,15 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     {
         return textElement.Ancestors<PhoneticRun>().Any();
     }
-    private List<Worksheets.ColumnWidth> GetColumnWidths(Worksheet sheet, int startColumn, int lastColumn)
+    private List<OfficeFileTableColumnWidth> GetColumnWidths(Worksheet sheet, Worksheets.PrintArea printArea)
     {
         Columns? columns = sheet.Descendants<Columns>().FirstOrDefault();
         if (columns == null)
         {
             return [];
         }
-        List<Worksheets.ColumnWidth> results = [];
-        for (int i = startColumn; i <= lastColumn; i++)
+        List<OfficeFileTableColumnWidth> results = [];
+        for (int i = printArea.Start.Column; i <= printArea.End.Column; i++)
         {
             double columnWidth = DefaultWidth;
             if (columns != null)
@@ -317,7 +321,35 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     columnWidth = Numbers.ConvertFromPixelToCentimeter(column.Width * 7.0);
                 }
             }
-            results.Add(new Worksheets.ColumnWidth(i, SheetFunc.AddressConverter.ConvertIndexToAlphabet(i), columnWidth));
+            results.Add(new OfficeFileTableColumnWidth(i, SheetFunc.AddressConverter.ConvertIndexToAlphabet(i), columnWidth));
+        }
+        return results;
+    }
+    private List<OfficeFileTableRowHeight> GetRowHeights(Worksheet sheet, Worksheets.PrintArea printArea)
+    {
+        SheetData? sheetData = sheet.GetFirstChild<SheetData>();
+        if(sheetData == null)
+        {
+            return [];
+        }
+        List<OfficeFileTableRowHeight> results = [];
+        foreach (Row row in sheetData.Elements<Row>())
+        {
+            uint? rowIndex = row.RowIndex?.Value;
+            if(rowIndex == null)
+            {
+                continue;
+            }
+            double height = DefaultHeight;
+            if(row.Height?.Value != null)
+            {
+                height = Numbers.ConvertFromPointToCentimeter(row.Height.Value);
+            }
+
+            results.Add(new (
+                Row: (int)rowIndex,
+                Height: height
+            ));
         }
         return results;
     }
@@ -452,29 +484,63 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return Worksheets.PrintArea.DefaultPrintArea();
     }
-    private static List<OfficeFileTableColumnWidth> GetWidths(List<Worksheets.Cell> cells)
+    private static List<OfficeFileTableColumnWidth> GetMergedWidths(List<OfficeFileTableColumnWidth> allWidths,
+        List<OfficeFileTableCell> cells)
     {
         List<OfficeFileTableColumnWidth> results = [];
-        int[] columns = [.. cells.Select(c => c.Address.Column).Distinct()];
-        foreach(int column in columns)
+        int[] mergedColumns = [.. cells.Select(c => c.CellAddress.Column).Distinct().Order()];
+        
+        OfficeFileTableColumnWidth startColumn = allWidths.First();
+        double lastWidth = startColumn.Width;
+        foreach(OfficeFileTableColumnWidth w in allWidths)
         {
-            Worksheets.Cell cell = cells.First(c => c.Address.Column == column);
-            results.Add(new (
-                Column: cell.Address.Column,
-                Width: cell.Width));
+            OfficeFileTableColumnWidth currentColumn = w;
+            if(mergedColumns.Any(c => c == currentColumn.Column))
+            {
+                results.Add(new (
+                    Column: startColumn.Column,
+                    ColumnName: startColumn.ColumnName,
+                    Width: lastWidth
+                ));
+                startColumn = currentColumn;
+                lastWidth = currentColumn.Width;
+            }
+            else
+            {
+                lastWidth += currentColumn.Width;
+            }
         }
+        results.Add(new (
+            Column: startColumn.Column,
+            ColumnName: startColumn.ColumnName,
+            Width: lastWidth
+        ));
         return results;
     }
-    private static List<OfficeFileTableRowHeight> GetHeights(List<Worksheets.Cell> cells)
+    private static List<OfficeFileTableRowHeight> GetMergedHeights(List<OfficeFileTableRowHeight> allRows,
+        List<OfficeFileTableCell> cells)
     {
         List<OfficeFileTableRowHeight> results = [];
-        int[] rows = [.. cells.Select(c => c.Address.Row).Distinct()];
-        foreach(int row in rows)
+        int[] mergedRows = [.. cells.Select(c => c.CellAddress.Row).Distinct().Order()];
+        
+        OfficeFileTableRowHeight startRow = allRows.First();
+        double lastHeight = startRow.Height;
+        foreach(OfficeFileTableRowHeight h in allRows)
         {
-            Worksheets.Cell cell = cells.First(c => c.Address.Row == row);
-            results.Add(new (
-                Row: cell.Address.Row,
-                Height: cell.Height));
+            OfficeFileTableRowHeight currentRow = h;
+            if(mergedRows.Any(r => r == currentRow.Row))
+            {
+                results.Add(new (
+                    Row: startRow.Row,
+                    Height: lastHeight
+                ));
+                startRow = currentRow;
+                lastHeight = currentRow.Height;
+            }
+            else
+            {
+                lastHeight += currentRow.Height;
+            }
         }
         return results;
     }
