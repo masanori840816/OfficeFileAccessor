@@ -93,6 +93,13 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     }
                 }
                 addedAddresses.AddRange(mergedCell.Select(c => c.Address));
+
+Logger.LogWarning("----groupcell");
+                foreach(var c in mergedCell)
+                {
+                    Logger.LogWarning("C:{c}", c);
+                }
+
                 group.Cells.Add(
                     OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell)));
@@ -149,7 +156,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     {
         Worksheets.CellAddress rightAddress = Worksheets.CellAddress.Move(baseAddress, 1, 0);
         Worksheets.Cell? right = allCells.FirstOrDefault(c => c.Address == rightAddress);
-        if(right == null || right.Borders.Top == Worksheets.BorderType.None)
+        if(right == null || (right.Merged == false && right.Borders.Top == Worksheets.BorderType.None))
         {
             return;
         }
@@ -165,7 +172,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     {
         Worksheets.CellAddress bottomAddress = Worksheets.CellAddress.Move(baseAddress, 0, 1);
         Worksheets.Cell? bottom = allCells.FirstOrDefault(c => c.Address == bottomAddress);
-        if(bottom == null || bottom.Borders.Top != Worksheets.BorderType.None)
+        if(bottom == null || (bottom.Merged == false && bottom.Borders.Left == Worksheets.BorderType.None))
         {
             return;
         }
