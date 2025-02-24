@@ -26,7 +26,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             results.Add(group);
             List<Worksheets.CellAddress> addedAddresses = [];
             List<OfficeFileTableCell> tableCells = [];
-            
             if(g.Cells.Any(c => c.Borders.CheckIsBordered()) == false)
             {
                 if(results.Count <= 1)
@@ -99,7 +98,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell)));
             }
         }
-        
         return results;
     }
     private static TitleCellAddresses? GetTitle(Worksheets.Cell cell, List<Worksheets.Cell> cells)
@@ -149,18 +147,16 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     private static void AddRightTop(Worksheets.CellAddress baseAddress,
         List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
     {
-        if(current.Any(ce => ce.Borders.Right != Worksheets.BorderType.None &&
-                ce.Borders.Top != Worksheets.BorderType.None))
-        {
-            return;
-        }
         Worksheets.CellAddress rightAddress = Worksheets.CellAddress.Move(baseAddress, 1, 0);
         Worksheets.Cell? right = allCells.FirstOrDefault(c => c.Address == rightAddress);
-        if(right == null)
+        if(right == null || right.Borders.Top == Worksheets.BorderType.None)
         {
             return;
         }
-        current.Add(right);
+        if(current.Any(c => c.Address == rightAddress) == false)
+        {
+            current.Add(right);
+        }
         AddMergedCells(right, current, allCells);
         AddRightTop(rightAddress, current, allCells);
     }
