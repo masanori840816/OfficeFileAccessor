@@ -163,10 +163,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     private static void AddLeftBottom(Worksheets.CellAddress baseAddress,
         List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
     {
-        if(current.Any(ce => ce.Borders.Bottom != Worksheets.BorderType.None))
-        {
-            return;
-        }
         Worksheets.CellAddress bottomAddress = Worksheets.CellAddress.Move(baseAddress, 0, 1);
         Worksheets.Cell? bottom = allCells.FirstOrDefault(c => c.Address == bottomAddress);
         if(bottom == null || bottom.Borders.Top != Worksheets.BorderType.None)
