@@ -9,7 +9,9 @@ export interface OfficeFileSheetAreaProps {
 export const OfficeFileSheetArea: React.FC<OfficeFileSheetAreaProps> = ({sheet, dpi}) => {
     
     return <>
-        <h2>{sheet.name}</h2>
+        <div className="pb-3">
+            <h3>Sheet: {sheet.name}</h3>
+        </div>        
         {sheet.tableGroups.map((g, index) => (
             <React.Fragment key={index}>            
                 <div><TableGroupArea key={index} group={g} dpi={dpi} widths={sheet.widths} heights={sheet.heights} /></div>

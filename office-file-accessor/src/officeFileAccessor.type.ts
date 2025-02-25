@@ -20,7 +20,6 @@ export type CellBorders = {
 
 export type OfficeFile = {
     id: number,
-    name: string,
     fileName: string,
     mimeType: string,
     sheets: OfficeFileSheet[],
@@ -58,6 +57,7 @@ export type CellFontFormat = {
     bold: boolean,
 };
 export type OfficeFileTableColumnWidth = {
+    columnName: string,
     column: number,
     width: number,
 };

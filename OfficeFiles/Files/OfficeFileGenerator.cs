@@ -67,8 +67,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 {
                     continue;
                 }
-                if(cell.Borders.Left == Worksheets.BorderType.None ||
-                    cell.Borders.Top == Worksheets.BorderType.None)
+                if(CheckIsStartCell(cell, g.Cells) == false)
                 {
                     continue;
                 }
@@ -105,7 +104,22 @@ Logger.LogWarning("----groupcell");
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell)));
             }
         }
-        return results;
+        return [.. results.Where(g => g.Cells.Count > 0)];
+    }
+    private static bool CheckIsStartCell(Worksheets.Cell cell, List<Worksheets.Cell> cells)
+    {
+        if(cell.Borders.Left != Worksheets.BorderType.None ||
+                    cell.Borders.Top != Worksheets.BorderType.None)
+        {
+            return true;
+        }
+        Worksheets.CellAddress upperAddress = Worksheets.CellAddress.Move(cell.Address, 0, -1);
+        Worksheets.Cell? nextCell = cells.FirstOrDefault(c => c.Address == upperAddress);
+        if(nextCell == null || nextCell.Borders.Bottom != Worksheets.BorderType.None)
+        {
+            return true;
+        }
+        return false;
     }
     private static TitleCellAddresses? GetTitle(Worksheets.Cell cell, List<Worksheets.Cell> cells)
     {
@@ -154,9 +168,13 @@ Logger.LogWarning("----groupcell");
     private static void AddRightTop(Worksheets.CellAddress baseAddress,
         List<Worksheets.Cell> current, List<Worksheets.Cell> allCells)
     {
+        if(current.Any(ce => ce.Borders.Right != Worksheets.BorderType.None))
+        {
+            return;
+        }
         Worksheets.CellAddress rightAddress = Worksheets.CellAddress.Move(baseAddress, 1, 0);
         Worksheets.Cell? right = allCells.FirstOrDefault(c => c.Address == rightAddress);
-        if(right == null || (right.Merged == false && right.Borders.Top == Worksheets.BorderType.None))
+        if(right == null || right.Borders.Left != Worksheets.BorderType.None)
         {
             return;
         }
