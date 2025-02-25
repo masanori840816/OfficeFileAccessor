@@ -97,7 +97,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell)));
             }
         }
-        return results;
+        return [.. results.Where(g => g.Cells.Count > 0)];
     }
     private static bool CheckIsStartCell(Worksheets.Cell cell, List<Worksheets.Cell> cells)
     {
