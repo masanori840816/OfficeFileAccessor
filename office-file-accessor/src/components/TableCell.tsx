@@ -4,9 +4,11 @@ import { hasAnyTexts } from "../texts/hasAnyTexts";
 export interface TableCellProps {
     cell: OfficeFileTableCell,
     dpi: number,
+    column: number,
+    row: number
 }
 
-export const TableCell: React.FC<TableCellProps> = ({ cell, dpi }) => {
+export const TableCell: React.FC<TableCellProps> = ({ cell, dpi, column, row }) => {
     const borderThin = "1px solid black";
     const borderNone = "none";
     let backgroudColor = "white";
@@ -19,6 +21,8 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, dpi }) => {
     if(cell.fontFormat?.fontSize != null) {
         fontSize = `${cell.fontFormat.fontSize}px`;
     }
+    const gridColumn = `${column}/${column + cell.horizontalLength}`;
+    const gridRow = `${row}/${row + cell.verticalLength}`;
     const cellStyle = {
         'backgroundColor': backgroudColor,
         'borderLeft': (cell.borders.left == 1)? borderThin: borderNone,
@@ -26,6 +30,8 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, dpi }) => {
         'borderRight': (cell.borders.right == 1)? borderThin: borderNone,
         'borderBottom': (cell.borders.bottom == 1)? borderThin: borderNone,
         'fontSize': fontSize,
+        'gridColumn': gridColumn,
+        'gridRow': gridRow,
     }
     return <>
 
