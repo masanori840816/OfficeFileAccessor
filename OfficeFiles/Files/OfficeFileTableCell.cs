@@ -29,7 +29,7 @@ public record OfficeFileTableCell
             Value = cell.Value,
             Borders = cell.Borders,
             BackgroundColor = cell.BackgroundColor,
-            Editabled = cell.BackgroundColor == "FFFF00"
+            Editabled = cell.BackgroundColor == ConstantParams.EditableColor
         };
     }
     public static OfficeFileTableCell Generate(CellAddress baseAddress, string mergedValue, CellBorders borders,
@@ -41,7 +41,7 @@ public record OfficeFileTableCell
             Value = mergedValue,
             Borders = borders,
             BackgroundColor = backgroundColor,
-            Editabled = backgroundColor == "FFFF00",
+            Editabled = backgroundColor == ConstantParams.EditableColor,
             MergedCell = mergedCell,
         };
     }

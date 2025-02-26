@@ -81,12 +81,11 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 string? backgroundColor = null;
                 foreach(Worksheets.Cell c in mergedCell)
                 {
-                    if(c.BackgroundColor == "FFFF00")
+                    if(c.BackgroundColor == ConstantParams.EditableColor)
                     {
                         backgroundColor = c.BackgroundColor;
-                        break;
                     }
-                    if(string.IsNullOrEmpty(c.BackgroundColor) == false)
+                    else if(backgroundColor == ConstantParams.EditableColor && string.IsNullOrEmpty(c.BackgroundColor) == false)
                     {
                         backgroundColor = c.BackgroundColor;
                     }
