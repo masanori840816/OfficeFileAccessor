@@ -65,13 +65,14 @@ export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, width
                 newCells.push({cell, column: a.columnIndex, row: a.rowIndex});
                 for(let rowOffset = 0; rowOffset < cell.verticalLength; rowOffset++) {
                     for(let columnOffset = 0; columnOffset < cell.horizontalLength; columnOffset++) {
-                        addedAddresses.push({ column: cell.cellAddress.column + columnOffset,
-                            columnName: '',
-                            row: cell.cellAddress.row + rowOffset });
+                        const nextAddress = addresses.find(ad => ad.columnIndex === (a.columnIndex + columnOffset) &&
+                            ad.rowIndex === a.rowIndex + rowOffset);
+                        if(nextAddress != null) {
+                            addedAddresses.push(nextAddress.address);
+                        }
                     }
                 }
-            }
-            
+            }            
         }
         setCells(newCells);
 
