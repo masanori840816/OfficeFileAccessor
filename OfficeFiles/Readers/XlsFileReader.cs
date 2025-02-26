@@ -133,6 +133,10 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 Widths = GetMergedWidths(allWidths, groupedCells),
                 Heights = GetMergedHeights(allHeights, groupedCells),
             };
+            foreach(OfficeFileTableCell c in groupedCells)
+            {
+                c.UpdateCellLength(sheet.Widths, sheet.Heights);
+            }
             result.Sheets.Add(sheet);
                         
             // TODO: uncomment after testing
