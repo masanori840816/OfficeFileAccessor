@@ -1,28 +1,31 @@
-import { OfficeFileTableCell } from "../officeFileAccessor.type";
-import { hasAnyTexts } from "../texts/hasAnyTexts";
+import { OfficeFileTableCell } from '../officeFileAccessor.type';
+import { hasAnyTexts } from '../texts/hasAnyTexts';
+import * as borders from '../tables/borders';
 
 export interface TableCellProps {
     cell: OfficeFileTableCell,
-    dpi: number,
     column: number,
     row: number
 }
 
-export const TableCell: React.FC<TableCellProps> = ({ cell, dpi, column, row }) => {
+export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
     const borderThin = "1px solid black";
     const borderNone = "none";
-    let backgroudColor = "white";
+    let backgroudColor = 'unset';
     if(hasAnyTexts(cell.backgroundColor))
     {
         backgroudColor = `#${cell.backgroundColor}`;
     }
-    console.log(dpi);
     let fontSize = '12px';
     if(cell.fontFormat?.fontSize != null) {
         fontSize = `${cell.fontFormat.fontSize}px`;
     }
     const gridColumn = `${column}/${column + cell.horizontalLength}`;
     const gridRow = `${row}/${row + cell.verticalLength}`;
+    let whiteSpace = 'pre-wrap';
+    if(borders.checkIsBordered(cell.borders) === false) {
+        whiteSpace = 'nowrap';
+    }
     const cellStyle = {
         'backgroundColor': backgroudColor,
         'borderLeft': (cell.borders.left == 1)? borderThin: borderNone,
@@ -32,10 +35,12 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, dpi, column, row }) 
         'fontSize': fontSize,
         'gridColumn': gridColumn,
         'gridRow': gridRow,
+        'whiteSpace': whiteSpace,
+        'overflow': 'visible',
     }
+    let cellValue = cell.value.replace(/\[NEW-LINE\]+/g, '\n');
+    cellValue = cellValue.replace(/\[TAB\]+/g, '\t');
     return <>
-
-        <div style={cellStyle}>{cell.value}</div>
-
+        <div style={cellStyle}>{cellValue}</div>
     </>;
 };

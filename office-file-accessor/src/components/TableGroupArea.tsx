@@ -79,12 +79,12 @@ export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, width
     }, [group, widths, heights]);
     return <>
         {hasAnyTexts(group.title)? (
-            <h4 className="pb-3">{group.title}</h4>
+            <h4 className='pb-3'>{group.title}</h4>
         ): <span></span>}
         
         <div ref={gridRef} className='grid'>
             {cells.map((c, index) => (
-                <TableCell key={index} cell={c.cell} column={c.column} row={c.row} dpi={dpi} />
+                <TableCell key={index} cell={c.cell} column={c.column} row={c.row} />
             ))}
         </div>
     </>
