@@ -85,7 +85,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     {
                         backgroundColor = c.BackgroundColor;
                     }
-                    else if(backgroundColor == ConstantParams.EditableColor && string.IsNullOrEmpty(c.BackgroundColor) == false)
+                    else if(backgroundColor != ConstantParams.EditableColor && string.IsNullOrEmpty(c.BackgroundColor) == false)
                     {
                         backgroundColor = c.BackgroundColor;
                     }
