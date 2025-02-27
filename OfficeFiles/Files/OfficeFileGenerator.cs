@@ -45,7 +45,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         if(string.IsNullOrEmpty(c.Value) == false &&
                             (titles == null || titles.Addresses.Any(a => a == c.Address) == false))
                         {
-                            group.Cells.Add(OfficeFileTableCell.Generate(c));
+                            List<Worksheets.Cell> mergedCell = [c];
+                            AddMergedCells(c, mergedCell, g.Cells);
+                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell)));
                         }
                     }
                 }
@@ -55,7 +57,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     {
                         if(string.IsNullOrEmpty(c.Value) == false)
                         {
-                            group.Cells.Add(OfficeFileTableCell.Generate(c));
+                            List<Worksheets.Cell> mergedCell = [c];
+                            AddMergedCells(c, mergedCell, g.Cells);
+                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell)));
                         }
                     }
                 }

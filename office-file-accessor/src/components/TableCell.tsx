@@ -37,7 +37,7 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
         'gridColumn': gridColumn,
         'gridRow': gridRow,
         'whiteSpace': whiteSpace,
-        'overflow': 'visible',
+        overflow: 'visible',
         writingMode: (cell.verticalWriting)? 'vertical-rl': 'horizontal-tb',
         transform: `rotate(${textRotation}deg)`
     }
