@@ -4,6 +4,10 @@ public enum BorderType
 {
     None = 0,
     Thin,
+    Hair,
+    Medium,
+    Dotted,
+    Double,
 }
 public static class BorderTypeFactory
 {
@@ -16,6 +20,10 @@ public static class BorderTypeFactory
         return borderValue.ToLower() switch
         {
             "thin" => BorderType.Thin,
+            "hair" => BorderType.Hair,
+            "medium" => BorderType.Medium,
+            "dotted" => BorderType.Dotted,
+            "double" => BorderType.Double,
             _ => BorderType.None,
         };
     }

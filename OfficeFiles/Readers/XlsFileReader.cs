@@ -140,9 +140,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 c.UpdateCellLength(sheet.Widths, sheet.Heights);
             }
             result.Sheets.Add(sheet);
-                        
-            // TODO: uncomment after testing
-            break;
         }
         return result;
     }
