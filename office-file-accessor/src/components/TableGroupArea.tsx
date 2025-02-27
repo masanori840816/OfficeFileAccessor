@@ -100,6 +100,8 @@ function generateEmptyCells(address: CellAddress): OfficeFileTableCell{
         borders: { left: 0, top: 0, right: 0, bottom: 0 },
         backgroundColor: null,
         editabled: false,
+        verticalWriting: false,
+        textRotation: 0,
     };
 }
 function generateAllAddresses(widths: OfficeFileTableColumnWidth[],

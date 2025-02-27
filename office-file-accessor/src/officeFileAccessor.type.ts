@@ -49,6 +49,8 @@ export type OfficeFileTableCell = {
     borders: CellBorders,
     backgroundColor: string|null,
     editabled: boolean,
+    verticalWriting: boolean,
+    textRotation: number,
 };
 export type CellFontFormat = {
     fontName: string|null,

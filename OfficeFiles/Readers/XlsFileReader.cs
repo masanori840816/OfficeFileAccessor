@@ -14,6 +14,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
 {
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
+
+    private record TextDirection(bool VerticalWriting, uint Rotation);
     
     public OfficeFile? Read(IFormFile file)
     {
@@ -152,6 +154,9 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         Worksheets.CellBorders borders = GetBorders(bookPart, cellFormat);
         // Background color
         string? backgroundColor = GetCellColor(bookPart, cellFormat);
+        // Text direction
+        TextDirection textDirection = GetTextDirection(cellFormat);
+        // Font format
         Worksheets.CellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
         
         // Formula
@@ -193,6 +198,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 Borders = borders,
                 Merged = merged,
                 MergedCell = mergedCell,
+                VerticalWriting = textDirection.VerticalWriting,
+                TextRotation = textDirection.Rotation,
             };
         }
         // Get value
@@ -223,6 +230,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     Borders = borders,
                     Merged = merged,
                     MergedCell = mergedCell,
+                    VerticalWriting = textDirection.VerticalWriting,
+                    TextRotation = textDirection.Rotation,
                 };
             }
         }
@@ -244,6 +253,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             Borders = borders,
             Merged = merged,
             MergedCell = mergedCell,
+            VerticalWriting = textDirection.VerticalWriting,
+            TextRotation = textDirection.Rotation,
         };
     }
     /// <summary>
@@ -432,7 +443,20 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return null;
     }
-    
+    private static TextDirection GetTextDirection(CellFormat? cellFormat)
+    {
+        uint? rotation = cellFormat?.Alignment?.TextRotation?.Value;
+        if(rotation == null)
+        {
+            return new (VerticalWriting: false, Rotation: 0);
+        }
+        // If the cell value is set as vertical in the spreadsheet, rotation will be 225(degrees).
+        if(rotation == 225)
+        {
+            return new (VerticalWriting: true, Rotation: 0);
+        }
+        return new (VerticalWriting: false, Rotation: rotation.Value);
+    }
     private static Worksheets.PrintArea GetPrintArea(WorkbookPart bookPart, string sheetName)
     {
         DefinedNames? definedNames = bookPart.Workbook.DefinedNames;

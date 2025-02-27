@@ -13,10 +13,12 @@ public class Cell
     // Only the start cell of a merged cell has this value.
     public MergedCell? MergedCell { get; init; }
     public bool Merged { get; init; }
+    public required bool VerticalWriting { get; init; }
+    public required uint TextRotation { get; init; }
 
     public override string ToString()
     {
-        return $"Cell Address:{Address} Type:{Type} Formula:{Formula} Value:{Value} BackgroundColor: {BackgroundColor} {FontFormat} {Borders} Merged?: {Merged} {MergedCell}";
+        return $"Cell Address:{Address} Type:{Type} Formula:{Formula} Value:{Value} BackgroundColor: {BackgroundColor} {FontFormat} {Borders} Merged?: {Merged} {MergedCell} VerticalWriting?: {VerticalWriting} TextRotation: {TextRotation}";
     }
     public static Cell Default(string? address)
     {
@@ -26,6 +28,8 @@ public class Cell
             Type = CellValueType.Text,
             Value = "",
             Borders = CellBorders.GetNoBorders(),
+            VerticalWriting = false,
+            TextRotation = 0
         };
     }
 }

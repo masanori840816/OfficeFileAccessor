@@ -26,7 +26,8 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
     if(borders.checkIsBordered(cell.borders) === false) {
         whiteSpace = 'nowrap';
     }
-    const cellStyle = {
+    const textRotation = getCssTextRotation(cell.textRotation);
+    const cellStyle: React.CSSProperties = {
         'backgroundColor': backgroudColor,
         'borderLeft': (cell.borders.left == 1)? borderThin: borderNone,
         'borderTop': (cell.borders.top == 1)? borderThin: borderNone,
@@ -37,6 +38,8 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
         'gridRow': gridRow,
         'whiteSpace': whiteSpace,
         'overflow': 'visible',
+        writingMode: (cell.verticalWriting)? 'vertical-rl': 'horizontal-tb',
+        transform: `rotate(${textRotation}deg)`
     }
     let cellValue = cell.value.replace(/\[NEW-LINE\]+/g, '\n');
     cellValue = cellValue.replace(/\[TAB\]+/g, '\t');
@@ -44,3 +47,13 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
         <div style={cellStyle}>{cellValue}</div>
     </>;
 };
+function getCssTextRotation(spreadsheetRotation: number): number {
+    switch(spreadsheetRotation) {
+        case 90:
+            return 270;
+        case 180:
+            return 90;
+        default:
+            return spreadsheetRotation;
+    }
+}

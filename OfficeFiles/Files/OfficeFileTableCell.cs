@@ -15,25 +15,27 @@ public record OfficeFileTableCell
     public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
     public MergedCell? MergedCell { get; init; }
+    
+    public required bool VerticalWriting { get; init; } = false;
+    public required uint TextRotation { get; init; } = 0;
     public static OfficeFileTableCell Generate(Cell cell)
-    {
-        int horizontalLength = 1;
-        int verticalLength = 1;
-        
+    {        
         return new ()
         {
             CellAddress = cell.Address,
             FontFormat = cell.FontFormat,
-            HorizontalLength = horizontalLength,
-            VerticalLength = verticalLength,
+            HorizontalLength = 1,
+            VerticalLength = 1,
             Value = cell.Value,
             Borders = cell.Borders,
             BackgroundColor = cell.BackgroundColor,
-            Editabled = cell.BackgroundColor == ConstantParams.EditableColor
+            Editabled = cell.BackgroundColor == ConstantParams.EditableColor,
+            VerticalWriting = cell.VerticalWriting,
+            TextRotation = cell.TextRotation,
         };
     }
     public static OfficeFileTableCell Generate(CellAddress baseAddress, string mergedValue, CellBorders borders,
-        string? backgroundColor, MergedCell? mergedCell)
+        string? backgroundColor, MergedCell? mergedCell, bool verticalWriting, uint textRotation)
     {
         return new ()
         {
@@ -43,6 +45,8 @@ public record OfficeFileTableCell
             BackgroundColor = backgroundColor,
             Editabled = backgroundColor == ConstantParams.EditableColor,
             MergedCell = mergedCell,
+            VerticalWriting = verticalWriting,
+            TextRotation = textRotation,
         };
     }
     public void UpdateCellLength(List<OfficeFileTableColumnWidth> widths, List<OfficeFileTableRowHeight> heights)

@@ -93,7 +93,8 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 addedAddresses.AddRange(mergedCell.Select(c => c.Address));
                 group.Cells.Add(
                     OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
-                        backgroundColor, Worksheets.MergedCell.Generate(mergedCell)));
+                        backgroundColor, Worksheets.MergedCell.Generate(mergedCell),
+                        cell.VerticalWriting, cell.TextRotation));
             }
         }
         return [.. results.Where(g => g.Cells.Count > 0)];
