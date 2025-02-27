@@ -17,17 +17,28 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         Worksheets.CellBorders noBorders = Worksheets.CellBorders.GetNoBorders();
         Worksheets.CellBorders allThin = Worksheets.CellBorders.GetAllThin();        
         List<OfficeFileTableGroup> results = [];
+        OfficeFileTableGroup group = new ()
+        {
+            DisplayOrder = results.Count,
+        };
+        results.Add(group);
+        bool hasBorders = false;
         foreach(GroupedCells g in groupedCells)
         {
-            OfficeFileTableGroup group = new ()
+            if(hasBorders)
             {
-                DisplayOrder = results.Count,
-            };
-            results.Add(group);
+                group = new ()
+                {
+                    DisplayOrder = results.Count,
+                };
+                results.Add(group);
+            }
+            
             List<Worksheets.CellAddress> addedAddresses = [];
             List<OfficeFileTableCell> tableCells = [];
             if(g.Cells.Any(c => c.Borders.CheckIsBordered()) == false)
             {
+                hasBorders = false;
                 if(results.Count <= 1)
                 {
                     TitleCellAddresses? titles = null;
@@ -65,6 +76,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 }
                 continue;
             }
+            hasBorders = true;
             foreach(Worksheets.Cell cell in g.Cells)
             {
                 if(addedAddresses.Any(a => cell.Address == a))
@@ -137,6 +149,12 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             Worksheets.Cell? nextCell = cells.FirstOrDefault(c => c.Address == next);
             if(string.IsNullOrEmpty(nextCell?.Value))
             {
+                if(nextCell?.Merged == true)
+                {
+                    addresses.Add(next);
+                    offset += 1;
+                    continue;
+                }
                 break;
             }
             title += nextCell.Value;
