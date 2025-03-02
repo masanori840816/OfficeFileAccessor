@@ -8,6 +8,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         public required int StartColumn { get; init; }
         public required int DisplayOrder { get; init; }
         public required bool Ended { get; set; }
+        public required bool HasBorders { get; set; }
         public List<Worksheets.Cell> Cells { get; init; } = [];
     }
     public List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
@@ -36,7 +37,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             
             List<Worksheets.CellAddress> addedAddresses = [];
             List<OfficeFileTableCell> tableCells = [];
-            if(g.Cells.Any(c => c.Borders.CheckIsBordered()) == false)
+            if(g.HasBorders == false)
             {
                 hasBorders = false;
                 if(results.Count <= 1)
@@ -93,7 +94,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 AddLeftBottom(cell.Address, mergedCell, g.Cells);
                 int[] columns = [.. mergedCell.Select(c => c.Address.Column).Distinct()];
                 int[] rows = [.. mergedCell.Select(c => c.Address.Row).Distinct()];
-                AddRestCells(mergedCell, g.Cells, columns, rows);
+                AddRestCells(mergedCell, g.Cells, columns, rows);                
                 string? backgroundColor = null;
                 foreach(Worksheets.Cell c in mergedCell)
                 {
@@ -289,9 +290,18 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         {
             bool groupEnded = false;
             int nextColumn = printArea.Start.Column;
-            if(startColumns.Count <= 1)
+            bool hasBorders = startColumns.Count > 1;
+            if(hasBorders)
             {
-                startColumns = GetStartGroupColumns(cells, row, printArea);                
+                if(CheckIsEndGroupRow(cells, row, printArea, startColumns))
+                {
+                    groupEnded = true;
+                }
+            }
+            else
+            {
+                startColumns = GetStartGroupColumns(cells, row, printArea);     
+                hasBorders = startColumns.Count > 1;           
                 nextColumn = GetNextColumn(printArea, startColumns, nextColumn);
                 if(startColumns.Count > 1)
                 {
@@ -302,17 +312,13 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     lastGroup = null;
                 }
             }
-            else if(CheckIsEndGroupRow(cells, row, printArea, startColumns))
-            {
-                groupEnded = true;
-            }
             int currentRow = row;
             foreach(Worksheets.Cell cell in cells.Where(c => c.Address.Row == currentRow)
                 .OrderBy(c => c.Address.Column))
             {
                 if(startColumns.Count <= 1)
                 {
-                    lastGroup = GetOrCreateGroup(lastGroup, cell, results);
+                    lastGroup = GetOrCreateGroup(lastGroup, cell, results, hasBorders);
                     lastGroup.Cells.Add(cell);
                     continue;
                 }
@@ -327,6 +333,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                             StartColumn = column,
                             DisplayOrder = results.Count,
                             Ended = false,
+                            HasBorders = hasBorders,
                         };
                         results.Add(nextGroup);
                         lastGroup = nextGroup;
@@ -337,7 +344,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     }
                     nextColumn = GetNextColumn(printArea, startColumns, nextColumn);
                 }
-                lastGroup = GetOrCreateGroup(lastGroup, cell, results);
+                lastGroup = GetOrCreateGroup(lastGroup, cell, results, hasBorders);
                 lastGroup.Cells.Add(cell);
             }
             if(groupEnded)
@@ -356,7 +363,8 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         }
         return results;
     }
-    private static GroupedCells GetOrCreateGroup(GroupedCells? currentGroup, Worksheets.Cell currentCell, List<GroupedCells> groupedCells)
+    private static GroupedCells GetOrCreateGroup(GroupedCells? currentGroup, Worksheets.Cell currentCell, 
+        List<GroupedCells> groupedCells, bool hasBorders)
     {
         if(currentGroup == null)
         {
@@ -365,6 +373,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 StartColumn = currentCell.Address.Column,
                 DisplayOrder = groupedCells.Count,
                 Ended = false,
+                HasBorders = hasBorders,
             };
             groupedCells.Add(currentGroup);
         }
