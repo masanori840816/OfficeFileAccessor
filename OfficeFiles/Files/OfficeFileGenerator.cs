@@ -22,23 +22,12 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             DisplayOrder = results.Count,
         };
         results.Add(group);
-        bool hasBorders = false;
         foreach(GroupedCells g in groupedCells)
         {
-            if(hasBorders)
-            {
-                group = new ()
-                {
-                    DisplayOrder = results.Count,
-                };
-                results.Add(group);
-            }
-            
             List<Worksheets.CellAddress> addedAddresses = [];
             List<OfficeFileTableCell> tableCells = [];
             if(g.HasBorders == false)
             {
-                hasBorders = false;
                 if(results.Count <= 1)
                 {
                     TitleCellAddresses? titles = null;
@@ -76,7 +65,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 }
                 continue;
             }
-            hasBorders = true;
             foreach(Worksheets.Cell cell in g.Cells)
             {
                 if(addedAddresses.Any(a => cell.Address == a))
