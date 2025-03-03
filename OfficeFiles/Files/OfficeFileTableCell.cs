@@ -18,7 +18,8 @@ public record OfficeFileTableCell
     
     public required bool VerticalWriting { get; init; } = false;
     public required uint TextRotation { get; init; } = 0;
-    public static OfficeFileTableCell Generate(Cell cell, MergedCell? mergedCell)
+    public static OfficeFileTableCell Generate(Cell cell, MergedCell? mergedCell,
+        CellBorders borders)
     {        
         return new ()
         {
@@ -27,7 +28,7 @@ public record OfficeFileTableCell
             HorizontalLength = 1,
             VerticalLength = 1,
             Value = cell.Value,
-            Borders = cell.Borders,
+            Borders = borders,
             BackgroundColor = cell.BackgroundColor,
             Editabled = cell.BackgroundColor == ConstantParams.EditableColor,
             MergedCell = mergedCell,

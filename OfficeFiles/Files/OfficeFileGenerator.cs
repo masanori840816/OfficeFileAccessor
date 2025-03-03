@@ -16,7 +16,6 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     {
         List<GroupedCells> groupedCells = GroupCells(printArea, cells);
         Worksheets.CellBorders noBorders = Worksheets.CellBorders.GetNoBorders();
-        Worksheets.CellBorders allThin = Worksheets.CellBorders.GetAllThin();        
         List<OfficeFileTableGroup> results = [];
         OfficeFileTableGroup group = new ()
         {
@@ -59,7 +58,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell)));
+                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -71,7 +70,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell)));
+                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -95,21 +94,11 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 int[] columns = [.. mergedCell.Select(c => c.Address.Column).Distinct()];
                 int[] rows = [.. mergedCell.Select(c => c.Address.Row).Distinct()];
                 AddRestCells(mergedCell, g.Cells, columns, rows);                
-                string? backgroundColor = null;
-                foreach(Worksheets.Cell c in mergedCell)
-                {
-                    if(c.BackgroundColor == ConstantParams.EditableColor)
-                    {
-                        backgroundColor = c.BackgroundColor;
-                    }
-                    else if(backgroundColor != ConstantParams.EditableColor && string.IsNullOrEmpty(c.BackgroundColor) == false)
-                    {
-                        backgroundColor = c.BackgroundColor;
-                    }
-                }
+                string? backgroundColor = GetBackgroundColorFromMergedCells(mergedCell);
                 addedAddresses.AddRange(mergedCell.Select(c => c.Address));
                 group.Cells.Add(
-                    OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), allThin, 
+                    OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), 
+                        GetBordersFromMergedCells(mergedCell), 
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell),
                         cell.VerticalWriting, cell.TextRotation));
             }
@@ -469,5 +458,46 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             result = printArea.End.Column + 1;
         }
         return result;
+    }
+    private static string? GetBackgroundColorFromMergedCells(List<Worksheets.Cell> cells)
+    {
+        string? backgroundColor = null;
+        foreach(Worksheets.Cell c in cells)
+        {
+            if(backgroundColor == ConstantParams.EditableColor)
+            {
+                break;
+            }
+            if(c.BackgroundColor == ConstantParams.EditableColor)
+            {
+                backgroundColor = c.BackgroundColor;
+            }
+            else if(string.IsNullOrEmpty(c.BackgroundColor) == false)
+            {
+                backgroundColor = c.BackgroundColor;
+            }
+        }
+        return backgroundColor;
+    }
+    private static Worksheets.CellBorders GetBordersFromMergedCells(List<Worksheets.Cell> cells)
+    {
+        Worksheets.Cell? leftCell = cells.FirstOrDefault(c => c.Borders.Left != Worksheets.BorderType.None);
+        Worksheets.BorderType left = leftCell?.Borders?.Left ?? Worksheets.BorderType.None;
+
+        Worksheets.Cell? topCell = cells.FirstOrDefault(c => c.Borders.Top != Worksheets.BorderType.None);
+        Worksheets.BorderType top = topCell?.Borders?.Top ?? Worksheets.BorderType.None;
+        
+        Worksheets.Cell? rightCell = cells.FirstOrDefault(c => c.Borders.Right != Worksheets.BorderType.None);
+        Worksheets.BorderType right = rightCell?.Borders?.Right ?? Worksheets.BorderType.None;
+
+        Worksheets.Cell? bottomCell = cells.FirstOrDefault(c => c.Borders.Bottom != Worksheets.BorderType.None);
+        Worksheets.BorderType bottom = bottomCell?.Borders?.Bottom ?? Worksheets.BorderType.None;
+        
+        return new () {
+            Left = left,
+            Top = top,
+            Right = right,
+            Bottom = bottom,
+        };
     }
 }
