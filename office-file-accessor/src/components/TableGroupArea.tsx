@@ -24,7 +24,6 @@ type TableAddress = {
 export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, widths, heights}) => {
     const gridRef = useRef<HTMLDivElement>(null);
     const [cells, setCells] = useState<AddressedCell[]>([]);
-
     useEffect(() => {
         if(gridRef.current == null) {
             return;
@@ -34,7 +33,12 @@ export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, width
             gridColumns += `${pixels.convertCentimeterToPixel((w.width * 1.2), dpi)}px `;
         }
         gridRef.current.style.gridTemplateColumns = gridColumns;
-    }, [widths, dpi]);
+        let gridRows = '';
+        for(const h of heights) {
+            gridRows += `${pixels.convertCentimeterToPixel((h.height * 1.4), dpi)}px `;
+        }
+        gridRef.current.style.gridTemplateRows = gridRows;
+    }, [widths, heights, dpi]);
     useEffect(() => {
         const addresses = generateAllAddresses(widths, heights);
         const addedAddresses: CellAddress[] = [];
@@ -50,7 +54,7 @@ export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, width
             }
         }
         for(const a of addresses) {
-            if(maxRow < a.address.row) {
+            if(maxRow <= a.address.row) {
                 break;
             }
             if(minRow > a.address.row ||
