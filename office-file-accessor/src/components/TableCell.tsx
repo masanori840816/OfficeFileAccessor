@@ -9,8 +9,6 @@ export interface TableCellProps {
 }
 
 export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
-    const borderThin = "1px solid black";
-    const borderNone = "none";
     let backgroudColor = 'unset';
     if(hasAnyTexts(cell.backgroundColor))
     {
@@ -29,10 +27,10 @@ export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
     const textRotation = getCssTextRotation(cell.textRotation);
     const cellStyle: React.CSSProperties = {
         'backgroundColor': backgroudColor,
-        'borderLeft': (cell.borders.left == 1)? borderThin: borderNone,
-        'borderTop': (cell.borders.top == 1)? borderThin: borderNone,
-        'borderRight': (cell.borders.right == 1)? borderThin: borderNone,
-        'borderBottom': (cell.borders.bottom == 1)? borderThin: borderNone,
+        'borderLeft': getBorder(cell.borders.left),
+        'borderTop': getBorder(cell.borders.top),
+        'borderRight': getBorder(cell.borders.right),
+        'borderBottom': getBorder(cell.borders.bottom),
         'fontSize': fontSize,
         'gridColumn': gridColumn,
         'gridRow': gridRow,
@@ -55,5 +53,26 @@ function getCssTextRotation(spreadsheetRotation: number): number {
             return 90;
         default:
             return spreadsheetRotation;
+    }
+}
+function getBorder(borderType: number): string {
+    switch(borderType) {
+        // Thin
+        case 1:
+            return '1px solid black';
+        // Hair
+        case 2:
+            return '0.5px solid black';
+        // Medium
+        case 3:
+            return '2px solid black';
+        // Dotted
+        case 4:
+            return '1px dotted black';
+        // Double
+        case 5:
+            return '1px double black';
+        default:
+            return 'none';
     }
 }
