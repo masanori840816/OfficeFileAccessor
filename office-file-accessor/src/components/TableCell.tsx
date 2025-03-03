@@ -62,7 +62,7 @@ function getBorder(borderType: number): string {
             return '1px solid black';
         // Hair
         case 2:
-            return '0.5px solid black';
+            return '0.8px dotted black';
         // Medium
         case 3:
             return '2px solid black';
