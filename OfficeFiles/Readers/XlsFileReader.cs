@@ -50,7 +50,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
             List<OfficeFileTableColumnWidth> allWidths = GetColumnWidths(targetSheet, printArea);
             List<OfficeFileTableRowHeight> allHeights = GetRowHeights(targetSheet, printArea);
-            
             List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
             if (drawingsPart == null)
@@ -327,11 +326,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         {
             return [];
         }
+        
         List<OfficeFileTableRowHeight> results = [];
-        foreach (Row row in sheetData.Elements<Row>())
+        for (int i = printArea.Start.Row; i <= printArea.End.Row; i++)
         {
-            uint? rowIndex = row.RowIndex?.Value;
-            if(rowIndex == null)
+            Row? row = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value == i);
+            if(row == null)
             {
                 continue;
             }
@@ -340,9 +340,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             {
                 height = Numbers.ConvertFromPointToCentimeter(row.Height.Value);
             }
-
             results.Add(new (
-                Row: (int)rowIndex,
+                Row: i,
                 Height: height
             ));
         }
