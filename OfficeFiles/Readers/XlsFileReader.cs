@@ -496,7 +496,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     {
         List<OfficeFileTableColumnWidth> results = [];
         int[] mergedColumns = [.. cells.Select(c => c.CellAddress.Column).Distinct().Order()];
-        OfficeFileTableColumnWidth startColumn = allWidths.First();
+        int firstColumn = mergedColumns.First();
+        OfficeFileTableColumnWidth startColumn = allWidths.First(c => c.Column == firstColumn);
         double lastWidth = startColumn.Width;
         foreach(OfficeFileTableColumnWidth w in allWidths)
         {
@@ -531,8 +532,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     {
         List<OfficeFileTableRowHeight> results = [];
         int[] mergedRows = [.. cells.Select(c => c.CellAddress.Row).Distinct().Order()];
-        
-        OfficeFileTableRowHeight startRow = allRows.First();
+        int firstRow = mergedRows.First();
+        OfficeFileTableRowHeight startRow = allRows.First(r => r.Row == firstRow);
         double lastHeight = startRow.Height;
         foreach(OfficeFileTableRowHeight h in allRows)
         {
