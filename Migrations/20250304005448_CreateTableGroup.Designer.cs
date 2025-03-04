@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OfficeFileAccessor;
@@ -11,9 +12,11 @@ using OfficeFileAccessor;
 namespace OfficeFileAccessor.Migrations
 {
     [DbContext(typeof(OfficeFileAccessorContext))]
-    partial class OfficeFileAccessorContextModelSnapshot : ModelSnapshot
+    [Migration("20250304005448_CreateTableGroup")]
+    partial class CreateTableGroup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

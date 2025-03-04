@@ -42,4 +42,5 @@ public record TableCell
     public TableCellBorders? Borders { get; init; }
     public MergedTableCell? MergedCell { get; init; }
     public TableCellFontFormat? FontFormat { get; init; }
+    public List<TableGroup> TableGroups { get; set; } = [];
 }

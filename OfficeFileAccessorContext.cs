@@ -32,8 +32,27 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .WithOne(c => c.FontFormat)
             .HasForeignKey<TableCellFontFormat>(f => f.TableCellId)
             .IsRequired();
+        modelBuilder.Entity<TableGroup>()
+            .HasMany(g => g.TableCells)
+            .WithMany(c => c.TableGroups)
+            .UsingEntity<Dictionary<string, object>>(
+            "TableGroupCell",
+            j => j.HasOne<TableCell>()
+                  .WithMany()
+                  .HasForeignKey("table_cell_id")
+                  .HasPrincipalKey(nameof(TableCell.Id)),
+            j => j.HasOne<TableGroup>()
+                  .WithMany()
+                  .HasForeignKey("table_group_id")
+                  .HasPrincipalKey(nameof(TableGroup.Id)),
+            j =>
+            {
+                j.HasKey("table_cell_id", "table_group_id");
+                j.ToTable("table_group_cell");
+            });
     }
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
+    public DbSet<TableGroup> Groups => Set<TableGroup>();
     public DbSet<TableCell> Cells => Set<TableCell>();
     public DbSet<MergedTableCell> MergedCells => Set<MergedTableCell>();
     public DbSet<TableCellBorders> CellBorders => Set<TableCellBorders>();
