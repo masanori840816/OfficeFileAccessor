@@ -104,9 +104,33 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
                 j.HasKey("row_height_id", "sheet_id");
                 j.ToTable("sheet_row_height");
             });
+        modelBuilder.Entity<OfficeFile>()
+            .HasMany(s => s.OfficeFileSheets)
+            .WithMany(g => g.OfficeFiles)
+            .UsingEntity<Dictionary<string, object>>(
+            "FileSheet",
+            j => j.HasOne<OfficeFileSheet>()
+                  .WithMany()
+                  .HasForeignKey("sheet_id")
+                  .HasPrincipalKey(nameof(OfficeFileSheet.Id)),
+            j => j.HasOne<OfficeFile>()
+                  .WithMany()
+                  .HasForeignKey("file_id")
+                  .HasPrincipalKey(nameof(OfficeFile.Id)),
+            j =>
+            {
+                j.HasKey("sheet_id", "file_id");
+                j.ToTable("file_sheet");
+            });
+        modelBuilder.Entity<OfficeFileData>()
+            .HasOne(d => d.OfficeFile)
+            .WithOne(f => f.OfficeFileData)
+            .HasForeignKey<OfficeFileData>(f => f.FileId)
+            .IsRequired();
     }
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
-
+    public DbSet<OfficeFile> OfficeFiles => Set<OfficeFile>();
+    public DbSet<OfficeFileData> OfficeFileData => Set<OfficeFileData>();
     public DbSet<OfficeFileSheet> Sheets => Set<OfficeFileSheet>();
     
     public DbSet<TableColumnWidth> ColumnWidths => Set<TableColumnWidth>();

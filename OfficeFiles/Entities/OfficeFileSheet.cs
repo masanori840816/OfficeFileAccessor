@@ -13,5 +13,6 @@ public record OfficeFileSheet
     public required string Name { get; init; }
     public List<TableColumnWidth> ColumnWidths { get; init; } = [];
     public List<TableRowHeight> RowHeights { get; init; } = [];
-    public List<TableGroup> TableGroups { get; set; } = [];
+    public List<TableGroup> TableGroups { get; init; } = [];
+    public List<OfficeFile> OfficeFiles { get; init; } = [];
 }
