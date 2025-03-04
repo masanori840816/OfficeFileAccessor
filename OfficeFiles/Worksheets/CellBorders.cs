@@ -20,16 +20,6 @@ public record CellBorders
             Bottom = BorderType.None,
         };
     }
-    public static CellBorders GetAllThin()
-    {
-        return new ()
-        {
-            Left = BorderType.Thin,
-            Top = BorderType.Thin,
-            Right = BorderType.Thin,
-            Bottom = BorderType.Thin,
-        };
-    }
     public bool CheckIsBordered()
     {
         return Left != BorderType.None ||

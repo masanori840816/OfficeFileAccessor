@@ -11,7 +11,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         public required bool HasBorders { get; set; }
         public List<Worksheets.Cell> Cells { get; init; } = [];
     }
-    public List<OfficeFileTableGroup> Generate(string sheetName, Worksheets.PrintArea printArea,
+    public List<OfficeFileTableGroup> Generate(Worksheets.PrintArea printArea,
         List<Worksheets.Cell> cells)
     {
         List<GroupedCells> groupedCells = GroupCells(printArea, cells);

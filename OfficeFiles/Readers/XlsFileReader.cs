@@ -125,7 +125,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     }
                 }
             }
-            List<OfficeFileTableGroup> groups = FileGenerator.Generate(sheetName, printArea, cells);
+            List<OfficeFileTableGroup> groups = FileGenerator.Generate(printArea, cells);
             List<OfficeFileTableCell> groupedCells = [.. groups.SelectMany(g => g.Cells)];
             OfficeFileSheet sheet = new ()
             {
@@ -454,7 +454,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         {
             return Worksheets.PrintArea.DefaultPrintArea();
         }
-        List<Worksheets.PrintArea> results = [];
         foreach (DefinedName definedName in definedNames.Elements<DefinedName>())
         {
             if(string.IsNullOrEmpty(definedName.Name?.Value))
