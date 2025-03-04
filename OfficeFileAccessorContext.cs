@@ -50,8 +50,67 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
                 j.HasKey("table_cell_id", "table_group_id");
                 j.ToTable("table_group_cell");
             });
+        modelBuilder.Entity<OfficeFileSheet>()
+            .HasMany(s => s.TableGroups)
+            .WithMany(g => g.OfficeFileSheets)
+            .UsingEntity<Dictionary<string, object>>(
+            "SheetTableGroup",
+            j => j.HasOne<TableGroup>()
+                  .WithMany()
+                  .HasForeignKey("table_group_id")
+                  .HasPrincipalKey(nameof(TableGroup.Id)),
+            j => j.HasOne<OfficeFileSheet>()
+                  .WithMany()
+                  .HasForeignKey("sheet_id")
+                  .HasPrincipalKey(nameof(OfficeFileSheet.Id)),
+            j =>
+            {
+                j.HasKey("table_group_id", "sheet_id");
+                j.ToTable("sheet_table_group");
+            });
+        modelBuilder.Entity<OfficeFileSheet>()
+            .HasMany(s => s.ColumnWidths)
+            .WithMany(g => g.OfficeFileSheets)
+            .UsingEntity<Dictionary<string, object>>(
+            "SheetColumnWidth",
+            j => j.HasOne<TableColumnWidth>()
+                  .WithMany()
+                  .HasForeignKey("column_width_id")
+                  .HasPrincipalKey(nameof(TableColumnWidth.Id)),
+            j => j.HasOne<OfficeFileSheet>()
+                  .WithMany()
+                  .HasForeignKey("sheet_id")
+                  .HasPrincipalKey(nameof(OfficeFileSheet.Id)),
+            j =>
+            {
+                j.HasKey("column_width_id", "sheet_id");
+                j.ToTable("sheet_column_width");
+            });
+        modelBuilder.Entity<OfficeFileSheet>()
+            .HasMany(s => s.RowHeights)
+            .WithMany(g => g.OfficeFileSheets)
+            .UsingEntity<Dictionary<string, object>>(
+            "SheetRowHeight",
+            j => j.HasOne<TableRowHeight>()
+                  .WithMany()
+                  .HasForeignKey("row_height_id")
+                  .HasPrincipalKey(nameof(TableRowHeight.Id)),
+            j => j.HasOne<OfficeFileSheet>()
+                  .WithMany()
+                  .HasForeignKey("sheet_id")
+                  .HasPrincipalKey(nameof(OfficeFileSheet.Id)),
+            j =>
+            {
+                j.HasKey("row_height_id", "sheet_id");
+                j.ToTable("sheet_row_height");
+            });
     }
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
+
+    public DbSet<OfficeFileSheet> Sheets => Set<OfficeFileSheet>();
+    
+    public DbSet<TableColumnWidth> ColumnWidths => Set<TableColumnWidth>();
+    public DbSet<TableRowHeight> RowHeights => Set<TableRowHeight>();
     public DbSet<TableGroup> Groups => Set<TableGroup>();
     public DbSet<TableCell> Cells => Set<TableCell>();
     public DbSet<MergedTableCell> MergedCells => Set<MergedTableCell>();
