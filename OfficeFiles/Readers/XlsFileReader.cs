@@ -6,6 +6,7 @@ using Drawing = DocumentFormat.OpenXml.Drawing;
 using OfficeFileAccessor.Apps;
 using SheetFunc = OfficeFileAccessor.OfficeFiles.Worksheets.Functions;
 using OfficeFileAccessor.OfficeFiles.Files;
+using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
@@ -17,7 +18,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
 
     private record TextDirection(bool VerticalWriting, uint Rotation);
     
-    public OfficeFile? Read(IFormFile file)
+    public Files.OfficeFile? Read(IFormFile file)
     {
         
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
@@ -27,7 +28,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             Logger.LogWarning("Failed getting WorkbookPart");
             return null;
         }
-        OfficeFile result = new ()
+        Files.OfficeFile result = new ()
         {
             FileName = file.FileName,
             MimeType = file.ContentType,
@@ -127,7 +128,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             }
             List<OfficeFileTableGroup> groups = FileGenerator.Generate(printArea, cells);
             List<OfficeFileTableCell> groupedCells = [.. groups.SelectMany(g => g.Cells)];
-            OfficeFileSheet sheet = new ()
+            Files.OfficeFileSheet sheet = new ()
             {
                 Name = sheetName,
                 TableGroups = groups,
@@ -153,7 +154,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         // Text direction
         TextDirection textDirection = GetTextDirection(cellFormat);
         // Font format
-        Worksheets.CellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
+        TableCellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
         
         // Formula
         string? formula = cell.CellFormula?.Text;
@@ -349,7 +350,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
     }
-    private static Worksheets.CellFontFormat? GetFontFormat(WorkbookPart bookPart, CellFormat? cellFormat)
+    private static TableCellFontFormat? GetFontFormat(WorkbookPart bookPart, CellFormat? cellFormat)
     {
         if(cellFormat?.FontId?.Value == null)
         {
@@ -357,8 +358,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         if (bookPart.WorkbookStylesPart?.Stylesheet?.Fonts?.ElementAt((int)cellFormat.FontId.Value) is Font font)
         {
-            return new (FontName: font.FontName?.Val, FontSize: font.FontSize?.Val?.Value,
-                FontColor: font.Color?.Rgb, Bold: font?.Bold != null);
+            return new () {
+                FontName = font.FontName?.Val,
+                FontSize = font.FontSize?.Val?.Value,
+                FontColor = font.Color?.Rgb,
+                Bold = font?.Bold != null
+            };
         }
         return null;
     }
