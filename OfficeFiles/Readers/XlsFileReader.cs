@@ -148,7 +148,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     {
         CellFormat? cellFormat = GetCellFormat(bookPart, cell);
         // Borders
-        Worksheets.CellBorders borders = GetBorders(bookPart, cellFormat);
+        Entities.TableCellBorders borders = GetBorders(bookPart, cellFormat);
         // Background color
         string? backgroundColor = GetCellColor(bookPart, cellFormat);
         // Text direction
@@ -367,7 +367,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return null;
     }
-    private static Worksheets.CellBorders GetBorders(WorkbookPart bookPart, CellFormat? cellFormat)
+    private static Entities.TableCellBorders GetBorders(WorkbookPart bookPart, CellFormat? cellFormat)
     {
         if(cellFormat?.BorderId?.Value != null)
         {
@@ -383,7 +383,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 };
             }
         }
-        return Worksheets.CellBorders.GetNoBorders();
+        return Entities.TableCellBorders.GetNoBorders();
     }
     private static string? GetCellColor(WorkbookPart bookPart, CellFormat? cellFormat)
     {

@@ -1,4 +1,5 @@
 
+using OfficeFileAccessor.OfficeFiles.Entities;
 using OfficeFileAccessor.OfficeFiles.Worksheets;
 
 namespace OfficeFileAccessor.OfficeFiles.Files;
@@ -7,11 +8,11 @@ public record OfficeFileTableCell
 {
     public long? Id { get; init; }
     public required CellAddress CellAddress { get; init; }
-    public CellFontFormat? FontFormat { get; init; }
+    public TableCellFontFormat? FontFormat { get; init; }
     public int VerticalLength { get; set; } = 1;
     public int HorizontalLength { get; set;} = 1;
     public required string Value { get; init; }
-    public required CellBorders Borders { get; init; }
+    public required TableCellBorders Borders { get; init; }
     public string? BackgroundColor { get; init; }
     public bool Editabled { get; init; }
     public MergedCell? MergedCell { get; init; }
@@ -19,7 +20,7 @@ public record OfficeFileTableCell
     public required bool VerticalWriting { get; init; } = false;
     public required uint TextRotation { get; init; } = 0;
     public static OfficeFileTableCell Generate(Cell cell, MergedCell? mergedCell,
-        CellBorders borders)
+        TableCellBorders borders)
     {        
         return new ()
         {
@@ -36,7 +37,7 @@ public record OfficeFileTableCell
             TextRotation = cell.TextRotation,
         };
     }
-    public static OfficeFileTableCell Generate(CellAddress baseAddress, string mergedValue, CellBorders borders,
+    public static OfficeFileTableCell Generate(CellAddress baseAddress, string mergedValue, TableCellBorders borders,
         string? backgroundColor, MergedCell? mergedCell, bool verticalWriting, uint textRotation)
     {
         return new ()

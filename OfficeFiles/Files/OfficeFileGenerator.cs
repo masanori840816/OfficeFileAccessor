@@ -15,7 +15,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         List<Worksheets.Cell> cells)
     {
         List<GroupedCells> groupedCells = GroupCells(printArea, cells);
-        Worksheets.CellBorders noBorders = Worksheets.CellBorders.GetNoBorders();
+        Entities.TableCellBorders noBorders = Entities.TableCellBorders.GetNoBorders();
         List<OfficeFileTableGroup> results = [];
         
         foreach(GroupedCells g in groupedCells)
@@ -467,19 +467,19 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         }
         return backgroundColor;
     }
-    private static Worksheets.CellBorders GetBordersFromMergedCells(List<Worksheets.Cell> cells)
+    private static Entities.TableCellBorders GetBordersFromMergedCells(List<Worksheets.Cell> cells)
     {
         Worksheets.Cell? leftCell = cells.FirstOrDefault(c => c.Borders.Left != Worksheets.BorderType.None);
-        Worksheets.BorderType left = leftCell?.Borders?.Left ?? Worksheets.BorderType.None;
+        int left = leftCell?.Borders?.Left ?? Worksheets.BorderType.None;
 
         Worksheets.Cell? topCell = cells.FirstOrDefault(c => c.Borders.Top != Worksheets.BorderType.None);
-        Worksheets.BorderType top = topCell?.Borders?.Top ?? Worksheets.BorderType.None;
+        int top = topCell?.Borders?.Top ?? Worksheets.BorderType.None;
         
         Worksheets.Cell? rightCell = cells.FirstOrDefault(c => c.Borders.Right != Worksheets.BorderType.None);
-        Worksheets.BorderType right = rightCell?.Borders?.Right ?? Worksheets.BorderType.None;
+        int right = rightCell?.Borders?.Right ?? Worksheets.BorderType.None;
 
         Worksheets.Cell? bottomCell = cells.FirstOrDefault(c => c.Borders.Bottom != Worksheets.BorderType.None);
-        Worksheets.BorderType bottom = bottomCell?.Borders?.Bottom ?? Worksheets.BorderType.None;
+        int bottom = bottomCell?.Borders?.Bottom ?? Worksheets.BorderType.None;
         
         return new () {
             Left = left,

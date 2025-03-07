@@ -1,4 +1,6 @@
 
+using OfficeFileAccessor.OfficeFiles.Entities;
+
 namespace OfficeFileAccessor.OfficeFiles.Worksheets;
 
 public class Cell
@@ -7,8 +9,8 @@ public class Cell
     public required string Value { get; init; }
     public string? Formula { get; init; }
     public string? BackgroundColor { get; init; }
-    public CellFontFormat? FontFormat { get; init; }
-    public required CellBorders Borders { get; init; }
+    public TableCellFontFormat? FontFormat { get; init; }
+    public required TableCellBorders Borders { get; init; }
     // Only the start cell of a merged cell has this value.
     public MergedCell? MergedCell { get; init; }
     public bool Merged { get; init; }
@@ -25,7 +27,7 @@ public class Cell
         {
             Address = CellAddress.GenerateFromAddress(address),
             Value = "",
-            Borders = CellBorders.GetNoBorders(),
+            Borders = TableCellBorders.GetNoBorders(),
             VerticalWriting = false,
             TextRotation = 0
         };

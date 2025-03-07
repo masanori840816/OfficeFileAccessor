@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using OfficeFileAccessor.OfficeFiles.Worksheets;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -26,4 +27,15 @@ public record TableCellBorders
     public required int Bottom { get; init; }
 
     public TableCell? TableCell { get; init; }
+
+    public static TableCellBorders GetNoBorders()
+    {
+        return new ()
+        {
+            Left = BorderType.None,
+            Top = BorderType.None,
+            Right = BorderType.None,
+            Bottom = BorderType.None,
+        };
+    }
 }

@@ -1,17 +1,17 @@
 namespace OfficeFileAccessor.OfficeFiles.Worksheets;
 
-public enum BorderType
+public static class BorderType
 {
-    None = 0,
-    Thin,
-    Hair,
-    Medium,
-    Dotted,
-    Double,
+    public static readonly int None = 0;
+    public static readonly int Thin = 1;
+    public static readonly int Hair = 2;
+    public static readonly int Medium = 3;
+    public static readonly int Dotted = 4;
+    public static readonly int Double = 5;
 }
 public static class BorderTypeFactory
 {
-    public static BorderType Get(string? borderValue)
+    public static int Get(string? borderValue)
     {
         if(string.IsNullOrEmpty(borderValue))
         {
