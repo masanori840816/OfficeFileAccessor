@@ -17,13 +17,14 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         List<GroupedCells> groupedCells = GroupCells(printArea, cells);
         Worksheets.CellBorders noBorders = Worksheets.CellBorders.GetNoBorders();
         List<OfficeFileTableGroup> results = [];
-        OfficeFileTableGroup group = new ()
-        {
-            DisplayOrder = results.Count,
-        };
-        results.Add(group);
+        
         foreach(GroupedCells g in groupedCells)
         {
+            OfficeFileTableGroup group = new ()
+            {
+                DisplayOrder = results.Count,
+            };
+            results.Add(group);
             List<Worksheets.CellAddress> addedAddresses = [];
             List<OfficeFileTableCell> tableCells = [];
             if(g.HasBorders == false)
@@ -213,7 +214,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 if(string.IsNullOrEmpty(result) == false)
                 {
-                    result += "[NEW-LINE]";
+                    result += "\n";
                 }
                 if(string.IsNullOrEmpty(currentRowText) == false)
                 {
@@ -228,7 +229,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 {
                     for(int i = 0; i < (cell.Address.Column - startColumn); i++)
                     {
-                        currentRowText += "[TAB]";
+                        currentRowText += "\t";
                     }
                 }
                 currentRowText += cell.Value;
@@ -239,12 +240,11 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         {        
             if(string.IsNullOrEmpty(result) == false)
             {
-                result += "[NEW-LINE]";
+                result += "\n";
             }
             result += currentRowText;
         }
-        result = result.Replace("\r\n", "[NEW-LINE]");
-        return result.Replace("\n", "[NEW-LINE]");
+        return result.Replace("\r\n", "\n]");
     }
     private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells,
         int[] columns, int[] rows)
