@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -42,6 +43,7 @@ public class TableCell
     public TableCellBorders? Borders { get; init; }
     public MergedTableCell? MergedCell { get; init; }
     public TableCellFontFormat? FontFormat { get; init; }
+    [JsonIgnore]
     public List<TableGroup> TableGroups { get; set; } = [];
 
     public static TableCell Generate(Worksheets.Cell cell, Worksheets.MergedCell? mergedCell,

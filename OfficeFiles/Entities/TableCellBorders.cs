@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using OfficeFileAccessor.OfficeFiles.Worksheets;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
@@ -25,7 +26,7 @@ public record TableCellBorders
     [Required]
     [Column("bottom")]
     public required int Bottom { get; init; }
-
+    [JsonIgnore]
     public TableCell? TableCell { get; init; }
 
     public static TableCellBorders GetNoBorders()

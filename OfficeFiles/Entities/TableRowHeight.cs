@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -16,5 +17,6 @@ public record TableRowHeight
     [Required]
     [Column("height")]
     public required double Height { get; init; }
+    [JsonIgnore]
     public List<OfficeFileSheet> OfficeFileSheets { get; set; } = [];
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -18,5 +19,6 @@ public record TableGroup
     [MaxLength(512)]
     public string? Title { get; init; }
     public List<TableCell> TableCells { get; set; } = [];
+    [JsonIgnore]
     public List<OfficeFileSheet> OfficeFileSheets { get; set; } = [];
 }

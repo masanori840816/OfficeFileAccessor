@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -16,6 +17,6 @@ public record OfficeFileData
     [Required]
     [Column("file_data")]
     public required byte[] FileData { get; init; }
-
+    [JsonIgnore]
     public OfficeFile? OfficeFile { get; init; }    
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -25,6 +26,6 @@ public record MergedTableCell
     [Required]
     [Column("end_row")]
     public required int EndRow { get; init; }
-
+    [JsonIgnore]
     public TableCell? TableCell { get; init; }
 }

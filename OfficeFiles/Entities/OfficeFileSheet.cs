@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -14,5 +15,6 @@ public record OfficeFileSheet
     public List<TableColumnWidth> ColumnWidths { get; init; } = [];
     public List<TableRowHeight> RowHeights { get; init; } = [];
     public List<TableGroup> TableGroups { get; init; } = [];
+    [JsonIgnore]
     public List<OfficeFile> OfficeFiles { get; init; } = [];
 }
