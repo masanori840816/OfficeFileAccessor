@@ -1,4 +1,6 @@
 
+using OfficeFileAccessor.OfficeFiles.Entities;
+
 namespace OfficeFileAccessor.OfficeFiles.Files;
 
 public record OfficeFileTableGroup
@@ -7,5 +9,5 @@ public record OfficeFileTableGroup
     public long SheetId { get; init; }
     public required int DisplayOrder { get; init; }
     public string? Title { get; set; }
-    public List<OfficeFileTableCell> Cells { get; init; } = [];
+    public List<TableCell> Cells { get; init; } = [];
 }

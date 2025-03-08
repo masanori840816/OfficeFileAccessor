@@ -1,3 +1,5 @@
+using OfficeFileAccessor.OfficeFiles.Entities;
+
 namespace OfficeFileAccessor.OfficeFiles.Files;
 
 public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFileGenerator
@@ -26,7 +28,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             };
             results.Add(group);
             List<Worksheets.CellAddress> addedAddresses = [];
-            List<OfficeFileTableCell> tableCells = [];
+            List<TableCell> tableCells = [];
             if(g.HasBorders == false)
             {
                 if(results.Count <= 1)
@@ -48,7 +50,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
+                            group.Cells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -60,7 +62,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.Cells.Add(OfficeFileTableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
+                            group.Cells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -86,7 +88,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 string? backgroundColor = GetBackgroundColorFromMergedCells(mergedCell);
                 addedAddresses.AddRange(mergedCell.Select(c => c.Address));
                 group.Cells.Add(
-                    OfficeFileTableCell.Generate(cell.Address, MergeCellValues(mergedCell), 
+                    TableCell.Generate(cell.Address, MergeCellValues(mergedCell), 
                         GetBordersFromMergedCells(mergedCell), 
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell),
                         cell.VerticalWriting, cell.TextRotation));

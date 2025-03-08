@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
 [Table("table_cell")]
-public record TableCell
+public class TableCell
 {
     [Key]
     [Column("id")]
@@ -19,10 +19,10 @@ public record TableCell
     [Required]
     [Column("vertical_length")]
 
-    public int VerticalLength { get; init; } = 1;
+    public int VerticalLength { get; set; } = 1;
     [Required]
     [Column("horizontal_length")]
-    public int HorizontalLength { get; init;} = 1;
+    public int HorizontalLength { get; set;} = 1;
     [Required]
     [Column("value")]
     public required string Value { get; init; }
@@ -43,4 +43,87 @@ public record TableCell
     public MergedTableCell? MergedCell { get; init; }
     public TableCellFontFormat? FontFormat { get; init; }
     public List<TableGroup> TableGroups { get; set; } = [];
+
+    public static TableCell Generate(Worksheets.Cell cell, Worksheets.MergedCell? mergedCell,
+        TableCellBorders borders)
+    {
+        MergedTableCell? merged = null;
+        if(mergedCell != null)
+        {
+            merged = new ()
+            {
+                StartColumn = mergedCell.Start.Column,
+                StartRow = mergedCell.Start.Row,
+                EndColumn = mergedCell.End.Column, 
+                EndRow = mergedCell.End.Row,
+            };
+        }
+        return new ()
+        {
+            Column = cell.Address.Column,
+            Row = cell.Address.Row,
+            FontFormat = cell.FontFormat,
+            HorizontalLength = 1,
+            VerticalLength = 1,
+            Value = cell.Value,
+            Borders = borders,
+            BackgroundColor = cell.BackgroundColor,
+            Editabled = cell.BackgroundColor == ConstantParams.EditableColor,
+            MergedCell = merged,
+            VerticalWriting = cell.VerticalWriting,
+            TextRotation = (int)cell.TextRotation,
+        };
+    }
+    public static TableCell Generate(Worksheets.CellAddress baseAddress, string mergedValue, TableCellBorders borders,
+        string? backgroundColor, Worksheets.MergedCell? mergedCell, bool verticalWriting, uint textRotation)
+    {
+        MergedTableCell? merged = null;
+        if(mergedCell != null)
+        {
+            merged = new ()
+            {
+                StartColumn = mergedCell.Start.Column,
+                StartRow = mergedCell.Start.Row,
+                EndColumn = mergedCell.End.Column, 
+                EndRow = mergedCell.End.Row,
+            };
+        }
+        return new ()
+        {
+            Column = baseAddress.Column,
+            Row = baseAddress.Row,
+            Value = mergedValue,
+            Borders = borders,
+            BackgroundColor = backgroundColor,
+            Editabled = backgroundColor == ConstantParams.EditableColor,
+            MergedCell = merged,
+            VerticalWriting = verticalWriting,
+            TextRotation = (int)textRotation,
+        };
+    }
+    public void UpdateCellLength(List<TableColumnWidth> widths, List<TableRowHeight> heights)
+    {
+        if(MergedCell == null)
+        {
+            return;
+        }
+        int horizontalLength = 0;
+        int verticalLength = 0;
+        foreach(TableColumnWidth w in widths)
+        {
+            if(MergedCell.StartColumn <= w.Column && MergedCell.EndColumn >= w.Column)
+            {
+                horizontalLength += 1;
+            }
+        }
+        foreach(TableRowHeight h in heights)
+        {
+            if(MergedCell.StartRow <= h.Row && MergedCell.EndRow >= h.Row)
+            {
+                verticalLength += 1;
+            }
+        }
+        HorizontalLength = horizontalLength;
+        VerticalLength = verticalLength;
+    }
 }
