@@ -1,5 +1,6 @@
 
 using OfficeFileAccessor.Apps;
+using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.Files;
 using OfficeFileAccessor.Files.DTO;
 using OfficeFileAccessor.OfficeFiles.DTO;
@@ -9,25 +10,12 @@ using OfficeFileAccessor.OfficeFiles.Repositories;
 
 namespace OfficeFileAccessor.OfficeFiles;
 
-public class OfficeFileService: IOfficeFileService
+public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader XlsFileReader,
+        IJsonCamelCaseOption JsonOption, IOfficeFiles OfficeFiles): IOfficeFileService
 {
-    private readonly ILogger<OfficeFileService> Logger;
-    private readonly IXlsFileReader XlsFileReader;
-    private readonly DocFileReader docFileReader;
-    private readonly IJsonCamelCaseOption JsonOption;
-    private readonly IOfficeFiles officeFiles;
-
-
-    public OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader XlsFileReader,
-        IJsonCamelCaseOption JsonOption, IOfficeFiles officeFiles)
-    {
-        this.Logger = Logger;
-        this.XlsFileReader = XlsFileReader;
-        this.docFileReader = new DocFileReader();
-        this.JsonOption = JsonOption;
-        this.officeFiles = officeFiles;
-    }
-    public async Task<DownloadFile> RegisterAsync(IFormFileCollection files)
+    private readonly DocFileReader docFileReader = new ();
+    
+    public async Task<DownloadFile> RegisterAsync(IFormFileCollection files, DisplayUser signinUser)
     {
         OfficeFile? file = null;
         foreach(var f in files!)
@@ -41,12 +29,12 @@ public class OfficeFileService: IOfficeFileService
             {
                 case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                 case "application/vnd.ms-excel.sheet.macroEnabled.12":
-                    file = XlsFileReader.Read(f);
+                    file = XlsFileReader.Read(f, signinUser);
                     if(file == null)
                     {
                         Logger.LogWarning("Faile reading the file");
                     } else {
-                        ApplicationResult createResult = await officeFiles.CreateAsync(file);
+                        ApplicationResult createResult = await OfficeFiles.CreateAsync(file);
                         Logger.LogWarning("CREATE Result {r}", createResult);
                     }
                     
@@ -71,5 +59,24 @@ public class OfficeFileService: IOfficeFileService
         };
 
         return result.GenerateDownloadFile(JsonOption.Get());
+    }
+    /// <summary>
+    /// Get an office file and sheets by id.
+    /// </summary>
+    /// <param name="fileId"></param>
+    /// <returns></returns>
+    public async Task<List<PreviewOfficeFileSheets>> GetPreviewSheetsAsync(long fileId)
+    {
+        return await OfficeFiles.GetPreviewSheetsAsync(fileId);
+    }
+    /// <summary>
+    /// Get a office file sheet by ids.
+    /// </summary>
+    /// <param name="fileId"></param>
+    /// <param name="sheetId"></param>
+    /// <returns></returns>
+    public async Task<OfficeFile?> GetOfficeFileSheetAsync( long? sheetId)
+    {
+        return null;
     }
 }
