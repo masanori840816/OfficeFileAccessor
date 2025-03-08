@@ -11,6 +11,8 @@ public record OfficeFileSheet
     [Column("id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public long? Id { get; init; }
+    [Column("name", TypeName = "varchar(256)")]
+    [MaxLength(256)]
     public required string Name { get; init; }
     public List<TableColumnWidth> ColumnWidths { get; init; } = [];
     public List<TableRowHeight> RowHeights { get; init; } = [];

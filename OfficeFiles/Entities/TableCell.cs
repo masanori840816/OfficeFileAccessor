@@ -19,7 +19,6 @@ public class TableCell
     public required int Row { get; init; }
     [Required]
     [Column("vertical_length")]
-
     public int VerticalLength { get; set; } = 1;
     [Required]
     [Column("horizontal_length")]
@@ -28,9 +27,11 @@ public class TableCell
     [Column("value")]
     public required string Value { get; init; }
     [Column("formula", TypeName = "varchar(512)")]
+    [MaxLength(512)]
     public string? Formula { get; init; }
     [Required]
     [Column("value_type", TypeName = "varchar(32)")]
+    [MaxLength(32)]
     public required string ValueType { get; set; }
     [Column("background_color")]
     public string? BackgroundColor { get; init; }
