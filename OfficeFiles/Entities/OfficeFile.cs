@@ -23,7 +23,7 @@ public record OfficeFile
     public int Version { get; set; } = 1;
     [Required]
     [Column("last_update_date", TypeName = "timestamp with time zone")]
-    public DateTime LastUpdateDate { get; set; }
+    public required DateTime LastUpdateDate { get; set; }
 
     public OfficeFileData? OfficeFileData { get; init; }
     public List<OfficeFileSheet> OfficeFileSheets { get; init; } = [];

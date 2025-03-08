@@ -37,6 +37,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             OfficeFileData = new () {
                 FileData = ms.ToArray(),
             },
+            LastUpdateDate = DateTime.Now.ToUniversalTime(),
         };
         foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
         {
