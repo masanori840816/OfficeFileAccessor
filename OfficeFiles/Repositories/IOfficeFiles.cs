@@ -8,4 +8,5 @@ public interface IOfficeFiles
 {
     Task<ApplicationResult> CreateAsync(OfficeFile newItem);
     Task<List<PreviewOfficeFileSheets>> GetPreviewSheetsAsync(long fileId);
+    Task<OfficeFile?> GetOfficeFileSheetAsync(long? sheetId);
 }

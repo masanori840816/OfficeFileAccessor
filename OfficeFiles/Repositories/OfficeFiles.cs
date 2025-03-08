@@ -43,4 +43,49 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
             .Where(s => s.FileId == fileId)
             .ToListAsync();
     }
+    public async Task<OfficeFile?> GetOfficeFileSheetAsync(long? sheetId)
+    {
+        
+        string sql = """
+            SELECT sheet.id AS "SheetId",
+                tgroup.id AS "GroupId",
+                cell.id AS "CellId",
+                tgroup.display_order AS "GroupDisplayOrder",
+                tgroup.title AS "Title",
+                cell.column AS "Column",
+                cell.row AS "Row",
+                cell.vertical_length AS "VerticalLength",
+                cell.horizontal_length AS "HorizontalLength",
+                cell.value AS "Value",
+                cell.formula AS "Formula",
+                cell.value_type AS "ValueType",
+                cell.background_color AS "BackgroundColor",
+                cell.editabled AS "Editabled",
+                cell.vertical_writing AS "VerticalWriting",
+                cell.text_rotation AS "TextRotation",
+                border.left AS "BorderLeft",
+                border.top AS "BorderTop",
+                border.right AS "BorderRight",
+                border.bottom AS "BorderBottom",
+                font.font_name AS "FontName",
+                font.font_size AS "FontSize",
+                font.font_color AS "FontColor",
+                font.bold AS "Bold",
+                mtc.start_column AS "MergedStartColumn",
+                mtc.start_row AS "MergedStartRow",
+                mtc.end_column AS "MergedEndColumn",
+                mtc.end_row AS "MergedEndRow"
+                FROM office_file_sheet sheet
+                INNER JOIN link_sheet_group lsg ON sheet.id = lsg.sheet_id
+                INNER JOIN table_group tgroup ON tgroup.id = lsg.table_group_id
+                INNER JOIN link_group_cell lgc ON tgroup.id = lgc.table_group_id
+                INNER JOIN table_cell cell ON cell.id = lgc.table_cell_id
+                LEFT JOIN table_cell_borders border ON cell.id = border.table_cell_id
+                LEFT JOIN table_cell_font_format font ON cell.id = font.table_cell_id
+                LEFT JOIN merged_table_cell mtc ON cell.id = mtc.table_cell_id
+            """;
+        // TODO: implementation
+        return null;
+    }
+    
 }
