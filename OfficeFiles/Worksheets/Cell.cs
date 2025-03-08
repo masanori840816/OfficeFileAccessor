@@ -8,6 +8,7 @@ public class Cell
     public required CellAddress Address { get; init; }
     public required string Value { get; init; }
     public string? Formula { get; init; }
+    public required string ValueType { get; set; }
     public string? BackgroundColor { get; init; }
     public TableCellFontFormat? FontFormat { get; init; }
     public required TableCellBorders Borders { get; init; }
@@ -19,7 +20,7 @@ public class Cell
 
     public override string ToString()
     {
-        return $"Cell Address:{Address} Formula:{Formula} Value:{Value} BackgroundColor: {BackgroundColor} {FontFormat} {Borders} Merged?: {Merged} {MergedCell} VerticalWriting?: {VerticalWriting} TextRotation: {TextRotation}";
+        return $"Cell Address:{Address} Formula:{Formula} Value:{Value} Type:{ValueType} BackgroundColor: {BackgroundColor} {FontFormat} {Borders} Merged?: {Merged} {MergedCell} VerticalWriting?: {VerticalWriting} TextRotation: {TextRotation}";
     }
     public static Cell Default(string? address)
     {
@@ -27,6 +28,7 @@ public class Cell
         {
             Address = CellAddress.GenerateFromAddress(address),
             Value = "",
+            ValueType = CellValueType.Text,
             Borders = TableCellBorders.GetNoBorders(),
             VerticalWriting = false,
             TextRotation = 0

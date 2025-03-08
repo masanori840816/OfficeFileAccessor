@@ -1,4 +1,5 @@
 using OfficeFileAccessor.OfficeFiles.Entities;
+using OfficeFileAccessor.OfficeFiles.Worksheets;
 
 namespace OfficeFileAccessor.OfficeFiles.Files;
 
@@ -87,8 +88,10 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 AddRestCells(mergedCell, g.Cells, columns, rows);                
                 string? backgroundColor = GetBackgroundColorFromMergedCells(mergedCell);
                 addedAddresses.AddRange(mergedCell.Select(c => c.Address));
+                                
                 group.TableCells.Add(
                     TableCell.Generate(cell.Address, MergeCellValues(mergedCell), 
+                        cell.Formula, cell.ValueType,
                         GetBordersFromMergedCells(mergedCell), 
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell),
                         cell.VerticalWriting, cell.TextRotation));

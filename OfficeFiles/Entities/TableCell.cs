@@ -27,7 +27,11 @@ public class TableCell
     [Required]
     [Column("value")]
     public required string Value { get; init; }
-    
+    [Column("formula", TypeName = "varchar(512)")]
+    public string? Formula { get; init; }
+    [Required]
+    [Column("value_type", TypeName = "varchar(32)")]
+    public required string ValueType { get; set; }
     [Column("background_color")]
     public string? BackgroundColor { get; init; }
     [Required]
@@ -68,6 +72,8 @@ public class TableCell
             HorizontalLength = 1,
             VerticalLength = 1,
             Value = cell.Value,
+            Formula = cell.Formula,
+            ValueType = cell.ValueType,
             Borders = borders,
             BackgroundColor = cell.BackgroundColor,
             Editabled = cell.BackgroundColor == ConstantParams.EditableColor,
@@ -76,7 +82,8 @@ public class TableCell
             TextRotation = (int)cell.TextRotation,
         };
     }
-    public static TableCell Generate(Worksheets.CellAddress baseAddress, string mergedValue, TableCellBorders borders,
+    public static TableCell Generate(Worksheets.CellAddress baseAddress, string mergedValue, string? formula,
+        string valueType, TableCellBorders borders,
         string? backgroundColor, Worksheets.MergedCell? mergedCell, bool verticalWriting, uint textRotation)
     {
         MergedTableCell? merged = null;
@@ -95,6 +102,8 @@ public class TableCell
             Column = baseAddress.Column,
             Row = baseAddress.Row,
             Value = mergedValue,
+            Formula = formula,
+            ValueType = valueType,
             Borders = borders,
             BackgroundColor = backgroundColor,
             Editabled = backgroundColor == ConstantParams.EditableColor,

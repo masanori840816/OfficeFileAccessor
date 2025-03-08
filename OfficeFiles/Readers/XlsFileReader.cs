@@ -189,6 +189,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 Address = address,
                 Value = calcResult,
                 Formula = formula,
+                ValueType = Worksheets.CellValueType.Formula,
                 BackgroundColor = backgroundColor,
                 FontFormat = cellFontFormat,
                 Borders = borders,
@@ -220,6 +221,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 {
                     Address = address,
                     Value = result,
+                    ValueType = Worksheets.CellValueType.Text,
                     BackgroundColor = backgroundColor,
                     FontFormat = cellFontFormat,
                     Borders = borders,
@@ -229,16 +231,19 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     TextRotation = textDirection.Rotation,
                 };
             }
-        }        
+        }
+        string valueType = Worksheets.CellValueType.Text;
         if (string.IsNullOrEmpty(value) == false &&
             double.TryParse(value, out double nv))
         {
             value = nv.ToString("G");
+            valueType = Worksheets.CellValueType.Double;
         }
         return new Worksheets.Cell
         {
             Address = address,
             Value = value,
+            ValueType = valueType,
             BackgroundColor = backgroundColor,
             FontFormat = cellFontFormat,
             Borders = borders,
@@ -347,7 +352,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return results;
     }
-    private static CellFormat? GetCellFormat(WorkbookPart bookPart, Cell cell)
+    private static CellFormat? GetCellFormat(WorkbookPart bookPart, DocumentFormat.OpenXml.Spreadsheet.Cell cell)
     {
         if(cell.StyleIndex?.Value == null)
         {
