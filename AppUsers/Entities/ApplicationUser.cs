@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
+using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.AppUsers.Entities;
 
@@ -60,6 +62,8 @@ public class ApplicationUser: IdentityUser<int>
     [NotMapped]
     public override bool PhoneNumberConfirmed { get; set; }
 
+    [JsonIgnore]
+    public List<OfficeFile> OfficeFiles { get; init; } = [];
     public static ApplicationUser Create(string userName, string email, string password, int? id = null)
     {
         var result = new ApplicationUser

@@ -7,6 +7,7 @@ using OfficeFileAccessor.Apps;
 using SheetFunc = OfficeFileAccessor.OfficeFiles.Worksheets.Functions;
 using OfficeFileAccessor.OfficeFiles.Files;
 using OfficeFileAccessor.OfficeFiles.Entities;
+using OfficeFileAccessor.AppUsers.DTO;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
@@ -18,7 +19,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
 
     private record TextDirection(bool VerticalWriting, uint Rotation);
     
-    public OfficeFile? Read(IFormFile file)
+    public OfficeFile? Read(IFormFile file, DisplayUser signinUser)
     {
         using MemoryStream ms = new ();
         using Stream stream = file.OpenReadStream();
@@ -37,6 +38,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             OfficeFileData = new () {
                 FileData = ms.ToArray(),
             },
+            RegisterUserId = signinUser.Id,
             LastUpdateDate = DateTime.Now.ToUniversalTime(),
         };
         foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
@@ -140,6 +142,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 TableGroups = groups,
                 ColumnWidths = GetMergedWidths(allWidths, groupedCells),
                 RowHeights = GetMergedHeights(allHeights, groupedCells),
+                DisplayOrder = result.OfficeFileSheets.Count,
             };
             foreach(TableCell c in groupedCells)
             {

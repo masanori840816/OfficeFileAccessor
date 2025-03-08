@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OfficeFileAccessor.AppUsers.Entities;
+using OfficeFileAccessor.OfficeFiles.DTO;
 using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor;
@@ -121,12 +122,20 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             {
                 j.HasKey("sheet_id", "file_id");
                 j.ToTable("link_file_sheet");
-            });
+            });        
+        modelBuilder.Entity<OfficeFile>()
+                    .HasOne(i => i.RegisterUser)
+                    .WithMany(u => u.OfficeFiles)
+                    .HasForeignKey(w => w.RegisterUserId)
+                    .HasConstraintName("FK_OfficeFile_ApplicationUser");
+
         modelBuilder.Entity<OfficeFileData>()
             .HasOne(d => d.OfficeFile)
             .WithOne(f => f.OfficeFileData)
             .HasForeignKey<OfficeFileData>(f => f.FileId)
             .IsRequired();
+        /* exclude from migration */
+        modelBuilder.Entity<PreviewOfficeFileSheets>().HasNoKey().ToView(null);
     }
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
     public DbSet<OfficeFile> OfficeFiles => Set<OfficeFile>();
@@ -140,4 +149,7 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
     public DbSet<MergedTableCell> MergedCells => Set<MergedTableCell>();
     public DbSet<TableCellBorders> CellBorders => Set<TableCellBorders>();
     public DbSet<TableCellFontFormat> FontFormats => Set<TableCellFontFormat>();
+
+    /* -- only for displaying */
+    public DbSet<PreviewOfficeFileSheets> PreviewSheets => Set<PreviewOfficeFileSheets>();
 }

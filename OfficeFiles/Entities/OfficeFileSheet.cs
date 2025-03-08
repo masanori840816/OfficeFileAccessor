@@ -14,6 +14,9 @@ public record OfficeFileSheet
     [Column("name", TypeName = "varchar(256)")]
     [MaxLength(256)]
     public required string Name { get; init; }
+    [Required]
+    [Column("display_order")]
+    public required int DisplayOrder { get; init; }
     public List<TableColumnWidth> ColumnWidths { get; init; } = [];
     public List<TableRowHeight> RowHeights { get; init; } = [];
     public List<TableGroup> TableGroups { get; init; } = [];
