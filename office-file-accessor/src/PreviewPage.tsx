@@ -86,7 +86,7 @@ export function PreviewPage(): JSX.Element {
                 <button className='min-w-[80px]'>Download</button>
             </div>
         </section>
-        <section className='w-[98%] h-[67%] ml-[1%] bg-green-50'>
+        <section className='w-[98%] h-[67%] ml-[1%] border rounded-lg shadow-sm bg-green-50'>
             {officeFile == null ? (
                     <div></div>
                   ):
