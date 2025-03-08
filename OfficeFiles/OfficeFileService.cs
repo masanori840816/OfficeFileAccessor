@@ -3,7 +3,7 @@ using OfficeFileAccessor.Apps;
 using OfficeFileAccessor.Files;
 using OfficeFileAccessor.Files.DTO;
 using OfficeFileAccessor.OfficeFiles.DTO;
-using OfficeFileAccessor.OfficeFiles.Files;
+using OfficeFileAccessor.OfficeFiles.Entities;
 using OfficeFileAccessor.OfficeFiles.Readers;
 
 namespace OfficeFileAccessor.OfficeFiles;

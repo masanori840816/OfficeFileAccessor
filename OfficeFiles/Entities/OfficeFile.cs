@@ -20,7 +20,7 @@ public record OfficeFile
     public required string MimeType { get; init; }
     [Required]
     [Column("version")]
-    public required int Version { get; set; }
+    public int Version { get; set; } = 1;
     [Required]
     [Column("last_update_date", TypeName = "timestamp with time zone")]
     public DateTime LastUpdateDate { get; set; }

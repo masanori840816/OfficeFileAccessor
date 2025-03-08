@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
 [Table("table_group")]
-public record TableGroup
+public class TableGroup
 {
     [Key]
     [Column("id")]
@@ -13,11 +13,11 @@ public record TableGroup
     public long? Id { get; init; }
     [Required]
     [Column("display_order")]
-    public required int DisplayOrder { get; init; }
+    public required int DisplayOrder { get; set; }
     
     [Column("title", TypeName = "varchar(512)")]
     [MaxLength(512)]
-    public string? Title { get; init; }
+    public string? Title { get; set; }
     public List<TableCell> TableCells { get; set; } = [];
     [JsonIgnore]
     public List<OfficeFileSheet> OfficeFileSheets { get; set; } = [];

@@ -1,7 +1,9 @@
+using OfficeFileAccessor.OfficeFiles.Entities;
+
 namespace OfficeFileAccessor.OfficeFiles.Files;
 
 public interface IOfficeFileGenerator
 {
-    List<OfficeFileTableGroup> Generate(Worksheets.PrintArea printArea,
+    List<TableGroup> Generate(Worksheets.PrintArea printArea,
         List<Worksheets.Cell> cells);
 }

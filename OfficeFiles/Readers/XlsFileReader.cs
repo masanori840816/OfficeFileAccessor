@@ -18,7 +18,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
 
     private record TextDirection(bool VerticalWriting, uint Rotation);
     
-    public Files.OfficeFile? Read(IFormFile file)
+    public OfficeFile? Read(IFormFile file)
     {
         
         using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
@@ -28,7 +28,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             Logger.LogWarning("Failed getting WorkbookPart");
             return null;
         }
-        Files.OfficeFile result = new ()
+        OfficeFile result = new ()
         {
             FileName = file.FileName,
             MimeType = file.ContentType,
@@ -126,20 +126,20 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     }
                 }
             }
-            List<OfficeFileTableGroup> groups = FileGenerator.Generate(printArea, cells);
-            List<TableCell> groupedCells = [.. groups.SelectMany(g => g.Cells)];
-            Files.OfficeFileSheet sheet = new ()
+            List<TableGroup> groups = FileGenerator.Generate(printArea, cells);
+            List<TableCell> groupedCells = [.. groups.SelectMany(g => g.TableCells)];
+            OfficeFileSheet sheet = new ()
             {
                 Name = sheetName,
                 TableGroups = groups,
-                Widths = GetMergedWidths(allWidths, groupedCells),
-                Heights = GetMergedHeights(allHeights, groupedCells),
+                ColumnWidths = GetMergedWidths(allWidths, groupedCells),
+                RowHeights = GetMergedHeights(allHeights, groupedCells),
             };
             foreach(TableCell c in groupedCells)
             {
-                c.UpdateCellLength(sheet.Widths, sheet.Heights);
+                c.UpdateCellLength(sheet.ColumnWidths, sheet.RowHeights);
             }
-            result.Sheets.Add(sheet);
+            result.OfficeFileSheets.Add(sheet);
         }
         return result;
     }

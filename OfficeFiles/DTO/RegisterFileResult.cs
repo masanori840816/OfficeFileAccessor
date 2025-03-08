@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using OfficeFileAccessor.Files.DTO;
 using OfficeFileAccessor.Apps;
-using OfficeFileAccessor.OfficeFiles.Files;
+using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles.DTO;
 

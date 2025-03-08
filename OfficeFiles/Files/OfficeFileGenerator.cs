@@ -13,16 +13,16 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         public required bool HasBorders { get; set; }
         public List<Worksheets.Cell> Cells { get; init; } = [];
     }
-    public List<OfficeFileTableGroup> Generate(Worksheets.PrintArea printArea,
+    public List<TableGroup> Generate(Worksheets.PrintArea printArea,
         List<Worksheets.Cell> cells)
     {
         List<GroupedCells> groupedCells = GroupCells(printArea, cells);
-        Entities.TableCellBorders noBorders = Entities.TableCellBorders.GetNoBorders();
-        List<OfficeFileTableGroup> results = [];
+        TableCellBorders noBorders = TableCellBorders.GetNoBorders();
+        List<TableGroup> results = [];
         
         foreach(GroupedCells g in groupedCells)
         {
-            OfficeFileTableGroup group = new ()
+            TableGroup group = new ()
             {
                 DisplayOrder = results.Count,
             };
@@ -50,7 +50,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.Cells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
+                            group.TableCells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -62,7 +62,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.Cells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
+                            group.TableCells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -87,14 +87,14 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 AddRestCells(mergedCell, g.Cells, columns, rows);                
                 string? backgroundColor = GetBackgroundColorFromMergedCells(mergedCell);
                 addedAddresses.AddRange(mergedCell.Select(c => c.Address));
-                group.Cells.Add(
+                group.TableCells.Add(
                     TableCell.Generate(cell.Address, MergeCellValues(mergedCell), 
                         GetBordersFromMergedCells(mergedCell), 
                         backgroundColor, Worksheets.MergedCell.Generate(mergedCell),
                         cell.VerticalWriting, cell.TextRotation));
             }
         }
-        return [.. results.Where(g => g.Cells.Count > 0)];
+        return results;
     }
     private static bool CheckIsStartCell(Worksheets.Cell cell, List<Worksheets.Cell> cells)
     {

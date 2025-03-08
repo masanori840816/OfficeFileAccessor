@@ -1,4 +1,4 @@
-using OfficeFileAccessor.OfficeFiles.Files;
+using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
