@@ -3,7 +3,7 @@ using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles.Repositories;
 
-public interface IOfficeFile
+public interface IOfficeFiles
 {
     Task<ApplicationResult> CreateAsync(OfficeFile newItem);
 }

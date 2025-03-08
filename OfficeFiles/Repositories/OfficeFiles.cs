@@ -3,7 +3,7 @@ using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles.Repositories;
 
-public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext Context): IOfficeFile
+public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext Context): IOfficeFiles
 {
     public async Task<ApplicationResult> CreateAsync(OfficeFile newItem)
     {

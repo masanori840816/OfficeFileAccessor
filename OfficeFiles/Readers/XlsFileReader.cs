@@ -20,18 +20,23 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     
     public OfficeFile? Read(IFormFile file)
     {
-        
-        using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(file.OpenReadStream(), false);
+        using MemoryStream ms = new ();
+        using Stream stream = file.OpenReadStream();
+        using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(stream, false);
         WorkbookPart? bookPart = spreadsheet.WorkbookPart;
         if(bookPart == null)
         {
             Logger.LogWarning("Failed getting WorkbookPart");
             return null;
         }
+        stream.CopyTo(ms);
         OfficeFile result = new ()
         {
             FileName = file.FileName,
             MimeType = file.ContentType,
+            OfficeFileData = new () {
+                FileData = ms.ToArray(),
+            },
         };
         foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
         {
@@ -143,6 +148,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return result;
     }
+
     private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell,
         List<Worksheets.MergedCell> mergedCells)
     {
