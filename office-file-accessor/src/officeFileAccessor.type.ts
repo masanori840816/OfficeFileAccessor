@@ -69,3 +69,11 @@ export type CellAddress = {
     column: number,
     row: number,
 };
+export type PreviewOfficeFileSheets = {
+    fileId: number,
+    fileName: string,
+    sheetId: number,
+    sheetName: string,
+    displayOrder: number,
+    registerUser: string,
+}

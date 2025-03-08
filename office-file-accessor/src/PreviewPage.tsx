@@ -1,16 +1,23 @@
 
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthentication } from './auth/authenticationContext';
 import { getServerUrl } from './web/serverUrlGetter';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
 import * as pixels from './numbers/pixelConverter';
+import * as numbers from './numbers/parseNumbers';
 import { OfficeFileArea } from './components/OfficeFileArea';
-import { OfficeFile } from './officeFileAccessor.type';
+import { OfficeFile, PreviewOfficeFileSheets } from './officeFileAccessor.type';
 
 export function PreviewPage(): JSX.Element {
     const authContext = useAuthentication();
-      const [officeFile, setOfficeFile] = useState<OfficeFile|null>(null);
+    const [officeFile, setOfficeFile] = useState<OfficeFile|null>(null);
     const [dpi, setDpi] = useState(96);
+    const [fileId, setFileId] = useState(-1);
+    const [sheetId, setSheetId] = useState(-1);    
+    const [sheets, setSheets] = useState<PreviewOfficeFileSheets[]>([]);
+    const search = useLocation().search;
+    const navigate = useNavigate();
     useEffect(() => {
         setDpi(pixels.getDPI())
     }, []);
@@ -18,10 +25,42 @@ export function PreviewPage(): JSX.Element {
         authStatusChecker.checkStatus(authContext);
     }, [authContext]);
     useEffect(() => {
+        const query = new URLSearchParams(search);
+        const newFileId = numbers.tryParseInt(query.get('fileid'));
+        if(newFileId != null) {
+            setFileId(newFileId);
+        } else {
+            // TODO: navigate to search page
+            navigate('/pages/');
+        }
+        const newSheetId = numbers.tryParseInt(query.get('sheetid'));
+        if(newSheetId != null) {
+            setSheetId(newSheetId);
+        } else {
+            setSheetId(-1);
+        }
         setOfficeFile(null);
-
-        console.log(`${getServerUrl()}/api/files/previewsheets`);
-    }, []);
+    }, [navigate, search]);
+    useEffect(() => {
+        if(fileId < 0) {
+            return;
+        }
+        fetch(`${getServerUrl()}/api/files/previewsheets?fileid=${fileId}`, {
+            mode: 'cors',
+            method: 'GET'
+        })
+        .then(res => res.json())
+        .then(res => {
+            setSheets(JSON.parse(JSON.stringify(res)));
+        })
+        .catch(err => console.error(err));
+    }, [fileId]);
+    const changeSheet = (nextSheetId: number) => {
+        if(sheetId === nextSheetId) {
+            return;
+        }
+        setSheetId(nextSheetId);
+    }
     return <>
         <section className='flex flex-row items-center justify-between w-[98%] h-[12%] ml-[1%]'>
             <div className='w-[82%] h-full flex flex-row items-center justify-between'>
@@ -37,11 +76,10 @@ export function PreviewPage(): JSX.Element {
                     </div>
                 </div>
             </div>
+            {sheetId}
             <div>
                 <button className='min-w-[80px]'>Download</button>
             </div>
-
-            
         </section>
         <section className='w-[98%] h-[67%] ml-[1%] bg-green-50'>
             {officeFile == null ? (
@@ -52,9 +90,9 @@ export function PreviewPage(): JSX.Element {
                   )}
         </section>
         <section className='flex flex-row w-[98%] h-[6%] ml-[1%] bg-red-50 items-start overflow-x-auto overflow-y-hidden'>
-            <button className='mr-[1vw]'>p12-14.作業要領書</button>
-            <button className='mr-[1vw]'>p23-17-16.計器、ﾊﾞｯｸｱｯﾌﾟ</button>
-            <button className='mr-[1vw]'>p23-17-16.計器、ﾊﾞｯｸｱｯﾌﾟ(2)</button>
+            {sheets.sort((a, b) => a.displayOrder - b.displayOrder).map((s, index) => (
+                <button key={index} className='mr-[1vw]' onClick={() => changeSheet(s.sheetId)}>{s.sheetName}</button>
+            ))}
         </section>
     </>
 }
