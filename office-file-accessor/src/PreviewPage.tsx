@@ -64,17 +64,22 @@ export function PreviewPage(): JSX.Element {
     return <>
         <section className='flex flex-row items-center justify-between w-[98%] h-[12%] ml-[1%]'>
             <div className='w-[82%] h-full flex flex-row items-center justify-between'>
-                <div className='flex flex-col justify-between items-start w-[50%] h-[60%]'>
-                    <h3>動作検証用ファイル名.xlsx</h3>
-                    <div className='flex flex-row w-[50%] justify-between items-center'>
-                        <div>
-                            User: 増井将則
+                {sheets.length > 0 && sheets[0] != null ? (
+                        <div className='flex flex-col justify-between items-start w-[50%] h-[60%]'>
+                            <h3>{sheets[0].fileName}</h3>
+                            <div className='flex flex-row w-full justify-between items-center'>
+                                <div className='mr-[2%]'>
+                                    User: {sheets[0].registerUser}
+                                </div>
+                                <div>
+                                    Update: {sheets[0].updateDateText}
+                                </div>
+                            </div>
+                        </div>                        
+                    ): (
+                        <div className='flex flex-col justify-between items-start w-[50%] h-[60%]'>                    
                         </div>
-                        <div>
-                            Update: 2025-03-08 12:22
-                        </div>
-                    </div>
-                </div>
+                    )}                
             </div>
             {sheetId}
             <div>
@@ -89,7 +94,7 @@ export function PreviewPage(): JSX.Element {
                     <OfficeFileArea file={officeFile} dpi={dpi} />
                   )}
         </section>
-        <section className='flex flex-row w-[98%] h-[6%] ml-[1%] bg-red-50 items-start overflow-x-auto overflow-y-hidden'>
+        <section className='flex flex-row w-[98%] h-[6%] ml-[1%] items-start overflow-x-auto overflow-y-hidden'>
             {sheets.sort((a, b) => a.displayOrder - b.displayOrder).map((s, index) => (
                 <button key={index} className='mr-[1vw]' onClick={() => changeSheet(s.sheetId)}>{s.sheetName}</button>
             ))}

@@ -76,4 +76,5 @@ export type PreviewOfficeFileSheets = {
     sheetName: string,
     displayOrder: number,
     registerUser: string,
+    updateDateText: string,
 }

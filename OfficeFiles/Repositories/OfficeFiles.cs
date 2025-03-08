@@ -32,7 +32,8 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
             sheet.id AS "SheetId",
             sheet.name AS "SheetName",
             sheet.display_order AS "DisplayOrder",
-            usr.user_name AS "RegisterUser"
+            usr.user_name AS "RegisterUser",
+            ofile.last_update_date AS "LastUpdateDate"
             FROM office_file ofile
             INNER JOIN link_file_sheet lfs ON ofile.id = lfs.file_id
             INNER JOIN office_file_sheet sheet ON sheet.id = lfs.sheet_id

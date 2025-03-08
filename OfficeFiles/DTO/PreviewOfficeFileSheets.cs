@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.DTO;
 
@@ -11,4 +12,7 @@ public record PreviewOfficeFileSheets
     public required string SheetName { get; init; }
     public int DisplayOrder { get; init; }
     public required string RegisterUser { get; init; }
+    [JsonIgnore]
+    public DateTime LastUpdateDate { get; init; }
+    public string UpdateDateText => $"{LastUpdateDate.ToLocalTime().ToShortDateString()} {LastUpdateDate.ToLocalTime().ToLongTimeString()}";
 }
