@@ -6,12 +6,7 @@ export type RegisterFileResult = {
     result: ApplicationResult,
     file: OfficeFile,
 };
-export type CellAddress = {
-    columnName: string,
-    column: number,
-    row: number,
-};
-export type CellBorders = {
+export type TableCellBorders = {
     left: number,
     top: number,
     right: number,
@@ -22,48 +17,55 @@ export type OfficeFile = {
     id: number,
     fileName: string,
     mimeType: string,
+    version: number,
+    lastUpdateDate: Date,
     sheets: OfficeFileSheet[],
 }
 export type OfficeFileSheet = {
     id: number,
-    officeFileId: number,
     name: string,
-    widths: OfficeFileTableColumnWidth[],
-    heights: OfficeFileTableRowHeight[],
-    tableGroups: OfficeFileTableGroup[],
+    columnWidths: TableColumnWidth[],
+    rowHeights: TableRowHeight[],
+    tableGroups: TableGroup[],
 };
-export type OfficeFileTableGroup = {
+export type TableGroup = {
     id: number,
-    sheetId: number,
     displayOrder: number,
     title: string|null,
-    cells: OfficeFileTableCell[],
+    cells: TableCell[],
 }
-export type OfficeFileTableCell = {
+export type TableCell = {
     id: number,
-    cellAddress: CellAddress,
-    fontFormat: CellFontFormat|null,
+    column: number,
+    row: number,
+    fontFormat: TableCellFontFormat|null,
     verticalLength: number,
     horizontalLength: number,
     value: string,
-    borders: CellBorders,
+    formula: string|null,
+    valueType: string,
+    borders: TableCellBorders,
     backgroundColor: string|null,
     editabled: boolean,
     verticalWriting: boolean,
     textRotation: number,
 };
-export type CellFontFormat = {
+export type TableCellFontFormat = {
     fontName: string|null,
     fontSize: number|null,
     fontColor: string|null,
     bold: boolean,
 };
-export type OfficeFileTableColumnWidth = {
-    columnName: string,
+export type TableColumnWidth = {
     column: number,
     width: number,
 };
-export type OfficeFileTableRowHeight = {
+export type TableRowHeight = {
     row: number,
     height: number,
+};
+
+export type CellAddress = {
+    column: number,
+    row: number,
 };

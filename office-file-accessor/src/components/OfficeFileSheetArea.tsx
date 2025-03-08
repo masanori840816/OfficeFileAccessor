@@ -14,7 +14,7 @@ export const OfficeFileSheetArea: React.FC<OfficeFileSheetAreaProps> = ({sheet, 
         </div>        
         {sheet.tableGroups.map((g, index) => (
             <React.Fragment key={index}>            
-                <div><TableGroupArea key={index} group={g} dpi={dpi} widths={sheet.widths} heights={sheet.heights} /></div>
+                <div><TableGroupArea key={index} group={g} dpi={dpi} widths={sheet.columnWidths} heights={sheet.rowHeights} /></div>
             </React.Fragment>
         ))}
     </>

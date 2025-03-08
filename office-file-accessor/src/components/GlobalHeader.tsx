@@ -1,8 +1,8 @@
 
-import { Link } from "react-router-dom";
-import { useAuthentication } from "../auth/authenticationContext";
-import "./GlobalHeader.css";
-import { SignOutButton } from "./SignOutButton";
+import { Link } from 'react-router-dom';
+import { useAuthentication } from '../auth/authenticationContext';
+import './GlobalHeader.css';
+import { SignOutButton } from './SignOutButton';
 
 export function GlobalHeader(): JSX.Element {
     
@@ -25,7 +25,7 @@ export function GlobalHeader(): JSX.Element {
                 <Link to='/pages/register' className='h-full w-[18%]'>
                     <div className='header-tab mr-[2%]'>File</div>
                 </Link>
-                <Link to='/pages/' className='h-full w-[18%]'>
+                <Link to='/pages/officefiles/preview/' className='h-full w-[18%]'>
                     <div className='header-tab mr-[2%]'>Output</div>
                 </Link>
                 <Link to='/pages/user' className='h-full w-[18%]'>

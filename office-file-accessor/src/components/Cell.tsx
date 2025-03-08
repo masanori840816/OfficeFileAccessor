@@ -1,14 +1,14 @@
-import { OfficeFileTableCell } from '../officeFileAccessor.type';
+import { TableCell } from '../officeFileAccessor.type';
 import { hasAnyTexts } from '../texts/hasAnyTexts';
 import * as borders from '../tables/borders';
 
 export interface TableCellProps {
-    cell: OfficeFileTableCell,
+    cell: TableCell,
     column: number,
     row: number,
 }
 
-export const TableCell: React.FC<TableCellProps> = ({ cell, column, row }) => {
+export const Cell: React.FC<TableCellProps> = ({ cell, column, row }) => {
     let backgroudColor = 'unset';
     if(hasAnyTexts(cell.backgroundColor))
     {

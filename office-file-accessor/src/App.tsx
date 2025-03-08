@@ -10,6 +10,7 @@ import { SigninPage } from './SigninPage';
 import { AuthenticationProvider } from './auth/AuthenticationProvider';
 import { GlobalHeader } from './components/GlobalHeader';
 import { UserPage } from './UserPage';
+import { PreviewPage } from './PreviewPage';
 
 function App() {
 
@@ -20,9 +21,10 @@ function App() {
         <GlobalHeader />
         <Routes>
           <Route path='/pages/signin/' element={<SigninPage />} />
-          <Route path='/' element={<RegisterPage />} />
+          <Route path='/' element={<PreviewPage />} />
           <Route path='/pages/' element={<IndexPage />} />
           <Route path='/pages/register/' element={<RegisterPage />} />
+          <Route path='/pages/officefiles/preview/' element={<PreviewPage />} />
           <Route path='/pages/user/' element={<UserPage />} />
         </Routes  >
         </Router>

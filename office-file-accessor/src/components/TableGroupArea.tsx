@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { OfficeFileTableColumnWidth, OfficeFileTableGroup, OfficeFileTableCell, OfficeFileTableRowHeight, CellAddress } from '../officeFileAccessor.type';
+import { TableColumnWidth, TableGroup, TableCell, TableRowHeight, CellAddress } from '../officeFileAccessor.type';
 import { hasAnyTexts } from '../texts/hasAnyTexts';
-import { TableCell } from './TableCell';
+import { Cell } from './Cell';
 import * as pixels from '../numbers/pixelConverter';
 
 
 export interface TableGroupAreaProps {
-    group: OfficeFileTableGroup,
+    group: TableGroup,
     dpi: number,
-    widths: OfficeFileTableColumnWidth[],
-    heights: OfficeFileTableRowHeight[],
+    widths: TableColumnWidth[],
+    heights: TableRowHeight[],
 }
 type AddressedCell = {
-    cell: OfficeFileTableCell,
+    cell: TableCell,
     column: number,
     row: number,
 };
@@ -46,11 +46,11 @@ export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, width
         let minRow = 2000;
         let maxRow = 1;
         for(const c of group.cells) {
-            if(maxRow < c.cellAddress.row) {
-                maxRow = c.cellAddress.row;
+            if(maxRow < c.row) {
+                maxRow = c.row;
             }
-            if(minRow > c.cellAddress.row) {
-                minRow = c.cellAddress.row;
+            if(minRow > c.row) {
+                minRow = c.row;
             }
         }
         for(const a of addresses) {
@@ -61,7 +61,7 @@ export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, width
                 addedAddresses.some(ad => a.address.column === ad.column && a.address.row === ad.row)) {
                 continue;
             }
-            const cell = group.cells.find(g => g.cellAddress.column === a.address.column && g.cellAddress.row === a.address.row);
+            const cell = group.cells.find(c => c.column === a.address.column && c.row === a.address.row);
             if(cell == null) {
                 newCells.push({cell: generateEmptyCells(a.address), column: a.columnIndex, row: a.rowIndex});
                 addedAddresses.push(a.address);
@@ -88,19 +88,22 @@ export const TableGroupArea: React.FC<TableGroupAreaProps> = ({group, dpi, width
         
         <div ref={gridRef} className='grid'>
             {cells.map((c, index) => (
-                <TableCell key={index} cell={c.cell} column={c.column} row={c.row} />
+                <Cell key={index} cell={c.cell} column={c.column} row={c.row} />
             ))}
         </div>
     </>
 };
-function generateEmptyCells(address: CellAddress): OfficeFileTableCell{
+function generateEmptyCells(address: CellAddress): TableCell{
     return {
         id: -1,
-        cellAddress: address,
+        column: address.column,
+        row: address.row,
         fontFormat: null,
         verticalLength: 1,
         horizontalLength: 1,
         value: '',
+        formula: null,
+        valueType: 'text',
         borders: { left: 0, top: 0, right: 0, bottom: 0 },
         backgroundColor: null,
         editabled: false,
@@ -108,14 +111,14 @@ function generateEmptyCells(address: CellAddress): OfficeFileTableCell{
         textRotation: 0,
     };
 }
-function generateAllAddresses(widths: OfficeFileTableColumnWidth[],
-    heights: OfficeFileTableRowHeight[]): TableAddress[] {
+function generateAllAddresses(widths: TableColumnWidth[],
+    heights: TableRowHeight[]): TableAddress[] {
     const results: TableAddress[] = [];
     let rowIndex = 1;
     for(const h of heights) {
         let columnIndex = 1;
         for(const w of widths) {
-            results.push({ address: {column: w.column, columnName: w.columnName, row: h.row},
+            results.push({ address: {column: w.column, row: h.row},
                 columnIndex,
                 rowIndex
             });
