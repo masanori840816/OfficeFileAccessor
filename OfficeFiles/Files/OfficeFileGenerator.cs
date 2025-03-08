@@ -249,7 +249,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             }
             result += currentRowText;
         }
-        return result.Replace("\r\n", "\n]");
+        return result.Replace("\r\n", "\n");
     }
     private static void AddRestCells(List<Worksheets.Cell> current, List<Worksheets.Cell> allCells,
         int[] columns, int[] rows)

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
-[Table("table_colmun_width")]
+[Table("table_column_width")]
 public record TableColumnWidth
 {
     [Key]

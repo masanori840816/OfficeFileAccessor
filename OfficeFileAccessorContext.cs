@@ -36,7 +36,7 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .HasMany(g => g.TableCells)
             .WithMany(c => c.TableGroups)
             .UsingEntity<Dictionary<string, object>>(
-            "TableGroupCell",
+            "LinkGroupCell",
             j => j.HasOne<TableCell>()
                   .WithMany()
                   .HasForeignKey("table_cell_id")
@@ -48,13 +48,13 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             j =>
             {
                 j.HasKey("table_cell_id", "table_group_id");
-                j.ToTable("table_group_cell");
+                j.ToTable("link_group_cell");
             });
         modelBuilder.Entity<OfficeFileSheet>()
             .HasMany(s => s.TableGroups)
             .WithMany(g => g.OfficeFileSheets)
             .UsingEntity<Dictionary<string, object>>(
-            "SheetTableGroup",
+            "LinkSheetGroup",
             j => j.HasOne<TableGroup>()
                   .WithMany()
                   .HasForeignKey("table_group_id")
@@ -66,13 +66,13 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             j =>
             {
                 j.HasKey("table_group_id", "sheet_id");
-                j.ToTable("sheet_table_group");
+                j.ToTable("link_sheet_group");
             });
         modelBuilder.Entity<OfficeFileSheet>()
             .HasMany(s => s.ColumnWidths)
             .WithMany(g => g.OfficeFileSheets)
             .UsingEntity<Dictionary<string, object>>(
-            "SheetColumnWidth",
+            "LinkSheetColumnWidth",
             j => j.HasOne<TableColumnWidth>()
                   .WithMany()
                   .HasForeignKey("column_width_id")
@@ -84,13 +84,13 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             j =>
             {
                 j.HasKey("column_width_id", "sheet_id");
-                j.ToTable("sheet_column_width");
+                j.ToTable("link_sheet_column_width");
             });
         modelBuilder.Entity<OfficeFileSheet>()
             .HasMany(s => s.RowHeights)
             .WithMany(g => g.OfficeFileSheets)
             .UsingEntity<Dictionary<string, object>>(
-            "SheetRowHeight",
+            "LinkSheetRowHeight",
             j => j.HasOne<TableRowHeight>()
                   .WithMany()
                   .HasForeignKey("row_height_id")
@@ -102,13 +102,13 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             j =>
             {
                 j.HasKey("row_height_id", "sheet_id");
-                j.ToTable("sheet_row_height");
+                j.ToTable("link_sheet_row_height");
             });
         modelBuilder.Entity<OfficeFile>()
             .HasMany(s => s.OfficeFileSheets)
             .WithMany(g => g.OfficeFiles)
             .UsingEntity<Dictionary<string, object>>(
-            "FileSheet",
+            "LinkFileSheet",
             j => j.HasOne<OfficeFileSheet>()
                   .WithMany()
                   .HasForeignKey("sheet_id")
@@ -120,7 +120,7 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             j =>
             {
                 j.HasKey("sheet_id", "file_id");
-                j.ToTable("file_sheet");
+                j.ToTable("link_file_sheet");
             });
         modelBuilder.Entity<OfficeFileData>()
             .HasOne(d => d.OfficeFile)
