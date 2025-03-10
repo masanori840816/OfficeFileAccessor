@@ -11,6 +11,7 @@ import { AuthenticationProvider } from './auth/AuthenticationProvider';
 import { GlobalHeader } from './components/GlobalHeader';
 import { UserPage } from './UserPage';
 import { PreviewPage } from './PreviewPage';
+import { SearchUserPage } from './SearchUserPage';
 
 function App() {
 
@@ -25,7 +26,8 @@ function App() {
           <Route path='/pages/' element={<IndexPage />} />
           <Route path='/pages/register/' element={<RegisterPage />} />
           <Route path='/pages/officefiles/preview/' element={<PreviewPage />} />
-          <Route path='/pages/user/' element={<UserPage />} />
+          <Route path='/pages/user/edit' element={<UserPage />} />
+          <Route path='/pages/user/' element={<SearchUserPage />} />
         </Routes  >
         </Router>
       </AuthenticationProvider>
