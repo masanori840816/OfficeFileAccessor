@@ -4,7 +4,7 @@ import { getCookieValue } from './web/cookieValues';
 import { useAuthentication } from './auth/authenticationContext';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
 import { hasAnyTexts } from './texts/hasAnyTexts';
-import { RegisterFileResult } from './officeFileAccessor.type';
+import { ApplicationResult } from './officeFileAccessor.type';
 
 export function RegisterPage(): JSX.Element {
   const [files, setFiles] = useState<FileList|null>(null);
@@ -45,11 +45,11 @@ export function RegisterPage(): JSX.Element {
         },
         body: formData,
       });
-      const result = JSON.parse(JSON.stringify(await res.json())) as RegisterFileResult;
-      if(result?.result?.succeeded === true) {
+      const result = JSON.parse(JSON.stringify(await res.json())) as ApplicationResult;
+      if(result?.succeeded === true) {
         console.log('OK');        
-      } else if(hasAnyTexts(result?.result?.errorMessage)){
-        console.log(result?.result?.errorMessage);
+      } else if(hasAnyTexts(result?.errorMessage)){
+        console.log(result?.errorMessage);
       } else {
         console.error('something wrong');
       }

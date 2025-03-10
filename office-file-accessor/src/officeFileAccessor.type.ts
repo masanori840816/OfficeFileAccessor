@@ -2,9 +2,6 @@ export type ApplicationResult = {
     succeeded: boolean,
     errorMessage: string|null,
 };
-export type RegisterFileResult = {
-    result: ApplicationResult,
-};
 export type TableColumnWidth = {
     column: number,
     width: number,
@@ -50,41 +47,6 @@ export type DisplayOfficeFileCell = {
     mergedEndColumn: number|null,
     mergedEndRow: number|null,
 }
-export type TableCellBorders = {
-    left: number,
-    top: number,
-    right: number,
-    bottom: number,
-};
-
-export type TableGroup = {
-    id: number,
-    displayOrder: number,
-    title: string|null,
-    cells: TableCell[],
-}
-export type TableCell = {
-    id: number,
-    column: number,
-    row: number,
-    fontFormat: TableCellFontFormat|null,
-    verticalLength: number,
-    horizontalLength: number,
-    value: string,
-    formula: string|null,
-    valueType: string,
-    borders: TableCellBorders,
-    backgroundColor: string|null,
-    editabled: boolean,
-    verticalWriting: boolean,
-    textRotation: number,
-};
-export type TableCellFontFormat = {
-    fontName: string|null,
-    fontSize: number|null,
-    fontColor: string|null,
-    bold: boolean,
-};
 export type CellAddress = {
     column: number,
     row: number,

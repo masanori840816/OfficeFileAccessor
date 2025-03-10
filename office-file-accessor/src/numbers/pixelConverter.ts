@@ -1,6 +1,6 @@
 export function getDPI(): number {
-    const div = document.createElement("div");
-    div.style.width = "1in";
+    const div = document.createElement('div');
+    div.style.width = '1in';
     document.body.appendChild(div);
     const dpi = div.offsetWidth;
     document.body.removeChild(div);

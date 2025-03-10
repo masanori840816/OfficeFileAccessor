@@ -1,4 +1,4 @@
-import { DisplayOfficeFileCell } from "../officeFileAccessor.type";
+import { DisplayOfficeFileCell } from '../officeFileAccessor.type';
 
 export function checkIsBordered(cell: DisplayOfficeFileCell): boolean {
     if(cell.borderLeft != null &&
