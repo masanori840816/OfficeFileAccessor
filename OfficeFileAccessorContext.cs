@@ -136,6 +136,7 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .IsRequired();
         /* exclude from migration */
         modelBuilder.Entity<PreviewOfficeFileSheets>().HasNoKey().ToView(null);
+        modelBuilder.Entity<DisplayOfficeFileCell>().HasNoKey().ToView(null);
     }
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
     public DbSet<OfficeFile> OfficeFiles => Set<OfficeFile>();
@@ -152,4 +153,5 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
 
     /* -- only for displaying */
     public DbSet<PreviewOfficeFileSheets> PreviewSheets => Set<PreviewOfficeFileSheets>();
+    public DbSet<DisplayOfficeFileCell> DisplayCells => Set<DisplayOfficeFileCell>();
 }

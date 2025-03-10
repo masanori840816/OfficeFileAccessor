@@ -43,7 +43,7 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
             .Where(s => s.FileId == fileId)
             .ToListAsync();
     }
-    public async Task<OfficeFile?> GetOfficeFileSheetAsync(long? sheetId)
+    public async Task<List<DisplayOfficeFileCell>> GetDisplayCellsAsync(long sheetId)
     {
         
         string sql = """
@@ -84,8 +84,12 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
                 LEFT JOIN table_cell_font_format font ON cell.id = font.table_cell_id
                 LEFT JOIN merged_table_cell mtc ON cell.id = mtc.table_cell_id
             """;
-        // TODO: implementation
-        return null;
+        return await Context.DisplayCells.FromSqlRaw(sql)
+            .Where(c => c.SheetId == sheetId)
+            .OrderBy(c => c.GroupDisplayOrder)
+            .ThenBy(c => c.Row)
+            .ThenBy(c => c.Column)
+            .ToListAsync();
     }
     
 }

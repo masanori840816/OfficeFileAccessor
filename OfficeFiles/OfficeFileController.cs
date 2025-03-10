@@ -36,7 +36,7 @@ public class OfficeFileController(ILogger<OfficeFileController> Logger, IOfficeF
         return Json(await OfficeFiles.GetPreviewSheetsAsync(fileid));
     }
     [HttpGet("/api/files/sheets")]
-    public async Task<IActionResult> GetOfficeFileSheet([FromQuery] long? sheetid)
+    public async Task<IActionResult> GetOfficeFileSheet([FromQuery] long sheetid)
     {
         OfficeFile? result = await OfficeFiles.GetOfficeFileSheetAsync(sheetid);
         if(result == null)
