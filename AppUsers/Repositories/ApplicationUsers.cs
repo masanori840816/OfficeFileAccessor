@@ -12,7 +12,7 @@ public class ApplicationUsers(OfficeFileAccessorContext Context): IApplicationUs
             .FirstOrDefaultAsync(u => u.Email == email);
     }
     public async Task<List<SearchUser>> SearchUsersAsync(string? organization, string? userName,
-        string? updateDateFrom, string? updateDateTo)
+        string? email, string? updateDateFrom, string? updateDateTo)
     {
         string sql = """
                 SELECT auser.id AS "Id",
@@ -34,15 +34,21 @@ public class ApplicationUsers(OfficeFileAccessorContext Context): IApplicationUs
         {
             query = query.Where(u => u.UserName != null && u.UserName.Contains(userName));
         }
+        if(string.IsNullOrEmpty(email) == false)
+        {
+            query = query.Where(u => u.Email != null && u.Email.Contains(email));
+        }
         if(string.IsNullOrEmpty(updateDateFrom) == false &&
             DateTime.TryParse($"{updateDateFrom} 00:00:00", out var updateFrom))
         {
-            query = query.Where(u => u.LastUpdateDate >= updateFrom);
+            var uData = updateFrom.ToUniversalTime();
+            query = query.Where(u => u.LastUpdateDate >= uData);
         }
         if(string.IsNullOrEmpty(updateDateTo) == false &&
-            DateTime.TryParse($"{updateDateTo} 00:00:00", out var updateTo))
+            DateTime.TryParse($"{updateDateTo} 23:59:59", out var updateTo))
         {
-            query = query.Where(u => u.LastUpdateDate <= updateTo);
+            var uData = updateTo.ToUniversalTime();
+            query = query.Where(u => u.LastUpdateDate <= uData);
         }
         return await query.ToListAsync();
     }

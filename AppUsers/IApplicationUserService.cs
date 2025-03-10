@@ -9,5 +9,5 @@ public interface IApplicationUserService
     Task SignOutAsync(HttpResponse response);
     Task<DTO.DisplayUser?> GetSignedInUserAsync(ClaimsPrincipal? user);
     Task<List<SearchUser>> SearchUsersAsync(string? organization, string? userName,
-        string? updateDateFrom, string? updateDateTo);
+        string? email, string? updateDateFrom, string? updateDateTo);
 }

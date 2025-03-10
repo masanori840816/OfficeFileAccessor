@@ -7,5 +7,5 @@ public interface IApplicationUsers
 {
     Task<ApplicationUser?> GetByEmailForSignInAsync(string email);
     Task<List<SearchUser>> SearchUsersAsync(string? organization, string? userName,
-        string? updateDateFrom, string? updateDateTo);
+        string? email, string? updateDateFrom, string? updateDateTo);
 }

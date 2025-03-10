@@ -42,8 +42,9 @@ public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUse
     }
     [HttpGet("/api/users/search")]
     public async Task<List<SearchUser>> SearchUsers([FromQuery] string? organization, [FromQuery] string? userName,
+        [FromQuery] string? email,
         [FromQuery] string? updateDateFrom, [FromQuery] string? updateDateTo)
     {
-        return await Users.SearchUsersAsync(organization, userName, updateDateFrom, updateDateTo);
+        return await Users.SearchUsersAsync(organization, userName, email, updateDateFrom, updateDateTo);
     }
 }
