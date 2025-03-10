@@ -72,9 +72,21 @@ export function PreviewPage(): JSX.Element {
         if(sheetId < 0) {
             return;
         }
-
-        // TODO: シート情報取得
-        setCurrentSheet(null);
+        fetch(`${getServerUrl()}/api/files/sheets?sheetid=${sheetId}`, {
+            mode: 'cors',
+            method: 'GET'
+        })
+        .then(res => res.json())
+        .then(res => {
+            const sheet = JSON.parse(JSON.stringify(res));
+            if(sheet?.cells?.length == null || sheet.cells.length <= 0) {
+                console.error('failed getting cells to preview');
+                setCurrentSheet(null);
+            } else {
+                setCurrentSheet(sheet);
+            }
+        })
+        .catch(err => console.error(err));
     }, [sheetId]);
     const changeSheet = (nextSheetId: number) => {
         if(sheetId === nextSheetId) {
@@ -102,12 +114,11 @@ export function PreviewPage(): JSX.Element {
                         </div>
                     )}                
             </div>
-            {sheetId}
             <div>
                 <button className='min-w-[80px]'>Download</button>
             </div>
         </section>
-        <section className='w-[98%] h-[67%] ml-[1%] border rounded-lg shadow-sm bg-green-50'>
+        <section className='w-[98%] h-[67%] ml-[1%] border rounded-lg shadow-sm overflow-y-auto'>
             {currentSheet == null ? (
                     <div></div>
                   ):
