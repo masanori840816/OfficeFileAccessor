@@ -17,3 +17,11 @@ export type SignedInUser = {
     organization: string|null,
     email: string, 
 };
+export type SearchUser = {
+    id: number,
+    userName: string,
+    organization: string|null,
+    email: string, 
+    useCount: number,
+    updateDateText: string,
+};

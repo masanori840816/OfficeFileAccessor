@@ -40,4 +40,10 @@ public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUse
     {
         return Json(await Users.GetSignedInUserAsync(User));
     }
+    [HttpGet("/api/users/search")]
+    public async Task<List<SearchUser>> SearchUsers([FromQuery] string? organization, [FromQuery] string? userName,
+        [FromQuery] string? updateDateFrom, [FromQuery] string? updateDateTo)
+    {
+        return await Users.SearchUsersAsync(organization, userName, updateDateFrom, updateDateTo);
+    }
 }

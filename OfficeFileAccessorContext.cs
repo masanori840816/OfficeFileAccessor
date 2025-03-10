@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.AppUsers.Entities;
 using OfficeFileAccessor.OfficeFiles.DTO;
 using OfficeFileAccessor.OfficeFiles.Entities;
@@ -137,6 +138,7 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
         /* exclude from migration */
         modelBuilder.Entity<PreviewOfficeFileSheets>().HasNoKey().ToView(null);
         modelBuilder.Entity<DisplayOfficeFileCell>().HasNoKey().ToView(null);
+        modelBuilder.Entity<SearchUser>().HasNoKey().ToView(null);
     }
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
     public DbSet<OfficeFile> OfficeFiles => Set<OfficeFile>();
@@ -154,4 +156,5 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
     /* -- only for displaying */
     public DbSet<PreviewOfficeFileSheets> PreviewSheets => Set<PreviewOfficeFileSheets>();
     public DbSet<DisplayOfficeFileCell> DisplayCells => Set<DisplayOfficeFileCell>();
+    public DbSet<SearchUser> SearchUsers => Set<SearchUser>();
 }

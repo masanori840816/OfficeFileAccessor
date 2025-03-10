@@ -45,6 +45,12 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
         }
         return DTO.DisplayUser.Create(signedInUser);
     }
+    public async Task<List<DTO.SearchUser>> SearchUsersAsync(string? organization, string? userName,
+        string? updateDateFrom, string? updateDateTo)
+    {
+        return await Users.SearchUsersAsync(organization, userName,
+            updateDateFrom, updateDateTo);
+    }
     /// <summary>
     /// Get signed in user email address
     /// </summary>

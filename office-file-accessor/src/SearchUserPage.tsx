@@ -1,5 +1,25 @@
+import { useEffect, useState } from 'react';
+import { getServerUrl } from './web/serverUrlGetter';
+import { SearchUser } from './auth/authenticationType';
+import { SearchUserRow } from './components/SearchUserRow';
 
 export function SearchUserPage(): JSX.Element {
+    const [users, setUsers] = useState<SearchUser[]>([]);
+    useEffect(() => {
+        fetch(`${getServerUrl()}/api/users/search`, {
+            mode: 'cors',
+            method: 'GET',
+        })
+        .then(res => res.json())
+        .then(res => {
+            const newUsers = JSON.parse(JSON.stringify(res));
+            if(newUsers?.length != null && newUsers.length <= 0) {
+                setUsers([]);
+            } else {
+                setUsers(newUsers);
+            }
+        })
+    }, []);
     return <>
         <section className='flex flex-row justify-between items-center w-[96%]  h-[24%] ml-[2%] mt-[2%]'>
             <div className='flex flex-row items-center border rounded-lg shadow-lg w-[86%] h-full'>
@@ -43,20 +63,12 @@ export function SearchUserPage(): JSX.Element {
             <div className='flex flex-row items-center justify-between w-full h-[4vh]'>
                 <div className='w-[20%] h-full ml-[2%]'>Organization</div>
                 <div className='w-[20%] h-full ml-[2%]'>User Name</div>
-                <div className='w-[20%] h-full ml-[2%]'>Registered Date</div>
+                <div className='w-[20%] h-full ml-[2%]'>Last Update Date</div>
                 <div className='w-[10%] h-full ml-[2%] mr-[2%]'></div>
             </div>
-            <div className='flex flex-row items-center justify-between border rounded-lg shadow-sm w-full h-[7vh] mb-[4px]'>
-                <div className='w-[20%] ml-[2%]'>Organization</div>
-                <div className='w-[20%] ml-[2%]'>User Name</div>
-                <div className='w-[20%] ml-[2%]'>Registered Date</div>
-                <div className='flex flex-row items-center justify-between w-[10%] ml-[2%] mr-[2%]'>
-                    <button className='min-w-[80px]'>Edit</button>
-                    <button className='min-w-[80px]'>Delete</button>
-                </div>
-            </div>
-            <div className='flex flex-row items-center justify-between border rounded-lg shadow-sm w-full h-[7vh] mb-[4px]'></div>
-
+            {users.map((u, index) => (
+                <SearchUserRow key={index} user={u}></SearchUserRow>
+            ))}
         </section>
     </>
 }

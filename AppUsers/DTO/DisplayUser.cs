@@ -12,18 +12,18 @@ namespace OfficeFileAccessor.AppUsers.DTO;
 public record DisplayUser
 {
     public int Id { get; init; }
-    public string? UserName { get; init; }
+    public required string UserName { get; init; }
     public string? Organization { get; init; }
-    public string? Email { get; init; }
+    public required string Email { get; init; }
 
     public static DisplayUser Create(ApplicationUser user)
     {
         return new ()
         {
             Id = user.Id,
-            UserName = user.UserName,
+            UserName = user.UserName ?? "",
             Organization = user.Organization,
-            Email = user.Email,
+            Email = user.Email ?? "",
         };
     }
 }
