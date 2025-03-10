@@ -26,6 +26,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             TableGroup group = new ()
             {
                 DisplayOrder = results.Count,
+                BorderedGroup = g.HasBorders,
             };
             results.Add(group);
             List<Worksheets.CellAddress> addedAddresses = [];

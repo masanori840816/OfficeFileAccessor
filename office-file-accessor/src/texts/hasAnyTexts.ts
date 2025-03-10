@@ -1,9 +1,8 @@
-export function hasAnyTexts(value: any): value is string
-{
+export function hasAnyTexts(value: unknown): value is string {
     if(value == null) {
         return false;
     }
-    if(typeof value === "string") {
+    if(typeof value === 'string') {
         if(value.length > 0) {
             return true;
         }

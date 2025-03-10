@@ -18,6 +18,8 @@ public class TableGroup
     [Column("title", TypeName = "varchar(512)")]
     [MaxLength(512)]
     public string? Title { get; set; }
+    [Column("bordered_group")]
+    public required bool BorderedGroup { get; set; }
     public List<TableCell> TableCells { get; set; } = [];
     [JsonIgnore]
     public List<OfficeFileSheet> OfficeFileSheets { get; set; } = [];
