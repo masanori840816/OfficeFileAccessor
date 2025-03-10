@@ -4,8 +4,52 @@ export type ApplicationResult = {
 };
 export type RegisterFileResult = {
     result: ApplicationResult,
-    file: OfficeFile,
 };
+export type TableColumnWidth = {
+    column: number,
+    width: number,
+};
+export type TableRowHeight = {
+    row: number,
+    height: number,
+};
+
+export type DisplayOfficeFileSheet = {
+    sheetId: number,
+    columnWidths: TableColumnWidth[],
+    rowHeights: TableRowHeight[],
+    cells: DisplayOfficeFileCell[],
+}
+export type DisplayOfficeFileCell = {
+    sheetId: number,
+    groupId: number,
+    cellId: number,
+    groupDisplayOrder: number,
+    title: string|null,
+    column: number,
+    row: number,
+    verticalLength: number,
+    horizontalLength: number,
+    value: string,
+    formula: string|null,
+    valueType: string,
+    backgroundColor: string,
+    editabled: boolean,
+    verticalWriting: boolean,
+    textRotation: number,
+    borderLeft: number|null,
+    borderTop: number|null,
+    borderRight: number|null,
+    borderBottom: number|null,
+    fontName: string|null,
+    fontSize: number|null,
+    fontColor: string|null,
+    bold: boolean|null,
+    mergedStartColumn: number|null,
+    mergedStartRow: number|null,
+    mergedEndColumn: number|null,
+    mergedEndRow: number|null,
+}
 export type TableCellBorders = {
     left: number,
     top: number,
@@ -13,21 +57,6 @@ export type TableCellBorders = {
     bottom: number,
 };
 
-export type OfficeFile = {
-    id: number,
-    fileName: string,
-    mimeType: string,
-    version: number,
-    lastUpdateDate: Date,
-    sheets: OfficeFileSheet[],
-}
-export type OfficeFileSheet = {
-    id: number,
-    name: string,
-    columnWidths: TableColumnWidth[],
-    rowHeights: TableRowHeight[],
-    tableGroups: TableGroup[],
-};
 export type TableGroup = {
     id: number,
     displayOrder: number,
@@ -56,15 +85,6 @@ export type TableCellFontFormat = {
     fontColor: string|null,
     bold: boolean,
 };
-export type TableColumnWidth = {
-    column: number,
-    width: number,
-};
-export type TableRowHeight = {
-    row: number,
-    height: number,
-};
-
 export type CellAddress = {
     column: number,
     row: number,

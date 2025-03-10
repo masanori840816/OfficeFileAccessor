@@ -6,12 +6,12 @@ import { getServerUrl } from './web/serverUrlGetter';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
 import * as pixels from './numbers/pixelConverter';
 import * as numbers from './numbers/parseNumbers';
-import { OfficeFileSheet, PreviewOfficeFileSheets } from './officeFileAccessor.type';
+import { DisplayOfficeFileSheet, PreviewOfficeFileSheets } from './officeFileAccessor.type';
 import { OfficeFileSheetArea } from './components/OfficeFileSheetArea';
 
 export function PreviewPage(): JSX.Element {
     const authContext = useAuthentication();
-    const [currentSheet, setCurrentSheet] = useState<OfficeFileSheet|null>(null);
+    const [currentSheet, setCurrentSheet] = useState<DisplayOfficeFileSheet|null>(null);
     const [dpi, setDpi] = useState(96);
     const [fileId, setFileId] = useState(-1);
     const [sheetId, setSheetId] = useState(-1);    
@@ -50,10 +50,24 @@ export function PreviewPage(): JSX.Element {
         })
         .then(res => res.json())
         .then(res => {
-            setSheets(JSON.parse(JSON.stringify(res)));
+            const newSheets = JSON.parse(JSON.stringify(res));
+            if(newSheets?.length == null || newSheets.length <= 0) {
+                console.error('failed getting sheets to preview');
+                setSheets([]);
+            } else {
+                setSheets(newSheets);
+            }
         })
         .catch(err => console.error(err));
     }, [fileId]);
+    useEffect(() => {
+        if(sheets.length <= 0 || sheets[0]?.sheetId == null) {
+            return;
+        }
+        if(sheetId < 0 || (sheets.some(s => s.sheetId === sheetId) !== true)) {
+            setSheetId(sheets[0].sheetId);
+        }
+    }, [sheets, sheetId]);
     useEffect(() => {
         if(sheetId < 0) {
             return;

@@ -47,14 +47,7 @@ export function RegisterPage(): JSX.Element {
       });
       const result = JSON.parse(JSON.stringify(await res.json())) as RegisterFileResult;
       if(result?.result?.succeeded === true) {
-        if(hasAnyTexts(result.file?.fileName)) {
-          console.log('OK');
-          console.log(result.file);
-          return;
-        } else {
-          console.log('No file data');
-        }
-        
+        console.log('OK');        
       } else if(hasAnyTexts(result?.result?.errorMessage)){
         console.log(result?.result?.errorMessage);
       } else {

@@ -1,21 +1,31 @@
-import React from "react";
-import { OfficeFileSheet } from "../officeFileAccessor.type";
-import { TableGroupArea } from "./TableGroupArea";
+import React, { useEffect, useRef } from 'react';
+import { DisplayOfficeFileSheet } from '../officeFileAccessor.type';
+import * as pixels from '../numbers/pixelConverter';
 
 export interface OfficeFileSheetAreaProps {
-    sheet: OfficeFileSheet,
+    sheet: DisplayOfficeFileSheet,
     dpi: number,
 }
 export const OfficeFileSheetArea: React.FC<OfficeFileSheetAreaProps> = ({sheet, dpi}) => {
-    
+    const gridRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if(gridRef.current == null) {
+            return;
+        }
+        let gridColumns = '';
+        for(const w of sheet.columnWidths){
+            gridColumns += `${pixels.convertCentimeterToPixel((w.width * 1.2), dpi)}px `;
+        }
+        gridRef.current.style.gridTemplateColumns = gridColumns;
+        let gridRows = '';
+        for(const h of sheet.rowHeights) {
+            gridRows += `${pixels.convertCentimeterToPixel((h.height * 1.4), dpi)}px `;
+        }
+        gridRef.current.style.gridTemplateRows = gridRows;
+    }, [sheet, dpi]);
     return <>
-        <div className="pb-3">
-            <h3>Sheet: {sheet.name}</h3>
-        </div>        
-        {sheet.tableGroups.map((g, index) => (
-            <React.Fragment key={index}>            
-                <div><TableGroupArea key={index} group={g} dpi={dpi} widths={sheet.columnWidths} heights={sheet.rowHeights} /></div>
-            </React.Fragment>
-        ))}
+        <div ref={gridRef} className='grid'>
+            <div>{sheet.cells.length}</div>
+        </div>
     </>
 }
