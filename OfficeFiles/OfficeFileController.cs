@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using OfficeFileAccessor.AppUsers;
 using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.Files.DTO;
+using OfficeFileAccessor.OfficeFiles.DTO;
 using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles;
@@ -38,10 +39,10 @@ public class OfficeFileController(ILogger<OfficeFileController> Logger, IOfficeF
     [HttpGet("/api/files/sheets")]
     public async Task<IActionResult> GetOfficeFileSheet([FromQuery] long sheetid)
     {
-        OfficeFile? result = await OfficeFiles.GetOfficeFileSheetAsync(sheetid);
+        DisplayOfficeFileSheet? result = await OfficeFiles.GetOfficeFileSheetAsync(sheetid);
         if(result == null)
         {
-            return BadRequest("The Specified office file was not found");
+            return BadRequest("The Specified office file sheet was not found");
         }
         return Json(result);
     }

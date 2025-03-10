@@ -75,13 +75,19 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
     /// <param name="fileId"></param>
     /// <param name="sheetId"></param>
     /// <returns></returns>
-    public async Task<OfficeFile?> GetOfficeFileSheetAsync(long sheetId)
+    public async Task<DisplayOfficeFileSheet?> GetOfficeFileSheetAsync(long sheetId)
     {
         List<DisplayOfficeFileCell> cells = await OfficeFiles.GetDisplayCellsAsync(sheetId);
-        foreach(var c in cells)
+        if(cells.Count <= 0)
         {
-            Logger.LogWarning("Display GD:{gd} ID:{cid} Row: {cr} Column:{cc} Value: {cv}", c.GroupDisplayOrder, c.CellId, c.Row, c.Column, c.Value);
+            return null;
         }
-        return null;
+        DisplayOfficeFileSheet result = new (
+            SheetId: sheetId,
+            ColumnWidths: await OfficeFiles.GetColumnWidthsAsync(sheetId),
+            RowHeights: await OfficeFiles.GetRowHeightsAsync(sheetId),
+            Cells: cells
+        );
+        return result;
     }
 }

@@ -21,5 +21,5 @@ public interface IOfficeFileService
     /// </summary>
     /// <param name="sheetId"></param>
     /// <returns></returns>
-    Task<OfficeFile?> GetOfficeFileSheetAsync(long sheetId);
+    Task<DisplayOfficeFileSheet?> GetOfficeFileSheetAsync(long sheetId);
 }

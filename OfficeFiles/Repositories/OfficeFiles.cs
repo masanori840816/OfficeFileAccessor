@@ -91,5 +91,26 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
             .ThenBy(c => c.Column)
             .ToListAsync();
     }
-    
+    public async Task<List<TableColumnWidth>> GetColumnWidthsAsync(long sheetId)
+    {
+        string sql = """
+            SELECT width.id, width.column, width.width FROM table_column_width width
+            INNER JOIN link_sheet_column_width lsw ON width.id = lsw.column_width_id
+            WHERE lsw.sheet_id = 
+            """;
+        sql += sheetId;
+        return await Context.ColumnWidths.FromSqlRaw(sql)
+            .ToListAsync();
+    }
+    public async Task<List<TableRowHeight>> GetRowHeightsAsync(long sheetId)
+    {
+        string sql = """
+            SELECT height.id, height.row, height.height FROM table_row_height height
+            INNER JOIN link_sheet_row_height lrh ON height.id = lrh.row_height_id
+            WHERE lrh.sheet_id = 
+            """;
+        sql += sheetId;
+        return await Context.RowHeights.FromSqlRaw(sql)
+            .ToListAsync();
+    }
 }

@@ -9,4 +9,6 @@ public interface IOfficeFiles
     Task<ApplicationResult> CreateAsync(OfficeFile newItem);
     Task<List<PreviewOfficeFileSheets>> GetPreviewSheetsAsync(long fileId);
     Task<List<DisplayOfficeFileCell>> GetDisplayCellsAsync(long sheetId);
+    Task<List<TableColumnWidth>> GetColumnWidthsAsync(long sheetId);
+    Task<List<TableRowHeight>> GetRowHeightsAsync(long sheetId);
 }
