@@ -1,15 +1,19 @@
-import { CellBorders } from "../officeFileAccessor.type";
+import { DisplayOfficeFileCell } from "../officeFileAccessor.type";
 
-export function checkIsBordered(borders: CellBorders): boolean {
-    if(borders.left > 0) {
+export function checkIsBordered(cell: DisplayOfficeFileCell): boolean {
+    if(cell.borderLeft != null &&
+        cell.borderLeft > 0) {
         return true;
     }
-    if(borders.top > 0) {
+    if(cell.borderTop != null &&
+        cell.borderTop > 0) {
         return true;
     }
-    if(borders.right > 0) {
+    if(cell.borderRight != null &&
+        cell.borderRight > 0) {
         return true;
-    }if(borders.bottom > 0) {
+    }if(cell.borderBottom != null &&
+        cell.borderBottom > 0) {
         return true;
     }
     return false;

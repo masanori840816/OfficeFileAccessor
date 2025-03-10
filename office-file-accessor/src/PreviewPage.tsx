@@ -118,7 +118,7 @@ export function PreviewPage(): JSX.Element {
                 <button className='min-w-[80px]'>Download</button>
             </div>
         </section>
-        <section className='w-[98%] h-[67%] ml-[1%] border rounded-lg shadow-sm overflow-y-auto'>
+        <section className='w-[98%] h-[67%] ml-[1%] border rounded-lg shadow-sm overflow-auto'>
             {currentSheet == null ? (
                     <div></div>
                   ):

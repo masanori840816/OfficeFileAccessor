@@ -1,9 +1,9 @@
-import { TableCell } from '../officeFileAccessor.type';
+import { DisplayOfficeFileCell } from '../officeFileAccessor.type';
 import { hasAnyTexts } from '../texts/hasAnyTexts';
 import * as borders from '../tables/borders';
 
 export interface TableCellProps {
-    cell: TableCell,
+    cell: DisplayOfficeFileCell,
     column: number,
     row: number,
 }
@@ -15,21 +15,21 @@ export const Cell: React.FC<TableCellProps> = ({ cell, column, row }) => {
         backgroudColor = `#${cell.backgroundColor}`;
     }
     let fontSize = '12px';
-    if(cell.fontFormat?.fontSize != null) {
-        fontSize = `${cell.fontFormat.fontSize}px`;
+    if(cell?.fontSize != null) {
+        fontSize = `${cell.fontSize}px`;
     }
     const gridColumn = `${column}/${column + cell.horizontalLength}`;
     const gridRow = `${row}/${row + cell.verticalLength}`;
     let whiteSpace = 'pre-wrap';
-    if(borders.checkIsBordered(cell.borders) === false) {
+    if(borders.checkIsBordered(cell) === false) {
         whiteSpace = 'nowrap';
     }
     const cellStyle: React.CSSProperties = {
         backgroundColor: backgroudColor,
-        'borderLeft': getBorder(cell.borders.left),
-        'borderTop': getBorder(cell.borders.top),
-        'borderRight': getBorder(cell.borders.right),
-        'borderBottom': getBorder(cell.borders.bottom),
+        'borderLeft': getBorder(cell.borderLeft),
+        'borderTop': getBorder(cell.borderTop),
+        'borderRight': getBorder(cell.borderRight),
+        'borderBottom': getBorder(cell.borderBottom),
         'fontSize': fontSize,
         'gridColumn': gridColumn,
         'gridRow': gridRow,
@@ -38,10 +38,9 @@ export const Cell: React.FC<TableCellProps> = ({ cell, column, row }) => {
         writingMode: (cell.verticalWriting)? 'vertical-rl': 'horizontal-tb',
         transform: getCssTextRotation(cell.textRotation),
     }
-    let cellValue = cell.value.replace(/\[NEW-LINE\]+/g, '\n');
-    cellValue = cellValue.replace(/\[TAB\]+/g, '\t');
+    
     return <>
-        <div style={cellStyle}>{cellValue}</div>
+        <div style={cellStyle}>{cell.value}</div>
     </>;
 };
 function getCssTextRotation(spreadsheetRotation: number): string {
@@ -54,7 +53,10 @@ function getCssTextRotation(spreadsheetRotation: number): string {
             return `rotate(${spreadsheetRotation}deg)`;
     }
 }
-function getBorder(borderType: number): string {
+function getBorder(borderType: number|null): string {
+    if(borderType == null) {
+        return 'none';
+    }
     switch(borderType) {
         // Thin
         case 1:

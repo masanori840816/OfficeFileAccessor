@@ -33,7 +33,7 @@ export type DisplayOfficeFileCell = {
     value: string,
     formula: string|null,
     valueType: string,
-    backgroundColor: string,
+    backgroundColor: string|null,
     editabled: boolean,
     verticalWriting: boolean,
     textRotation: number,
