@@ -4,18 +4,12 @@ import { getCookieValue } from './web/cookieValues';
 import { useAuthentication } from './auth/authenticationContext';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
 import { hasAnyTexts } from './texts/hasAnyTexts';
-import { OfficeFile, RegisterFileResult } from './officeFileAccessor.type';
-import { OfficeFileArea } from './components/OfficeFileArea';
-import * as pixels from './numbers/pixelConverter';
+import { RegisterFileResult } from './officeFileAccessor.type';
 
 export function RegisterPage(): JSX.Element {
   const [files, setFiles] = useState<FileList|null>(null);
-  const [officeFile, setOfficeFile] = useState<OfficeFile|null>(null);
   const authContext = useAuthentication();
-  const [dpi, setDpi] = useState(96);
-  useEffect(() => {
-      setDpi(pixels.getDPI())
-  }, []);
+  
   useEffect(() => {
           authStatusChecker.checkStatus(authContext);
       }, [authContext]);
@@ -55,7 +49,7 @@ export function RegisterPage(): JSX.Element {
       if(result?.result?.succeeded === true) {
         if(hasAnyTexts(result.file?.fileName)) {
           console.log('OK');
-          setOfficeFile(result.file);
+          console.log(result.file);
           return;
         } else {
           console.log('No file data');
@@ -66,7 +60,6 @@ export function RegisterPage(): JSX.Element {
       } else {
         console.error('something wrong');
       }
-      setOfficeFile(null);
     } catch(err) {
       console.error('Upload failed', err);
     }
@@ -77,12 +70,7 @@ export function RegisterPage(): JSX.Element {
         <h1>Register</h1>
       <input type='file' multiple onChange={handleFileChange} />
       <button onClick={handleUpload}>Upload</button>
-      {officeFile == null ? (
-        <div></div>
-      ):
-      (
-        <OfficeFileArea file={officeFile} dpi={dpi} />
-      )}      
+      
     </div>
   );
 }

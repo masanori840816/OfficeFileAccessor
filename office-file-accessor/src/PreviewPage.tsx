@@ -6,12 +6,12 @@ import { getServerUrl } from './web/serverUrlGetter';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
 import * as pixels from './numbers/pixelConverter';
 import * as numbers from './numbers/parseNumbers';
-import { OfficeFileArea } from './components/OfficeFileArea';
-import { OfficeFile, PreviewOfficeFileSheets } from './officeFileAccessor.type';
+import { OfficeFileSheet, PreviewOfficeFileSheets } from './officeFileAccessor.type';
+import { OfficeFileSheetArea } from './components/OfficeFileSheetArea';
 
 export function PreviewPage(): JSX.Element {
     const authContext = useAuthentication();
-    const [officeFile, setOfficeFile] = useState<OfficeFile|null>(null);
+    const [currentSheet, setCurrentSheet] = useState<OfficeFileSheet|null>(null);
     const [dpi, setDpi] = useState(96);
     const [fileId, setFileId] = useState(-1);
     const [sheetId, setSheetId] = useState(-1);    
@@ -39,7 +39,6 @@ export function PreviewPage(): JSX.Element {
         } else {
             setSheetId(-1);
         }
-        setOfficeFile(null);
     }, [navigate, search]);
     useEffect(() => {
         if(fileId < 0) {
@@ -55,6 +54,14 @@ export function PreviewPage(): JSX.Element {
         })
         .catch(err => console.error(err));
     }, [fileId]);
+    useEffect(() => {
+        if(sheetId < 0) {
+            return;
+        }
+
+        // TODO: シート情報取得
+        setCurrentSheet(null);
+    }, [sheetId]);
     const changeSheet = (nextSheetId: number) => {
         if(sheetId === nextSheetId) {
             return;
@@ -87,11 +94,11 @@ export function PreviewPage(): JSX.Element {
             </div>
         </section>
         <section className='w-[98%] h-[67%] ml-[1%] border rounded-lg shadow-sm bg-green-50'>
-            {officeFile == null ? (
+            {currentSheet == null ? (
                     <div></div>
                   ):
                   (
-                    <OfficeFileArea file={officeFile} dpi={dpi} />
+                    <OfficeFileSheetArea sheet={currentSheet} dpi={dpi} />
                   )}
         </section>
         <section className='flex flex-row w-[98%] h-[6%] ml-[1%] items-start overflow-x-auto overflow-y-hidden'>
