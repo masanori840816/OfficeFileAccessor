@@ -6,7 +6,6 @@ using Drawing = DocumentFormat.OpenXml.Drawing;
 using OfficeFileAccessor.Apps;
 using SheetFunc = OfficeFileAccessor.OfficeFiles.Worksheets.Functions;
 using OfficeFileAccessor.OfficeFiles.Files;
-using OfficeFileAccessor.OfficeFiles.Entities;
 using OfficeFileAccessor.AppUsers.DTO;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
@@ -19,7 +18,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
 
     private record TextDirection(bool VerticalWriting, uint Rotation);
     
-    public OfficeFile? Read(IFormFile file, DisplayUser signinUser)
+    public Entities.OfficeFile? Read(IFormFile file, DisplayUser signinUser)
     {
         using MemoryStream ms = new ();
         using Stream stream = file.OpenReadStream();
@@ -31,7 +30,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             return null;
         }
         stream.CopyTo(ms);
-        OfficeFile result = new ()
+        Entities.OfficeFile result = new ()
         {
             FileName = file.FileName,
             MimeType = file.ContentType,
@@ -57,59 +56,28 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 continue;
             }
             Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
-            List<TableColumnWidth> allWidths = GetColumnWidths(targetSheet, printArea);
-            List<TableRowHeight> allHeights = GetRowHeights(targetSheet, printArea);
+            List<Entities.TableColumnWidth> allWidths = GetColumnWidths(targetSheet, printArea);
+            List<Entities.TableRowHeight> allHeights = GetRowHeights(targetSheet, printArea);
             List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
+            List<Entities.Shape> shapes = [];
             DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
-            if (drawingsPart == null)
+            if (drawingsPart != null)
             {
-                continue;
-            }
-
-            foreach (var drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
-            {
-                Shape? shape = drawing.Descendants<Shape>().FirstOrDefault();
-                if (shape != null)
+                // Get shapes from only OneCellAnchor and TwoCellAnchor
+                foreach (OneCellAnchor drawing in drawingsPart.WorksheetDrawing.Elements<OneCellAnchor>())
                 {
-                    var fromMarker = drawing.FromMarker;
-                    var toMarker = drawing.ToMarker;
-                    // Start
-                    int fromColumn = Numbers.ParseInt(fromMarker?.ColumnId?.Text, 1) + 1;
-                    int fromRow = Numbers.ParseInt(fromMarker?.RowId?.Text, 1) + 1;
-                    int fromOffsetX = Numbers.ParseInt(fromMarker?.ColumnOffset?.Text, 0);
-                    int fromOffsetY = Numbers.ParseInt(fromMarker?.RowOffset?.Text, 0);
-
-                    // End
-                    int toColumn = Numbers.ParseInt(toMarker?.ColumnId?.Text, 1) + 1;
-                    int toRow = Numbers.ParseInt(toMarker?.RowId?.Text, 1) + 1;
-                    int toOffsetX = Numbers.ParseInt(toMarker?.ColumnOffset?.Text, 0);
-                    int toOffsetY = Numbers.ParseInt(toMarker?.RowOffset?.Text, 0);
-
-
-        Logger.LogInformation($"Shape Position: ({fromColumn}, {fromRow}) to ({toColumn}, {toRow})");
-        Logger.LogInformation("Cell from: {fC}{fR} to: {tC}{tR}", SheetFunc.AddressConverter.ConvertIndexToAlphabet(fromColumn), fromRow, SheetFunc.AddressConverter.ConvertIndexToAlphabet(toColumn), toRow);
-        Logger.LogInformation("Shape offset fX: {fx} fY: {fy} tX: {tx} tY: {ty}", 
-            Numbers.ConvertFromEMUToCentimeter(fromOffsetX), Numbers.ConvertFromEMUToCentimeter(fromOffsetY), 
-            Numbers.ConvertFromEMUToCentimeter(toOffsetX), Numbers.ConvertFromEMUToCentimeter(toOffsetY));
-
-                    var shapeProperties = shape.Descendants<ShapeProperties>().FirstOrDefault();
-                    if (shapeProperties != null)
+                    Entities.Shape? shape = GetShape(drawing);
+                    if(shape != null)
                     {
-                        var presetGeometry = shapeProperties.Descendants<Drawing.PresetGeometry>().FirstOrDefault();
-                        if (presetGeometry != null)
-                        {
-                            var shapeType = presetGeometry.Preset;
-                            Logger.LogInformation("Shape type: {text}", shapeType?.InnerText);
-                        }
+                        shapes.Add(shape);
                     }
-                    // Get text box
-                    string? text = shape.TextBody?.Descendants<Drawing.Paragraph>()
-                                             .Select(p => string.Join("", p.Descendants<Drawing.Text>().Select(t => t.Text)))
-                                             .Aggregate((current, next) => current + Environment.NewLine + next);
-
-                    if (!string.IsNullOrEmpty(text))
+                }
+                foreach (TwoCellAnchor drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
+                {
+                    Entities.Shape? shape = GetShape(drawing);
+                    if(shape != null)
                     {
-                        Logger.LogInformation("TextBox Value:{txt}", text);
+                        shapes.Add(shape);
                     }
                 }
             }
@@ -134,9 +102,9 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     }
                 }
             }
-            List<TableGroup> groups = FileGenerator.Generate(printArea, cells);
-            List<TableCell> groupedCells = [.. groups.SelectMany(g => g.TableCells)];
-            OfficeFileSheet sheet = new ()
+            List<Entities.TableGroup> groups = FileGenerator.Generate(printArea, cells);
+            List<Entities.TableCell> groupedCells = [.. groups.SelectMany(g => g.TableCells)];
+            Entities.OfficeFileSheet sheet = new ()
             {
                 Name = sheetName,
                 TableGroups = groups,
@@ -144,7 +112,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 RowHeights = GetMergedHeights(allHeights, groupedCells),
                 DisplayOrder = result.OfficeFileSheets.Count,
             };
-            foreach(TableCell c in groupedCells)
+            foreach(Entities.TableCell c in groupedCells)
             {
                 c.UpdateCellLength(sheet.ColumnWidths, sheet.RowHeights);
             }
@@ -164,7 +132,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         // Text direction
         TextDirection textDirection = GetTextDirection(cellFormat);
         // Font format
-        TableCellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
+        Entities.TableCellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
         
         // Formula
         string? formula = cell.CellFormula?.Text;
@@ -263,6 +231,81 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             TextRotation = textDirection.Rotation,
         };
     }
+    private Entities.Shape? GetShape(OneCellAnchor anchor)
+    {
+        Shape? shape = anchor.Descendants<Shape>().FirstOrDefault();
+        if (shape == null)
+        {
+            return null;
+        }
+        Drawing.Spreadsheet.FromMarker? fromMarker = anchor.FromMarker;
+        if(fromMarker == null)
+        {
+            return null;
+        }
+        Entities.Shape result = new () {
+            StartColumn = Numbers.ParseInt(fromMarker.ColumnId?.Text, 1) + 1,
+            StartRow = Numbers.ParseInt(fromMarker.RowId?.Text, 1) + 1,
+            StartOffsetX = Numbers.ParseInt(fromMarker.ColumnOffset?.Text, 0),
+            StartOffsetY = Numbers.ParseInt(fromMarker.RowOffset?.Text, 0),
+        };
+        return GetShape(shape, result);
+    }
+    private Entities.Shape? GetShape(TwoCellAnchor anchor)
+    {
+        Shape? shape = anchor.Descendants<Shape>().FirstOrDefault();
+        if (shape == null)
+        {
+            return null;
+        }
+        Drawing.Spreadsheet.FromMarker? fromMarker = anchor.FromMarker;
+        if(fromMarker == null)
+        {
+            return null;
+        }
+        Drawing.Spreadsheet.ToMarker? toMarker = anchor.ToMarker;
+
+        Entities.Shape result = new () {
+            StartColumn = Numbers.ParseInt(fromMarker.ColumnId?.Text, 1) + 1,
+            StartRow = Numbers.ParseInt(fromMarker.RowId?.Text, 1) + 1,
+            StartOffsetX = Numbers.ParseInt(fromMarker.ColumnOffset?.Text, 0),
+            StartOffsetY = Numbers.ParseInt(fromMarker.RowOffset?.Text, 0),
+            EndColumn = Numbers.ParseInt(toMarker?.ColumnId?.Text, 1) + 1,
+            EndRow = Numbers.ParseInt(toMarker?.RowId?.Text, 1) + 1,
+            EndOffsetX = Numbers.ParseInt(toMarker?.ColumnOffset?.Text, 0),
+            EndOffsetY = Numbers.ParseInt(toMarker?.RowOffset?.Text, 0),
+        };
+        return GetShape(shape, result);
+    }
+    private static Entities.Shape? GetShape(Shape shape, Entities.Shape result)
+    {
+        // Get shape type
+        string shapeType = "rect";
+        ShapeProperties? shapeProperties = shape.Descendants<ShapeProperties>().FirstOrDefault();
+        if (shapeProperties != null)
+        {
+            var presetGeometry = shapeProperties.Descendants<Drawing.PresetGeometry>().FirstOrDefault();
+            if (presetGeometry != null)
+            {
+                string? s = presetGeometry.Preset?.InnerText;
+                if(string.IsNullOrEmpty(s) == false)
+                {
+                    shapeType = s;
+                }
+            }
+        }
+        // Get text
+        string? text = shape.TextBody?.InnerText;
+        if(string.IsNullOrEmpty(text))
+        {
+            text = shape.TextBody?.Descendants<Drawing.Paragraph>()
+                                .Select(p => string.Join("", p.Descendants<Drawing.Text>().Select(t => t.Text)))
+                                .Aggregate((current, next) => current + Environment.NewLine + next);
+        }
+        result.ShapeType = shapeType;
+        result.Value = text ?? "";
+        return result;
+    }
     /// <summary>
     /// Get merged cells from Worksheet
     /// </summary>
@@ -304,14 +347,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     {
         return textElement.Ancestors<PhoneticRun>().Any();
     }
-    private List<TableColumnWidth> GetColumnWidths(Worksheet sheet, Worksheets.PrintArea printArea)
+    private List<Entities.TableColumnWidth> GetColumnWidths(Worksheet sheet, Worksheets.PrintArea printArea)
     {
         Columns? columns = sheet.Descendants<Columns>().FirstOrDefault();
         if (columns == null)
         {
             return [];
         }
-        List<TableColumnWidth> results = [];
+        List<Entities.TableColumnWidth> results = [];
         for (int i = printArea.Start.Column; i <= printArea.End.Column; i++)
         {
             double columnWidth = DefaultWidth;
@@ -325,7 +368,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     columnWidth = Numbers.ConvertFromPixelToCentimeter(column.Width * 7.0);
                 }
             }
-            results.Add(new TableColumnWidth()
+            results.Add(new Entities.TableColumnWidth()
             {
                 Column = i, 
                 Width = columnWidth,
@@ -333,7 +376,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return results;
     }
-    private List<TableRowHeight> GetRowHeights(Worksheet sheet, Worksheets.PrintArea printArea)
+    private List<Entities.TableRowHeight> GetRowHeights(Worksheet sheet, Worksheets.PrintArea printArea)
     {
         SheetData? sheetData = sheet.GetFirstChild<SheetData>();
         if(sheetData == null)
@@ -341,7 +384,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             return [];
         }
         
-        List<TableRowHeight> results = [];
+        List<Entities.TableRowHeight> results = [];
         for (int i = printArea.Start.Row; i <= printArea.End.Row; i++)
         {
             Row? row = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value == i);
@@ -370,7 +413,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return bookPart.WorkbookStylesPart?.Stylesheet?.CellFormats?.ElementAt((int)cell.StyleIndex.Value) as CellFormat;
     }
-    private static TableCellFontFormat? GetFontFormat(WorkbookPart bookPart, CellFormat? cellFormat)
+    private static Entities.TableCellFontFormat? GetFontFormat(WorkbookPart bookPart, CellFormat? cellFormat)
     {
         if(cellFormat?.FontId?.Value == null)
         {
@@ -509,17 +552,17 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return Worksheets.PrintArea.DefaultPrintArea();
     }
-    private static List<TableColumnWidth> GetMergedWidths(List<TableColumnWidth> allWidths,
-        List<TableCell> cells)
+    private static List<Entities.TableColumnWidth> GetMergedWidths(List<Entities.TableColumnWidth> allWidths,
+        List<Entities.TableCell> cells)
     {
-        List<TableColumnWidth> results = [];
+        List<Entities.TableColumnWidth> results = [];
         int[] mergedColumns = [.. cells.Select(c => c.Column).Distinct().Order()];
         int firstColumn = mergedColumns.First();
-        TableColumnWidth startColumn = allWidths.First(c => c.Column == firstColumn);
+        Entities.TableColumnWidth startColumn = allWidths.First(c => c.Column == firstColumn);
         double lastWidth = startColumn.Width;
-        foreach(TableColumnWidth w in allWidths)
+        foreach(Entities.TableColumnWidth w in allWidths)
         {
-            TableColumnWidth currentColumn = w;
+            Entities.TableColumnWidth currentColumn = w;
             if(mergedColumns.Any(c => c == currentColumn.Column))
             {
                 if(results.Any(c => c.Column == startColumn.Column) == false)
@@ -544,17 +587,17 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         });
         return results;
     }
-    private static List<TableRowHeight> GetMergedHeights(List<TableRowHeight> allRows,
-        List<TableCell> cells)
+    private static List<Entities.TableRowHeight> GetMergedHeights(List<Entities.TableRowHeight> allRows,
+        List<Entities.TableCell> cells)
     {
-        List<TableRowHeight> results = [];
+        List<Entities.TableRowHeight> results = [];
         int[] mergedRows = [.. cells.Select(c => c.Row).Distinct().Order()];
         int firstRow = mergedRows.First();
-        TableRowHeight startRow = allRows.First(r => r.Row == firstRow);
+        Entities.TableRowHeight startRow = allRows.First(r => r.Row == firstRow);
         double lastHeight = startRow.Height;
-        foreach(TableRowHeight h in allRows)
+        foreach(Entities.TableRowHeight h in allRows)
         {
-            TableRowHeight currentRow = h;
+            Entities.TableRowHeight currentRow = h;
             if(mergedRows.Any(r => r == currentRow.Row))
             {
                 if(results.Any(r => r.Row == startRow.Row) == false)

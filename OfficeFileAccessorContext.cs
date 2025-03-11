@@ -135,6 +135,11 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .WithOne(f => f.OfficeFileData)
             .HasForeignKey<OfficeFileData>(f => f.FileId)
             .IsRequired();
+        modelBuilder.Entity<Shape>()
+            .HasOne(s => s.Sheet)
+            .WithMany(s => s.Shapes)
+            .HasForeignKey(s => s.OfficeFileSheetId)
+            .HasConstraintName("FK_Shape_OfficeFileSheet");    
         /* exclude from migration */
         modelBuilder.Entity<PreviewOfficeFileSheets>().HasNoKey().ToView(null);
         modelBuilder.Entity<DisplayOfficeFileCell>().HasNoKey().ToView(null);

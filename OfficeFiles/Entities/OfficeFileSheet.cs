@@ -22,4 +22,5 @@ public record OfficeFileSheet
     public List<TableGroup> TableGroups { get; init; } = [];
     [JsonIgnore]
     public List<OfficeFile> OfficeFiles { get; init; } = [];
+    public List<Shape> Shapes { get; init; } = [];
 }
