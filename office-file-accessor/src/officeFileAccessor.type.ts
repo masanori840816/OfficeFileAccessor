@@ -66,5 +66,17 @@ export type SearchOfficeFile = {
     userName: string,
     useCount: number,
     updateDateText: string,
-
+}
+export type DisplayUser = {
+    id: number,
+    userName: string,
+    organization: string|null,
+    email: string,
+}
+export type UpdateUser = {
+    id: number,
+    userName: string,
+    organization: string|null,
+    email: string,
+    password: string,
 }

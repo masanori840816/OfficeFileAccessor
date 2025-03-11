@@ -47,4 +47,14 @@ public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUse
     {
         return await Users.SearchUsersAsync(organization, userName, email, updateDateFrom, updateDateTo);
     }
+    [HttpGet("/api/users/edit")]
+    public async Task<IActionResult> GetUserToEdit([FromQuery] int userId)
+    {
+
+    }
+    [HttpPost("/api/users/edit")]
+    public async Task<IActionResult> UpdateUser([FromBody] UpdateUser user)
+    {
+
+    }
 }
