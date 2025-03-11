@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useAuthentication } from './auth/authenticationContext';
+import * as authStatusChecker from './auth/authenticationStatusChecker';
 import { getServerUrl } from './web/serverUrlGetter';
 import { hasAnyTexts } from './texts/hasAnyTexts';
 import { addUrlParams } from './web/addUrlParams';
@@ -6,6 +8,7 @@ import { SearchOfficeFile } from './officeFileAccessor.type';
 import { SearchWorksheetRow } from './components/SearchWorksheetRow';
 
 export function SearchWorksheetPage(): JSX.Element {
+    const authContext = useAuthentication();
     const [files, setFiles] = useState<SearchOfficeFile[]>([]);
     const [fileName, setFileName] = useState('');
     const [userName, setUserName] = useState('');
@@ -27,6 +30,9 @@ export function SearchWorksheetPage(): JSX.Element {
         })
         .catch(err => console.error(err));
     }, []);
+    useEffect(() => {
+        authStatusChecker.checkStatus(authContext);
+    }, [authContext]);
     const handleFileNameChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
         setFileName(event.target.value);
     };

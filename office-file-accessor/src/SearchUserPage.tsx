@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
+import { useAuthentication } from './auth/authenticationContext';
+import * as authStatusChecker from './auth/authenticationStatusChecker';
 import { getServerUrl } from './web/serverUrlGetter';
 import { SearchUser } from './auth/authenticationType';
 import { SearchUserRow } from './components/SearchUserRow';
 import { hasAnyTexts } from './texts/hasAnyTexts';
 
 export function SearchUserPage(): JSX.Element {
+    const authContext = useAuthentication();
     const [users, setUsers] = useState<SearchUser[]>([]);
     const [organization, setOrganization] = useState('');
     const [userName, setUserName] = useState('');
     const [email, setEmail] = useState('');
     const [updateDateFrom, setUpdateDateFrom] = useState('');
     const [updateDateTo, setUpdateDateTo] = useState('');
+    useEffect(() => {
+        authStatusChecker.checkStatus(authContext);
+    }, [authContext]);
     useEffect(() => {
         fetch(`${getServerUrl()}/api/users/search`, {
             mode: 'cors',
