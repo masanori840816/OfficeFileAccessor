@@ -60,3 +60,11 @@ export type PreviewOfficeFileSheets = {
     registerUser: string,
     updateDateText: string,
 }
+export type SearchOfficeFile = {
+    fileId: number,
+    fileName: string,
+    userName: string,
+    useCount: number,
+    updateDateText: string,
+
+}
