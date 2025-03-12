@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthentication } from './auth/authenticationContext';
 import { getServerUrl } from './web/serverUrlGetter';
+import { getCookieValue } from './web/cookieValues';
 import * as numbers from './numbers/parseNumbers';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
 import { DisplayUser, UpdateUser } from './officeFileAccessor.type';
@@ -64,46 +65,61 @@ export function UserPage(): JSX.Element {
     const handlePasswordChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPassword(event.target.value);
     };
-    const saveUser = () => {
-        if(!hasAnyTexts(userName)) {
-            alert('User name is required');
-            return;
-        }
-        if(!hasAnyTexts(email)) {
-            alert('Email is required');
-            return;
-        }
-        if(!hasAnyTexts(password)) {
-            alert('Password is required');
-            return;
-        }
-        const newUser: UpdateUser = {
-            id: userId,
-            userName,
-            organization,
-            email,
-            password,
-        }
-        fetch(`${getServerUrl()}/api/users/edit`, {
-            mode: 'cors',
-            method: 'POST',
-            body: JSON.stringify(newUser),
-        })
-        .then(res => res.json())
-        .then(res => {
-            const result = JSON.parse(JSON.stringify(res));
+    const saveUser = async () => {
+        try {
+            // check sign-in and get XSRF-Token
+            await authStatusChecker.checkStatus(authContext);
+            const cookieValue = getCookieValue('XSRF-TOKEN');
+            if(!hasAnyTexts(cookieValue)) {
+                throw Error('Invalid token');
+            }
+            if(!hasAnyTexts(userName)) {
+                alert('User name is required');
+                return;
+            }
+            if(!hasAnyTexts(email)) {
+                alert('Email is required');
+                return;
+            }
+            if(!hasAnyTexts(password)) {
+                alert('Password is required');
+                return;
+            }
+            let targetUserId = null;
+            if(userId >= 0)
+            {
+                targetUserId = userId;
+            }
+            const newUser: UpdateUser = {
+                id: targetUserId,
+                userName,
+                organization,
+                email,
+                password,
+            }
+            const res = await fetch(`${getServerUrl()}/api/users/edit`, {
+                mode: 'cors',
+                method: 'POST',
+                headers: {
+                    'X-XSRF-TOKEN': cookieValue,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newUser),
+            });
+            const responseJson = await res.json();
+            const result = JSON.parse(JSON.stringify(responseJson));
             if(result?.succeeded === true) {
                 alert('User updated');
+                navigate('/pages/users/');
             } else if(hasAnyTexts(result?.errorMessage)) {
                 alert(result.errorMessage);
             } else {
                 alert('Failed getting user');
             }
-        })
-        .catch(err => {
+        } catch(err) {
             console.error(err);
             alert('Failed updating user');
-        });
+        };
     };
     const cancel = () => {
         navigate('/pages/user/');

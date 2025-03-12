@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using OfficeFileAccessor.Apps;
 using OfficeFileAccessor.AppUsers.Entities;
@@ -50,6 +51,31 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
     {
         return await Users.SearchUsersAsync(organization, userName, email,
             updateDateFrom, updateDateTo);
+    }
+    public async Task<DTO.DisplayUser?> GetUserAsync(int userId)
+    {
+        ApplicationUser? user = await Users.GetUserByIdAsync(userId);
+        if(user == null)
+        {
+            return null;
+        }
+        return DTO.DisplayUser.Create(user);
+    }
+    public async Task<ApplicationResult> UpdateUserAsync(DTO.UpdateUser user)
+    {
+        if(string.IsNullOrEmpty(user.UserName))
+        {
+            return ApplicationResult.GetFailedResult("UserName is required");
+        }
+        if(string.IsNullOrEmpty(user.Email))
+        {
+            return ApplicationResult.GetFailedResult("Email is required");
+        }
+        if(string.IsNullOrEmpty(user.Password))
+        {
+            return ApplicationResult.GetFailedResult("Password is required");
+        }
+        return await Users.CreateOrUpdateUserAsync(user);
     }
     /// <summary>
     /// Get signed in user email address

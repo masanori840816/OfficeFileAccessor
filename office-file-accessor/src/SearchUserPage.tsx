@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthentication } from './auth/authenticationContext';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
 import { getServerUrl } from './web/serverUrlGetter';
@@ -14,6 +15,7 @@ export function SearchUserPage(): JSX.Element {
     const [email, setEmail] = useState('');
     const [updateDateFrom, setUpdateDateFrom] = useState('');
     const [updateDateTo, setUpdateDateTo] = useState('');
+    const navigate = useNavigate();
     useEffect(() => {
         authStatusChecker.checkStatus(authContext);
     }, [authContext]);
@@ -48,6 +50,9 @@ export function SearchUserPage(): JSX.Element {
     const handleUpdateToChanged  = (event: React.ChangeEvent<HTMLInputElement>) => {
         setUpdateDateTo(event.target.value);
     };
+    const openCreatePage = () => {
+        navigate('/pages/users/edit/');
+    }
     const searchUsers = () => {
         let urlParams = '';
         if(hasAnyTexts(organization)) {
@@ -146,7 +151,7 @@ export function SearchUserPage(): JSX.Element {
                 </div>
             </div>
             <div className='h-full'>
-                <button className='min-w-[100px]'>Create</button>
+                <button className='min-w-[100px]' onClick={openCreatePage}>Create</button>
             </div>
         </section>
         <section className='border rounded-lg shadow-lg w-[96%] h-[48%] p-[1%] ml-[2%] mt-[2%]'>

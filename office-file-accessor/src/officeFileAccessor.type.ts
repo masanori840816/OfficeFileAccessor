@@ -74,7 +74,7 @@ export type DisplayUser = {
     email: string,
 }
 export type UpdateUser = {
-    id: number,
+    id: number|null,
     userName: string,
     organization: string|null,
     email: string,

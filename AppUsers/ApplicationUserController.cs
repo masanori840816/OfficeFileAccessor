@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -48,13 +47,18 @@ public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUse
         return await Users.SearchUsersAsync(organization, userName, email, updateDateFrom, updateDateTo);
     }
     [HttpGet("/api/users/edit")]
-    public async Task<IActionResult> GetUserToEdit([FromQuery] int userId)
+    public async Task<IActionResult> GetUser([FromQuery] int userId)
     {
-
+        DisplayUser? user = await Users.GetUserAsync(userId);
+        if(user == null)
+        {
+            return BadRequest("User was not found");
+        }
+        return Json(user);
     }
     [HttpPost("/api/users/edit")]
     public async Task<IActionResult> UpdateUser([FromBody] UpdateUser user)
     {
-
+        return Json(await Users.UpdateUserAsync(user));
     }
 }

@@ -1,15 +1,23 @@
+using System.Transactions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using OfficeFileAccessor.Apps;
 using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.AppUsers.Entities;
 
 namespace OfficeFileAccessor.AppUsers.Repositories;
 
-public class ApplicationUsers(OfficeFileAccessorContext Context): IApplicationUsers
+public class ApplicationUsers(ILogger<ApplicationUsers> Logger, OfficeFileAccessorContext Context): IApplicationUsers
 {
     public async Task<ApplicationUser?> GetByEmailForSignInAsync(string email)
     {
         return await Context.ApplicationUsers
             .FirstOrDefaultAsync(u => u.Email == email);
+    }
+    public async Task<ApplicationUser?> GetUserByIdAsync(int userId)
+    {
+        return await Context.ApplicationUsers
+            .FirstOrDefaultAsync(u => u.Id == userId);
     }
     public async Task<List<SearchUser>> SearchUsersAsync(string? organization, string? userName,
         string? email, string? updateDateFrom, string? updateDateTo)
@@ -51,5 +59,42 @@ public class ApplicationUsers(OfficeFileAccessorContext Context): IApplicationUs
             query = query.Where(u => u.LastUpdateDate <= uData);
         }
         return await query.ToListAsync();
+    }
+    public async Task<ApplicationResult> CreateOrUpdateUserAsync(UpdateUser user)
+    {
+        using IDbContextTransaction transaction = await Context.Database.BeginTransactionAsync();
+        try
+        {
+            if(user.Id == null)
+            {
+                if(await Context.ApplicationUsers.AnyAsync(u => u.Email == user.Email))
+                {
+                    return ApplicationResult.GetFailedResult("Your email is already in use");
+                }
+                await Context.ApplicationUsers.AddAsync(ApplicationUser.Create(user));
+            }
+            else
+            {
+                ApplicationUser? target = await Context.ApplicationUsers.FirstOrDefaultAsync(u => u.Id == user.Id);
+                if(target == null)
+                {
+                    return ApplicationResult.GetFailedResult("User was not found");
+                }
+                if(await Context.ApplicationUsers.AnyAsync(u => u.Email == user.Email && u.Id != target.Id))
+                {
+                    return ApplicationResult.GetFailedResult("Your email is already in use");
+                }
+                target.Update(user);
+            }
+            await Context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return ApplicationResult.GetSucceededResult();
+        }
+        catch(Exception ex)
+        {
+            Logger.LogError("CreateOrUpdateUserAsync Exception {ex}", ex.Message);
+            await transaction.RollbackAsync();
+            return ApplicationResult.GetFailedResult("Failed creating or updating user");
+        }
     }
 }

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
+using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.AppUsers.Entities;
@@ -64,12 +65,13 @@ public class ApplicationUser: IdentityUser<int>
 
     [JsonIgnore]
     public List<OfficeFile> OfficeFiles { get; init; } = [];
-    public static ApplicationUser Create(string userName, string email, string password, int? id = null)
+    public static ApplicationUser Create(string userName, string email, string password, int? id = null, string? organization = null)
     {
         var result = new ApplicationUser
         {
             UserName = userName,
             Email = email,
+            Organization = organization,
         };
         if(id != null)
         {
@@ -77,6 +79,19 @@ public class ApplicationUser: IdentityUser<int>
         }
         result.PasswordHash = new PasswordHasher<ApplicationUser>()
             .HashPassword(result, password);
+        return result;
+    }
+    public static ApplicationUser Create(UpdateUser user)
+    {
+        var result = new ApplicationUser
+        {
+            UserName = user.UserName,
+            Email = user.Email,
+            Organization = user.Organization,
+            LastUpdateDate = DateTime.Now.ToUniversalTime(),
+        };
+        result.PasswordHash = new PasswordHasher<ApplicationUser>()
+            .HashPassword(result, user.Password);
         return result;
     }
     public static ApplicationUser Copy(ApplicationUser user)
@@ -98,7 +113,11 @@ public class ApplicationUser: IdentityUser<int>
         this.PasswordHash = user.PasswordHash;
         this.LastUpdateDate = DateTime.Now.ToUniversalTime();
     }
-    public void Update(string userName, string organization,
+    public void Update(UpdateUser user)
+    {
+        Update(user.UserName, user.Organization, user.Email, user.Password);
+    }
+    public void Update(string userName, string? organization,
         string email, string password)
     {
         this.UserName = userName;

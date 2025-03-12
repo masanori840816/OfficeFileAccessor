@@ -26,8 +26,8 @@ function App() {
           <Route path='/pages/' element={<IndexPage />} />
           <Route path='/pages/register/' element={<RegisterPage />} />
           <Route path='/pages/officefiles/preview/' element={<PreviewPage />} />
-          <Route path='/pages/user/edit' element={<UserPage />} />
-          <Route path='/pages/user/' element={<SearchUserPage />} />
+          <Route path='/pages/users/edit/' element={<UserPage />} />
+          <Route path='/pages/users/' element={<SearchUserPage />} />
         </Routes  >
         </Router>
       </AuthenticationProvider>
