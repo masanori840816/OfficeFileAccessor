@@ -42,7 +42,7 @@ export function UserPage(): JSX.Element {
             .then(res => res.json())
             .then(res => {
                 const newUser = JSON.parse(JSON.stringify(res)) as DisplayUser;                
-                setOrganization(newUser?.organization ?? ''),
+                setOrganization(newUser?.organization ?? '');
                 setUserName(newUser?.userName ?? '');
                 setEmail(newUser?.email ?? '');
                 setPassword('');
