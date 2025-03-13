@@ -19,7 +19,8 @@ export function UserPage(): JSX.Element {
     const navigate = useNavigate();
     useEffect(() => {
         authStatusChecker.checkStatus(authContext);
-    }, [authContext]);useEffect(() => {
+    }, [authContext]);
+    useEffect(() => {
         const query = new URLSearchParams(search);
         const newUserId = numbers.tryParseInt(query.get('userid'));
         if(newUserId != null) {
@@ -122,7 +123,7 @@ export function UserPage(): JSX.Element {
         };
     };
     const cancel = () => {
-        navigate('/pages/user/');
+        navigate('/pages/users/');
     }
     return <div className='flex justify-center items-start mt-[2%] h-[80%] w-full'>
             <div className='h-[80%] w-[96%] max-w-[2048px] max-h-[800px]'>
