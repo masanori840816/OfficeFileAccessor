@@ -121,7 +121,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         return result;
     }
 
-    private static Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell,
+    private  Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell,
         List<Worksheets.MergedCell> mergedCells)
     {
         CellFormat? cellFormat = GetCellFormat(bookPart, cell);
@@ -134,6 +134,25 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         // Font format
         Entities.TableCellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
         
+        uint? numberFormatId = cellFormat?.NumberFormatId?.Value;
+        if(numberFormatId == null)
+        {
+            Logger.LogWarning("numformatid was null ref:{r}", cell.CellReference);
+        }
+        else {
+            Worksheets.NumberFormat? numberFormat = Worksheets.NumberFormat.DefaultNumberFormat((uint)numberFormatId)
+                ?? GetNumberFormat(bookPart, (uint)numberFormatId!);
+            if(numberFormat == null)
+            {
+                Logger.LogWarning("Failed getting number format id: {nid} ref:{r}", numberFormatId, cell.CellReference);
+            }
+            else
+            {
+                Logger.LogWarning("Format ID:{id} format:{f} ref:{r}", numberFormat?.NumberFormatId, numberFormat?.Format, cell.CellReference);
+            }
+        }
+                    
+
         // Formula
         string? formula = cell.CellFormula?.Text;
         string? calcResult = cell.CellValue?.InnerText;
@@ -231,7 +250,33 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             TextRotation = textDirection.Rotation,
         };
     }
-    private Entities.Shape? GetShape(OneCellAnchor anchor)
+    private static Worksheets.NumberFormat? GetNumberFormat(WorkbookPart workbookPart, uint numberFormatId)
+    {
+        // Get the number format from the Stylesheet
+        NumberingFormats? numberingFormats = workbookPart.WorkbookStylesPart?.Stylesheet?.Elements<NumberingFormats>()?.FirstOrDefault();
+        if (numberingFormats != null)
+        {
+            foreach (var format in numberingFormats.Elements<NumberingFormat>())
+            {
+                if(format.NumberFormatId == null)
+                {
+                    continue;
+                }        
+                if (format.NumberFormatId.Value == numberFormatId && string.IsNullOrEmpty(format.FormatCode?.InnerText) == false)
+                {
+
+                    return new Worksheets.NumberFormat() { 
+                        NumberFormatId = numberFormatId,
+                        // TODO: separate int, double, date, etc.
+                        ValueType = "Custom",
+                        Format = format.FormatCode.InnerText };
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Entities.Shape? GetShape(OneCellAnchor anchor)
     {
         Shape? shape = anchor.Descendants<Shape>().FirstOrDefault();
         if (shape == null)
