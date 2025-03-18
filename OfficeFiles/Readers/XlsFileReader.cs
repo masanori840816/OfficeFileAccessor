@@ -7,6 +7,7 @@ using OfficeFileAccessor.Apps;
 using SheetFunc = OfficeFileAccessor.OfficeFiles.Worksheets.Functions;
 using OfficeFileAccessor.OfficeFiles.Files;
 using OfficeFileAccessor.AppUsers.DTO;
+using System.Globalization;
 
 namespace OfficeFileAccessor.OfficeFiles.Readers;
 
@@ -82,7 +83,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 }
             }
             List<Worksheets.Cell> cells = [];
-            
+            Logger.LogWarning("Sheet {s}", sheetName);
             for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
             {
                 for(int column = printArea.Start.Column; column <= printArea.End.Column; column++)
@@ -133,7 +134,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         TextDirection textDirection = GetTextDirection(cellFormat);
         // Font format
         Entities.TableCellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
-        
+        Logger.LogWarning("Cell Value v:{v} it:{it} f:{f} ref:{r}", cell.CellValue?.Text, cell.CellValue?.InnerText, cell.CellFormula?.Text, cell.CellReference);
         uint? numberFormatId = cellFormat?.NumberFormatId?.Value;
         if(numberFormatId == null)
         {
@@ -144,11 +145,30 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 ?? GetNumberFormat(bookPart, (uint)numberFormatId!);
             if(numberFormat == null)
             {
-                Logger.LogWarning("Failed getting number format id: {nid} ref:{r}", numberFormatId, cell.CellReference);
+                if(numberFormatId != 0)
+                {
+                    
+                    Logger.LogWarning("Failed getting number format id: {nid} ref:{r}", numberFormatId, cell.CellReference);
+                }
             }
             else
             {
                 Logger.LogWarning("Format ID:{id} format:{f} ref:{r}", numberFormat?.NumberFormatId, numberFormat?.Format, cell.CellReference);
+            }
+
+
+
+            NumberingFormat? numberingFormat = bookPart.WorkbookStylesPart?.Stylesheet?.NumberingFormats?
+                .Elements<NumberingFormat>()?.FirstOrDefault(nf => nf.NumberFormatId != null && nf.NumberFormatId == numberFormatId);
+            var cellValue = cell.CellValue?.Text;
+            if (numberingFormat != null && cellValue != null)
+            {
+                string? formatCode = numberingFormat.FormatCode?.Value;
+                if (double.TryParse(cellValue, out double numericValue))
+                {
+                    var nValue = numericValue.ToString(formatCode, CultureInfo.InvariantCulture);
+                    Logger.LogWarning("NVVValue {nv} ref:{r}", nValue, cell.CellReference);
+                }
             }
         }
                     
