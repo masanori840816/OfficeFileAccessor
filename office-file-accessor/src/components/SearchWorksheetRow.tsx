@@ -1,15 +1,17 @@
-import { SearchOfficeFile } from "../officeFileAccessor.type";
+import { useNavigate } from 'react-router-dom';
+import { SearchOfficeFile } from '../officeFileAccessor.type';
 
 
 export interface SearchWorksheetRowProps {
     sheet: SearchOfficeFile
 }
 export const SearchWorksheetRow: React.FC<SearchWorksheetRowProps> = ({sheet}) => {
+    const navigate = useNavigate();
     const openInputPage = (fileId: number) => {
         console.log(fileId);
     }
     const openViewPage = (fileId: number) => {
-        console.log(fileId);
+        navigate(`/pages/officefiles/preview/?fileid=${fileId}`);
     }
     const deletFile = (fileId: number) => {
         console.log(fileId);

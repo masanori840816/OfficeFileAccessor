@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { SearchUser } from "../auth/authenticationType"
+import { useNavigate } from 'react-router-dom';
+import { SearchUser } from '../auth/authenticationType'
 
 export interface SearchUserRowProps {
     user: SearchUser
