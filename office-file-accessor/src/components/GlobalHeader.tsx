@@ -22,7 +22,7 @@ export function GlobalHeader(): JSX.Element {
                     </div>
                 </div>
                 <div className='w-full h-[38%] flex flex-row items-center justify-center'>
-                    <Link to='/pages/register' className='h-full w-[18%]'>
+                    <Link to='/pages/officefiles/' className='h-full w-[18%]'>
                         <div className='header-tab mr-[2%]'>File</div>
                     </Link>
                     <Link to='/pages/officefiles/preview/' className='h-full w-[18%]'>

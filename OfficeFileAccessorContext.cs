@@ -144,6 +144,7 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
         modelBuilder.Entity<PreviewOfficeFileSheets>().HasNoKey().ToView(null);
         modelBuilder.Entity<DisplayOfficeFileCell>().HasNoKey().ToView(null);
         modelBuilder.Entity<SearchUser>().HasNoKey().ToView(null);
+        modelBuilder.Entity<SearchOfficeFile>().HasNoKey().ToView(null);
     }
     public DbSet<ApplicationUser> ApplicationUsers => Set<ApplicationUser>();
     public DbSet<OfficeFile> OfficeFiles => Set<OfficeFile>();
@@ -162,4 +163,5 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
     public DbSet<PreviewOfficeFileSheets> PreviewSheets => Set<PreviewOfficeFileSheets>();
     public DbSet<DisplayOfficeFileCell> DisplayCells => Set<DisplayOfficeFileCell>();
     public DbSet<SearchUser> SearchUsers => Set<SearchUser>();
+    public DbSet<SearchOfficeFile> SearchOfficeFiles => Set<SearchOfficeFile>();
 }

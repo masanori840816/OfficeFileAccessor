@@ -15,7 +15,7 @@ export function SearchWorksheetPage(): JSX.Element {
     const [updateDateFrom, setUpdateDateFrom] = useState('');
     const [updateDateTo, setUpdateDateTo] = useState('');
     useEffect(() => {
-        fetch(`${getServerUrl()}/api/files/search`, {
+        fetch(`${getServerUrl()}/api/worksheets/search`, {
             mode: 'cors',
             method: 'GET',
         })

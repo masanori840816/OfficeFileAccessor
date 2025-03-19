@@ -90,4 +90,9 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
         );
         return result;
     }
+    public async Task<List<SearchOfficeFile>> SearchOfficeFilesAsync(string? fileName, string? userName, 
+        string? updateDateFrom, string? updateDateTo, int? limit)
+    {
+        return await OfficeFiles.SearchOfficeFilesAsync(fileName, userName, updateDateFrom, updateDateTo, limit);
+    }
 }

@@ -113,4 +113,53 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
         return await Context.RowHeights.FromSqlRaw(sql)
             .ToListAsync();
     }
+    public async Task<List<SearchOfficeFile>> SearchOfficeFilesAsync(string? fileName, string? userName, 
+        string? updateDateFrom, string? updateDateTo, int? limit)
+    {
+        string sql = """
+            SELECT ofile.id AS "FileId",
+                    ofile.file_name AS "FileName",
+                    ofile.register_user_id AS "RegisterUserId",
+                    auser.user_name AS "UserName",
+                    ofile.version AS "Version",
+                    1 AS "UseCount",
+                    ofile.last_update_date AS "LastUpdateDate"
+                FROM office_file ofile
+                INNER JOIN application_user auser ON ofile.register_user_id = auser.id
+            """;
+        IQueryable<SearchOfficeFile> query = Context.SearchOfficeFiles.FromSqlRaw(sql);
+        if(string.IsNullOrEmpty(fileName) == false)
+        {
+            query = query.Where(f => f.FileName.Contains(fileName));
+        }
+        if(string.IsNullOrEmpty(userName) == false)
+        {
+            query = query.Where(f => f.UserName.Contains(userName));
+        }
+        if(string.IsNullOrEmpty(updateDateFrom) == false &&
+            DateTime.TryParse($"{updateDateFrom} 00:00:00", out var dateFrom))
+        {
+            DateTime uDateFrom = dateFrom.ToUniversalTime();
+            query = query.Where(p => p.LastUpdateDate >= uDateFrom);
+        }
+        if(string.IsNullOrEmpty(updateDateTo) == false &&
+            DateTime.TryParse($"{updateDateTo} 23:59:59", out var dateTo))
+        {
+            DateTime uDateTo = dateTo.ToUniversalTime();
+            query = query.Where(p => p.LastUpdateDate <= uDateTo);
+        }
+        int takeCount = 10;
+        if(limit != null && limit > 0)
+        {
+            takeCount = limit.Value;
+        }
+        return await Task.Run(() => {
+            return query.AsEnumerable()
+                .GroupBy(p => p.FileName)
+                .Select(p => p.OrderByDescending(w => w.Version).First())
+                .OrderByDescending(p => p.LastUpdateDate)
+                .Take(takeCount)
+                .ToList();
+        });
+    }
 }

@@ -31,6 +31,12 @@ public class OfficeFileController(ILogger<OfficeFileController> Logger, IOfficeF
         DownloadFile file = await OfficeFiles.RegisterAsync(files, user);
         return File(file.FileData, file.MimeType, file.FileName);
     }
+    [HttpGet("/api/worksheets/search")]
+    public async Task<IActionResult> SearchOfficeFiles([FromQuery] string? fileName, [FromQuery] string? userName,
+        [FromQuery] string? updateDateFrom, [FromQuery] string? updateDateTo, [FromQuery] int? limit)
+    {
+        return Json(await OfficeFiles.SearchOfficeFilesAsync(fileName, userName, updateDateFrom, updateDateTo, limit));
+    }
     [HttpGet("/api/files/previewsheets")]
     public async Task<IActionResult> GetPreviewSheets([FromQuery] long fileid)
     {

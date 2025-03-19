@@ -22,4 +22,6 @@ public interface IOfficeFileService
     /// <param name="sheetId"></param>
     /// <returns></returns>
     Task<DisplayOfficeFileSheet?> GetOfficeFileSheetAsync(long sheetId);
+    Task<List<SearchOfficeFile>> SearchOfficeFilesAsync(string? fileName, string? userName,
+        string? updateDateFrom, string? updateDateTo, int? limit);
 }
