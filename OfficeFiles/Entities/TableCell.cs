@@ -59,10 +59,10 @@ public class TableCell
         {
             merged = new ()
             {
-                StartColumn = mergedCell.Start.Column,
-                StartRow = mergedCell.Start.Row,
-                EndColumn = mergedCell.End.Column, 
-                EndRow = mergedCell.End.Row,
+                StartColumn = mergedCell.StartColumn,
+                StartRow = mergedCell.StartRow,
+                EndColumn = mergedCell.EndColumn, 
+                EndRow = mergedCell.EndRow,
             };
         }
         return new ()
@@ -92,10 +92,10 @@ public class TableCell
         {
             merged = new ()
             {
-                StartColumn = mergedCell.Start.Column,
-                StartRow = mergedCell.Start.Row,
-                EndColumn = mergedCell.End.Column, 
-                EndRow = mergedCell.End.Row,
+                StartColumn = mergedCell.StartColumn,
+                StartRow = mergedCell.StartRow,
+                EndColumn = mergedCell.EndColumn, 
+                EndRow = mergedCell.EndRow,
             };
         }
         return new ()

@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -55,7 +56,7 @@ public class OfficeFileController(ILogger<OfficeFileController> Logger, IOfficeF
     public async Task<IActionResult> Download([FromQuery] long fileid)
     {
         DownloadFile result = await OfficeFiles.DonwloadFileAsync(fileid);
-        Response.Headers.Append("File-Name", result.FileName);
+        Response.Headers.Append("File-Name", WebUtility.UrlEncode(result.FileName));
         return File(result.FileData, result.MimeType, result.FileName);
     }
 }

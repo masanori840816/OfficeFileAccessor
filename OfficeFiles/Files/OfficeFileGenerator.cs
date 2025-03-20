@@ -155,8 +155,9 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         {
             return;
         }
-        foreach(Worksheets.Cell c in allCells.Where(c => c.Address.Column >= cell.MergedCell.Start.Column && c.Address.Column <= cell.MergedCell.End.Column &&
-                c.Address.Row >= cell.MergedCell.Start.Row && c.Address.Row <= cell.MergedCell.End.Row))
+        foreach(Worksheets.Cell c in allCells.Where(c => c.Address.Column >= cell.MergedCell.StartColumn &&
+                c.Address.Column <= cell.MergedCell.EndColumn &&
+                c.Address.Row >= cell.MergedCell.StartRow && c.Address.Row <= cell.MergedCell.EndRow))
         {
             Worksheets.CellAddress address = c.Address;
             if(current.Any(cu => cu.Address == address) == false)
@@ -269,10 +270,10 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         List<GroupedCells> results = [];
         GroupedCells? lastGroup = null;
         List<int> startColumns = [];
-        for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
+        for(int row = printArea.StartRow; row <= printArea.EndRow; row++)
         {
             bool groupEnded = false;
-            int nextColumn = printArea.Start.Column;
+            int nextColumn = printArea.StartColumn;
             bool hasBorders = startColumns.Count > 1;
             if(hasBorders)
             {
@@ -380,7 +381,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
             {
                 if(cells[i].Borders.Right != Worksheets.BorderType.None &&
                     cells[i].Borders.Top != Worksheets.BorderType.None &&
-                    (cells[i].Address.Column >= printArea.End.Column || cells[i + 1].Borders.Top == Worksheets.BorderType.None))
+                    (cells[i].Address.Column >= printArea.EndColumn || cells[i + 1].Borders.Top == Worksheets.BorderType.None))
                 {
                     hasBorders = false;
                     results.Add(cells[i].Address.Column + 1);
@@ -405,7 +406,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
     private static bool CheckIsEndGroupRow(List<Worksheets.Cell> cells, int row, Worksheets.PrintArea printArea,
         List<int> startGroupColumns)
     {
-        if(printArea.End.Row <= row)
+        if(printArea.EndRow <= row)
         {
             return true;
         }
@@ -449,7 +450,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         }
         if(lastColumn == result)
         {
-            result = printArea.End.Column + 1;
+            result = printArea.EndColumn + 1;
         }
         return result;
     }

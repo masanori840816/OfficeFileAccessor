@@ -8,6 +8,7 @@ import * as pixels from './numbers/pixelConverter';
 import * as numbers from './numbers/parseNumbers';
 import { DisplayOfficeFileSheet, PreviewOfficeFileSheets } from './officeFileAccessor.type';
 import { OfficeFileSheetArea } from './components/OfficeFileSheetArea';
+import { hasAnyTexts } from './texts/hasAnyTexts';
 
 export function PreviewPage(): JSX.Element {
     const authContext = useAuthentication();
@@ -30,8 +31,7 @@ export function PreviewPage(): JSX.Element {
         if(newFileId != null) {
             setFileId(newFileId);
         } else {
-            // TODO: navigate to search page
-            navigate('/pages/');
+            navigate('/pages/officefiles/');
         }
         const newSheetId = numbers.tryParseInt(query.get('sheetid'));
         if(newSheetId != null) {
@@ -94,6 +94,21 @@ export function PreviewPage(): JSX.Element {
         }
         setSheetId(nextSheetId);
     }
+    const downloadFile = () => {
+        if(sheetId < 0) {
+            alert('File not found');
+            return;
+        }
+        fetch(`${getServerUrl()}/api/worksheets/download?fileid=${fileId}`, {
+            mode: 'cors',
+            method: 'GET'
+        })
+        .then(res => handleDownloadResponse(res))
+        .catch(err => {
+            console.error(err);
+            alert('Failed downloading');
+        })
+    };
     return <>
         <section className='flex flex-row items-center justify-between w-[98%] h-[12%] ml-[1%]'>
             <div className='w-[82%] h-full flex flex-row items-center justify-between'>
@@ -115,7 +130,7 @@ export function PreviewPage(): JSX.Element {
                     )}                
             </div>
             <div>
-                <button className='min-w-[80px]'>Download</button>
+                <button className='min-w-[80px]' onClick={downloadFile}>Download</button>
             </div>
         </section>
         <section className='w-[98%] h-[67%] ml-[1%] border rounded-lg shadow-sm overflow-auto'>
@@ -132,4 +147,41 @@ export function PreviewPage(): JSX.Element {
             ))}
         </section>
     </>
+}
+function handleDownloadResponse(res: Response) {
+    if(res.ok !== true) {
+        alert('Failed downloading');
+        return;
+    }
+    const contentType = res.headers.get('Content-Type');
+    if(hasAnyTexts(contentType) !== true) {
+        alert('Failed downloading');
+        return;
+    }
+    if(contentType === 'application/json') {
+        res.json()
+        .then(jsonValue => {
+            const failedResult = JSON.parse(JSON.stringify(jsonValue));
+            if(hasAnyTexts(failedResult?.errorMessage)) {
+                alert(failedResult.errorMessage);
+            } else {
+                alert('Failed downloading');
+            }
+        });
+        return;
+    }
+    let fileName = res.headers.get('File-Name');
+    if(hasAnyTexts(fileName)) {
+        fileName = decodeURIComponent(fileName);
+    }else {
+        fileName = 'sample.xlsx';
+    }
+    res.blob()
+        .then(blob => {
+            const downloadlink = document.createElement('a');
+            downloadlink.download = fileName;
+            downloadlink.href = URL.createObjectURL(blob);
+            downloadlink.click();
+        });
+    
 }
