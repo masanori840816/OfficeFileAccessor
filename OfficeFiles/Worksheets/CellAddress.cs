@@ -4,7 +4,6 @@ namespace OfficeFileAccessor.OfficeFiles.Worksheets;
 
 public record CellAddress
 {
-    public required string ColumnName { get; init; }
     public required int Column { get; init; }
     public required int Row { get; init; }
 
@@ -14,8 +13,8 @@ public record CellAddress
     /// <returns></returns>
     public static CellAddress DefaultAddress()
     {
-        return new () {
-            ColumnName = "A",
+        return new ()
+        {
             Column = 1,
             Row = 1,
         };
@@ -41,7 +40,6 @@ public record CellAddress
         }
         return new ()
         {
-            ColumnName = AddressConverter.ConvertIndexToAlphabet(newColumn),
             Column = newColumn,
             Row = newRow,
         };
@@ -59,8 +57,8 @@ public record CellAddress
             return DefaultAddress();
         }
         string columnName = AddressConverter.GetColumnNameFromAddress(address);
-        return new () {
-            ColumnName = columnName,
+        return new ()
+        {
             Column = AddressConverter.ConvertAlphabetToIndex(columnName),
             Row = AddressConverter.GetRowFromAddress(address),
         };
