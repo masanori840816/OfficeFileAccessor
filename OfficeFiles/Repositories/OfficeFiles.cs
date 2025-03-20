@@ -162,4 +162,9 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
                 .ToList();
         });
     }
+    public async Task<OfficeFile?> GetFileAsync(long fileId)
+    {
+        return await Context.OfficeFiles.Include(f => f.OfficeFileData)
+            .FirstOrDefaultAsync(f => f.Id == fileId);
+    }
 }

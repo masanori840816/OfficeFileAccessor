@@ -13,4 +13,5 @@ public interface IOfficeFiles
     Task<List<TableRowHeight>> GetRowHeightsAsync(long sheetId);
     Task<List<SearchOfficeFile>> SearchOfficeFilesAsync(string? fileName, string? userName, 
         string? updateDateFrom, string? updateDateTo, int? limit);
+    Task<OfficeFile?> GetFileAsync(long fileId);
 }

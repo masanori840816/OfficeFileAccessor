@@ -5,7 +5,6 @@ using OfficeFileAccessor.AppUsers;
 using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.Files.DTO;
 using OfficeFileAccessor.OfficeFiles.DTO;
-using OfficeFileAccessor.OfficeFiles.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles;
 
@@ -51,5 +50,12 @@ public class OfficeFileController(ILogger<OfficeFileController> Logger, IOfficeF
             return BadRequest("The Specified office file sheet was not found");
         }
         return Json(result);
+    }
+    [HttpGet("/api/worksheets/download")]
+    public async Task<IActionResult> Download([FromQuery] long fileid)
+    {
+        DownloadFile result = await OfficeFiles.DonwloadFileAsync(fileid);
+        Response.Headers.Append("File-Name", result.FileName);
+        return File(result.FileData, result.MimeType, result.FileName);
     }
 }

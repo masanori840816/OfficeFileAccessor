@@ -15,11 +15,11 @@ public record RegisterFileResult
     {
         string resultJson = JsonSerializer.Serialize(this, options);
         return new DownloadFile
-        {
-            FileName = "result.json",
-            MimeType = "application/json",
-            FileData = Encoding.UTF8.GetBytes(resultJson),
-        };
+        (
+            FileName: "result.json",
+            MimeType: "application/json",
+            FileData: Encoding.UTF8.GetBytes(resultJson)
+        );
     }
     public static DownloadFile GenerateFailedResult(string errorMessage, JsonSerializerOptions options)
     {

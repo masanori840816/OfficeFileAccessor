@@ -95,4 +95,17 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
     {
         return await OfficeFiles.SearchOfficeFilesAsync(fileName, userName, updateDateFrom, updateDateTo, limit);
     }
+    public async Task<DownloadFile> DonwloadFileAsync(long fileId)
+    {
+        OfficeFile? file = await OfficeFiles.GetFileAsync(fileId);
+        if(file?.OfficeFileData == null)
+        {
+            return RegisterFileResult.GenerateFailedResult("File not found", JsonOption.Get());
+        }
+        return new DownloadFile(
+            FileName: file.FileName,
+            MimeType: file.MimeType,
+            FileData: file.OfficeFileData.FileData
+        );
+    }
 }
