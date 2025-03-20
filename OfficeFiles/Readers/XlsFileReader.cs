@@ -83,10 +83,10 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 }
             }
             List<Worksheets.Cell> cells = [];
-            Logger.LogWarning("Sheet {s}", sheetName);
-            for(int row = printArea.Start.Row; row <= printArea.End.Row; row++)
+            
+            for(int row = printArea.StartRow; row <= printArea.EndRow; row++)
             {
-                for(int column = printArea.Start.Column; column <= printArea.End.Column; column++)
+                for(int column = printArea.StartColumn; column <= printArea.EndColumn; column++)
                 {
                     string columnName = SheetFunc.AddressConverter.ConvertIndexToAlphabet(column);
                     string cellReference = columnName + row;
@@ -420,7 +420,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             return [];
         }
         List<Entities.TableColumnWidth> results = [];
-        for (int i = printArea.Start.Column; i <= printArea.End.Column; i++)
+        for (int i = printArea.StartColumn; i <= printArea.EndColumn; i++)
         {
             double columnWidth = DefaultWidth;
             if (columns != null)
@@ -450,7 +450,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         
         List<Entities.TableRowHeight> results = [];
-        for (int i = printArea.Start.Row; i <= printArea.End.Row; i++)
+        for (int i = printArea.StartRow; i <= printArea.EndRow; i++)
         {
             Row? row = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value == i);
             if(row == null)
@@ -607,10 +607,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     if(addresses.Length < 2)
                     {
                         continue;
-                    }                                        
+                    }
+                    Worksheets.CellAddress startAddress =  Worksheets.CellAddress.GenerateFromAddress(addresses[0]);
+                    Worksheets.CellAddress endAddress = Worksheets.CellAddress.GenerateFromAddress(addresses[1]);
                     return new (){
-                        Start = Worksheets.CellAddress.GenerateFromAddress(addresses[0]),
-                        End = Worksheets.CellAddress.GenerateFromAddress(addresses[1]),
+                        StartColumn = startAddress.Column,
+                        StartRow = startAddress.Row,
+                        EndColumn = endAddress.Column,
+                        EndRow = endAddress.Row,
                     }; 
                 }
             }

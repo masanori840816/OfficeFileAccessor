@@ -2,23 +2,19 @@ namespace OfficeFileAccessor.OfficeFiles.Worksheets;
 
 public record PrintArea
 {
-    public required CellAddress Start { get; init; }
-    public required CellAddress End { get; init; }
+    public required int StartColumn { get; init; }
+    public required int StartRow { get; init; }
+    public required int EndColumn { get; init; }
+    public required int EndRow { get; init; }
 
     public static PrintArea DefaultPrintArea()
     {
         return new ()
         {
-            Start = new () {
-                ColumnName = "A",
-                Column = 1,
-                Row = 1,
-            },
-            End = new () {
-                ColumnName = "IV",
-                Column = 256,
-                Row = 2000,
-            }
+            StartColumn = 1,
+            StartRow = 1,
+            EndColumn = 256,
+            EndRow = 2000,
         };
     }
 };
