@@ -83,7 +83,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 }
             }
             List<Worksheets.Cell> cells = [];
-            
             for(int row = printArea.StartRow; row <= printArea.EndRow; row++)
             {
                 for(int column = printArea.StartColumn; column <= printArea.EndColumn; column++)
@@ -181,14 +180,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         Worksheets.MergedCell? mergedCell = null;
         foreach(var m in mergedCells)
         {
-            if(m.Start.Column <= address.Column &&
-                m.End.Column >= address.Column &&
-                m.Start.Row <= address.Row &&
-                m.End.Row >= address.Row)
+            if(m.StartColumn <= address.Column &&
+                m.EndColumn >= address.Column &&
+                m.StartRow <= address.Row &&
+                m.EndRow >= address.Row)
             {
                 merged = true;
-                if(address.Column == m.Start.Column &&
-                    address.Row == m.Start.Row)
+                if(address.Column == m.StartColumn &&
+                    address.Row == m.StartRow)
                 {
                     mergedCell = m;
                 }
@@ -396,9 +395,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             {
                 continue;
             }
-            results.Add(new () {
-                Start = Worksheets.CellAddress.GenerateFromAddress(cellReferences[0]),
-                End = Worksheets.CellAddress.GenerateFromAddress(cellReferences[1])
+            Worksheets.CellAddress startAddress =  Worksheets.CellAddress.GenerateFromAddress(cellReferences[0]);
+            Worksheets.CellAddress endAddress = Worksheets.CellAddress.GenerateFromAddress(cellReferences[1]);
+            results.Add(new () 
+            {
+                StartColumn = startAddress.Column,
+                StartRow = startAddress.Row,
+                EndColumn = endAddress.Column,
+                EndRow = endAddress.Row,
             });
         }
         return results;
