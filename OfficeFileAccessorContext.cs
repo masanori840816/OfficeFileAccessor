@@ -3,6 +3,7 @@ using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.AppUsers.Entities;
 using OfficeFileAccessor.OfficeFiles.DTO;
 using OfficeFileAccessor.OfficeFiles.Entities;
+using OfficeFileAccessor.OfficeFiles.Records.Entities;
 
 namespace OfficeFileAccessor;
 
@@ -139,7 +140,8 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .HasOne(s => s.Sheet)
             .WithMany(s => s.Shapes)
             .HasForeignKey(s => s.OfficeFileSheetId)
-            .HasConstraintName("FK_Shape_OfficeFileSheet");    
+            .HasConstraintName("FK_Shape_OfficeFileSheet");
+        
         /* exclude from migration */
         modelBuilder.Entity<PreviewOfficeFileSheets>().HasNoKey().ToView(null);
         modelBuilder.Entity<DisplayOfficeFileCell>().HasNoKey().ToView(null);
@@ -159,6 +161,8 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
     public DbSet<TableCellBorders> CellBorders => Set<TableCellBorders>();
     public DbSet<TableCellFontFormat> FontFormats => Set<TableCellFontFormat>();
 
+    public DbSet<WorkRecord> WorkRecords => Set<WorkRecord>();
+    public DbSet<InputRecord> InputRecords => Set<InputRecord>();
     /* -- only for displaying */
     public DbSet<PreviewOfficeFileSheets> PreviewSheets => Set<PreviewOfficeFileSheets>();
     public DbSet<DisplayOfficeFileCell> DisplayCells => Set<DisplayOfficeFileCell>();

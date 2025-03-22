@@ -21,104 +21,109 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     
     public Entities.OfficeFile? Read(IFormFile file, DisplayUser signinUser)
     {
-        using MemoryStream ms = new ();
-        using Stream stream = file.OpenReadStream();
-        using SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(stream, false);
-        WorkbookPart? bookPart = spreadsheet.WorkbookPart;
-        if(bookPart == null)
+        byte[] fileData;
+        using (MemoryStream ms = new ())
+        using (Stream stream = file.OpenReadStream())
+        using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(stream, false))
         {
-            Logger.LogWarning("Failed getting WorkbookPart");
-            return null;
+            WorkbookPart? bookPart = spreadsheet.WorkbookPart;
+            if(bookPart == null)
+            {
+                Logger.LogWarning("Failed getting WorkbookPart");
+                return null;
+            }
+            stream.CopyTo(ms);
+            fileData = ms.ToArray();
+            List<Entities.OfficeFileSheet> sheets = [];
+            foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
+            {
+                string? sheetName = s.Name?.Value;
+                if(string.IsNullOrEmpty(sheetName) ||
+                    string.IsNullOrEmpty(s.Id) ||
+                    bookPart.TryGetPartById(s.Id!, out var part) == false ||
+                    (part is WorksheetPart sheetPart) == false)
+                {
+                    continue;
+                }
+                Worksheet? targetSheet = sheetPart.Worksheet;
+                if(targetSheet == null)
+                {
+                    continue;
+                }
+                Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
+                List<Entities.TableColumnWidth> allWidths = GetColumnWidths(targetSheet, printArea);
+                List<Entities.TableRowHeight> allHeights = GetRowHeights(targetSheet, printArea);
+                List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
+                List<Entities.Shape> shapes = [];
+                DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
+                if (drawingsPart != null)
+                {
+                    // Get shapes from only OneCellAnchor and TwoCellAnchor
+                    foreach (OneCellAnchor drawing in drawingsPart.WorksheetDrawing.Elements<OneCellAnchor>())
+                    {
+                        Entities.Shape? shape = GetShape(drawing);
+                        if(shape != null)
+                        {
+                            shapes.Add(shape);
+                        }
+                    }
+                    foreach (TwoCellAnchor drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
+                    {
+                        Entities.Shape? shape = GetShape(drawing);
+                        if(shape != null)
+                        {
+                            shapes.Add(shape);
+                        }
+                    }
+                }
+                List<Worksheets.Cell> cells = [];
+                for(int row = printArea.StartRow; row <= printArea.EndRow; row++)
+                {
+                    for(int column = printArea.StartColumn; column <= printArea.EndColumn; column++)
+                    {
+                        string columnName = SheetFunc.AddressConverter.ConvertIndexToAlphabet(column);
+                        string cellReference = columnName + row;
+                        Cell? cell = targetSheet.Descendants<Cell>()?.FirstOrDefault(c => 
+                            c.CellReference?.Value != null && c.CellReference.Value == cellReference);
+                        
+                        if(cell == null)
+                        {
+                            cells.Add(Worksheets.Cell.Default(cellReference));
+                        }
+                        else
+                        {
+                            cells.Add(GetCellValue(bookPart, cell, mergedCells));
+                        }
+                    }
+                }
+                List<Entities.TableGroup> groups = FileGenerator.Generate(printArea, cells);
+                List<Entities.TableCell> groupedCells = [.. groups.SelectMany(g => g.TableCells)];
+                Entities.OfficeFileSheet sheet = new ()
+                {
+                    Name = sheetName,
+                    TableGroups = groups,
+                    ColumnWidths = GetMergedWidths(allWidths, groupedCells),
+                    RowHeights = GetMergedHeights(allHeights, groupedCells),
+                    DisplayOrder = sheets.Count,
+                };
+                foreach(Entities.TableCell c in groupedCells)
+                {
+                    c.UpdateCellLength(sheet.ColumnWidths, sheet.RowHeights);
+                }
+                sheets.Add(sheet);
+            }
+        
         }
-        stream.CopyTo(ms);
-        Entities.OfficeFile result = new ()
+        return new ()
         {
             FileName = file.FileName,
             MimeType = file.ContentType,
             OfficeFileData = new () {
-                FileData = ms.ToArray(),
+                FileData = fileData,
             },
             RegisterUserId = signinUser.Id,
             LastUpdateDate = DateTime.Now.ToUniversalTime(),
         };
-        foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
-        {
-            string? sheetName = s.Name?.Value;
-            if(string.IsNullOrEmpty(sheetName) ||
-                string.IsNullOrEmpty(s.Id) ||
-                bookPart.TryGetPartById(s.Id!, out var part) == false ||
-                (part is WorksheetPart sheetPart) == false)
-            {
-                continue;
-            }
-            Worksheet? targetSheet = sheetPart.Worksheet;
-            if(targetSheet == null)
-            {
-                continue;
-            }
-            Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
-            List<Entities.TableColumnWidth> allWidths = GetColumnWidths(targetSheet, printArea);
-            List<Entities.TableRowHeight> allHeights = GetRowHeights(targetSheet, printArea);
-            List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
-            List<Entities.Shape> shapes = [];
-            DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
-            if (drawingsPart != null)
-            {
-                // Get shapes from only OneCellAnchor and TwoCellAnchor
-                foreach (OneCellAnchor drawing in drawingsPart.WorksheetDrawing.Elements<OneCellAnchor>())
-                {
-                    Entities.Shape? shape = GetShape(drawing);
-                    if(shape != null)
-                    {
-                        shapes.Add(shape);
-                    }
-                }
-                foreach (TwoCellAnchor drawing in drawingsPart.WorksheetDrawing.Descendants<TwoCellAnchor>())
-                {
-                    Entities.Shape? shape = GetShape(drawing);
-                    if(shape != null)
-                    {
-                        shapes.Add(shape);
-                    }
-                }
-            }
-            List<Worksheets.Cell> cells = [];
-            for(int row = printArea.StartRow; row <= printArea.EndRow; row++)
-            {
-                for(int column = printArea.StartColumn; column <= printArea.EndColumn; column++)
-                {
-                    string columnName = SheetFunc.AddressConverter.ConvertIndexToAlphabet(column);
-                    string cellReference = columnName + row;
-                    Cell? cell = targetSheet.Descendants<Cell>()?.FirstOrDefault(c => 
-                        c.CellReference?.Value != null && c.CellReference.Value == cellReference);
-                    
-                    if(cell == null)
-                    {
-                        cells.Add(Worksheets.Cell.Default(cellReference));
-                    }
-                    else
-                    {
-                        cells.Add(GetCellValue(bookPart, cell, mergedCells));
-                    }
-                }
-            }
-            List<Entities.TableGroup> groups = FileGenerator.Generate(printArea, cells);
-            List<Entities.TableCell> groupedCells = [.. groups.SelectMany(g => g.TableCells)];
-            Entities.OfficeFileSheet sheet = new ()
-            {
-                Name = sheetName,
-                TableGroups = groups,
-                ColumnWidths = GetMergedWidths(allWidths, groupedCells),
-                RowHeights = GetMergedHeights(allHeights, groupedCells),
-                DisplayOrder = result.OfficeFileSheets.Count,
-            };
-            foreach(Entities.TableCell c in groupedCells)
-            {
-                c.UpdateCellLength(sheet.ColumnWidths, sheet.RowHeights);
-            }
-            result.OfficeFileSheets.Add(sheet);
-        }
-        return result;
     }
 
     private  Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell,
