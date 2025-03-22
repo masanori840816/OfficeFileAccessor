@@ -141,6 +141,33 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .WithMany(s => s.Shapes)
             .HasForeignKey(s => s.OfficeFileSheetId)
             .HasConstraintName("FK_Shape_OfficeFileSheet");
+
+        modelBuilder.Entity<WorkRecord>()
+                    .HasOne(i => i.OfficeFile)
+                    .WithMany(u => u.WorkRecords)
+                    .HasForeignKey(w => w.OfficeFileId)
+                    .HasConstraintName("FK_WorkRecord_OfficeFile");        
+        modelBuilder.Entity<WorkRecord>()
+                    .HasOne(i => i.UpdateUser)
+                    .WithMany(u => u.WorkRecords)
+                    .HasForeignKey(w => w.UpdateUserId)
+                    .HasConstraintName("FK_WorkRecord_ApplicationUser");
+
+        modelBuilder.Entity<InputRecord>()
+                    .HasOne(i => i.WorkRecord)
+                    .WithMany(u => u.InputRecords)
+                    .HasForeignKey(w => w.WorkRecordId)
+                    .HasConstraintName("FK_InputRecord_WorkRecord");        
+        modelBuilder.Entity<InputRecord>()
+                    .HasOne(i => i.TableCell)
+                    .WithMany(u => u.InputRecords)
+                    .HasForeignKey(w => w.TableCellId)
+                    .HasConstraintName("FK_InputRecord_TableCell");
+        modelBuilder.Entity<InputRecord>()
+                    .HasOne(i => i.UpdateUser)
+                    .WithMany(u => u.InputRecords)
+                    .HasForeignKey(w => w.UpdateUserId)
+                    .HasConstraintName("FK_InputRecord_ApplicationUser");
         
         /* exclude from migration */
         modelBuilder.Entity<PreviewOfficeFileSheets>().HasNoKey().ToView(null);

@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using OfficeFileAccessor.AppUsers.DTO;
 using OfficeFileAccessor.OfficeFiles.Entities;
+using OfficeFileAccessor.OfficeFiles.Records.Entities;
 
 namespace OfficeFileAccessor.AppUsers.Entities;
 
@@ -22,6 +23,7 @@ public class ApplicationUser: IdentityUser<int>
     [Required]
     [Column("mail")]
     public override string? Email { get; set; } = null!;
+    [JsonIgnore]
     [Required]
     [Column("password")]
     public override string? PasswordHash { get; set; } = null!;
@@ -65,6 +67,9 @@ public class ApplicationUser: IdentityUser<int>
 
     [JsonIgnore]
     public List<OfficeFile> OfficeFiles { get; init; } = [];
+    public List<WorkRecord> WorkRecords { get; init; } = [];
+    public List<InputRecord> InputRecords { get; init; } = [];
+    
     public static ApplicationUser Create(string userName, string email, string password, int? id = null, string? organization = null)
     {
         var result = new ApplicationUser

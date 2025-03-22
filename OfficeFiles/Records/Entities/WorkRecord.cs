@@ -17,14 +17,14 @@ public class WorkRecord
     [Column("office_file_id")]
     public long OfficeFileId { get; init; }
     [Column("working_user_id")]
-    public int? WorkingUserId { get; set; }
+    public int? UpdateUserId { get; set; }
     [Column("finish_working_date", TypeName = "timestamp with time zone")]
     public DateTime? FinishWorkingDate { get; set; }
     [Required]
     [Column("last_update_date", TypeName = "timestamp with time zone")]
     public DateTime LastUpdateDate { get; set; }
     [JsonIgnore]
-    public ApplicationUser? ApplicationUser { get; set; }
+    public ApplicationUser? UpdateUser { get; set; }
     [JsonIgnore]
     public OfficeFile? OfficeFile { get; init; }
     public List<InputRecord> InputRecords { get; init; } = [];

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using OfficeFileAccessor.AppUsers.Entities;
+using OfficeFileAccessor.OfficeFiles.Records.Entities;
 
 namespace OfficeFileAccessor.OfficeFiles.Entities;
 
@@ -33,4 +34,5 @@ public record OfficeFile
     public ApplicationUser? RegisterUser { get; init; }
     public OfficeFileData? OfficeFileData { get; init; }
     public List<OfficeFileSheet> OfficeFileSheets { get; init; } = [];
+    public List<WorkRecord> WorkRecords { get; init; } = [];
 }

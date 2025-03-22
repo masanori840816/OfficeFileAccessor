@@ -35,7 +35,7 @@ public class InputRecord
     [JsonIgnore]
     public WorkRecord? WorkRecord { get; init; }
     [JsonIgnore]
-    public TableCell? Cell { get; init; }
+    public TableCell? TableCell { get; init; }
     [JsonIgnore]
     public ApplicationUser? UpdateUser { get; init; }
 }
