@@ -32,7 +32,7 @@ public record OfficeFile
     public required DateTime LastUpdateDate { get; set; }
     [JsonIgnore]
     public ApplicationUser? RegisterUser { get; init; }
-    public OfficeFileData? OfficeFileData { get; init; }
+    public OfficeFileData? OfficeFileData { get; set; }
     public List<OfficeFileSheet> OfficeFileSheets { get; init; } = [];
     public List<WorkRecord> WorkRecords { get; init; } = [];
 }

@@ -6,11 +6,12 @@ using OfficeFileAccessor.OfficeFiles.Entities;
 using OfficeFileAccessor.OfficeFiles.Records.Entities;
 using OfficeFileAccessor.OfficeFiles.Records.Repositories;
 using OfficeFileAccessor.OfficeFiles.Repositories;
+using OfficeFileAccessor.OfficeFiles.Writers;
 
 namespace OfficeFileAccessor.OfficeFiles;
 
 public class WorkRecordService(ILogger<WorkRecordService> Logger, IJsonCamelCaseOption JsonOption, 
-    IOfficeFiles OfficeFiles, IWorkRecords WorkRecords): IWorkRecordService
+    IOfficeFiles OfficeFiles, IWorkRecords WorkRecords, IXlsFileWriter XlsFileWriter): IWorkRecordService
 {
     public async Task<DownloadFile> DonwloadFileAsync(long recordId)
     {
@@ -25,10 +26,15 @@ public class WorkRecordService(ILogger<WorkRecordService> Logger, IJsonCamelCase
             return RegisterFileResult.GenerateFailedResult("File not found", JsonOption.Get());
         }
         List<EditabledCell> editabledCells = await OfficeFiles.GetEditabledCellsByFileIdAsync(workRecord.OfficeFileId);
-        foreach(var c in editabledCells)
+        byte[]? fileData = XlsFileWriter.WriteRecords(file, workRecord, editabledCells);
+        if(fileData == null)
         {
-            Logger.LogWarning("Cell fid{fid} sheet:{s} cel:{c}", c.FileId, c.SheetName, c.CellId);
+            return RegisterFileResult.GenerateFailedResult("Failed writing records", JsonOption.Get());
         }
-        return RegisterFileResult.GenerateFailedResult("not implemented", JsonOption.Get());
+        return new DownloadFile(
+            FileName: file.FileName,
+            MimeType: file.MimeType,
+            FileData: fileData
+        );
     }
 }

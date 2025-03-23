@@ -18,6 +18,7 @@ using OfficeFileAccessor.OfficeFiles.Files;
 using OfficeFileAccessor.OfficeFiles.Readers;
 using OfficeFileAccessor.OfficeFiles.Records.Repositories;
 using OfficeFileAccessor.OfficeFiles.Repositories;
+using OfficeFileAccessor.OfficeFiles.Writers;
 
 var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
 
@@ -94,6 +95,7 @@ try
     builder.Services.AddScoped<IOfficeFiles, OfficeFiles>();
     builder.Services.AddScoped<IWorkRecordService, WorkRecordService>();
     builder.Services.AddScoped<IWorkRecords, WorkRecords>();
+    builder.Services.AddScoped<IXlsFileWriter, XlsFileWriter>();
     builder.Services.AddSingleton<IJsonCamelCaseOption, JsonCamelCaseOption>();
     var app = builder.Build();
     

@@ -21,8 +21,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     
     public Entities.OfficeFile? Read(IFormFile file, DisplayUser signinUser)
     {
-        byte[] fileData;
-        using (MemoryStream ms = new ())
+        List<Entities.OfficeFileSheet> sheets = [];
         using (Stream stream = file.OpenReadStream())
         using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(stream, false))
         {
@@ -32,9 +31,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 Logger.LogWarning("Failed getting WorkbookPart");
                 return null;
             }
-            stream.CopyTo(ms);
-            fileData = ms.ToArray();
-            List<Entities.OfficeFileSheet> sheets = [];
             foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
             {
                 string? sheetName = s.Name?.Value;
@@ -77,6 +73,9 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     }
                 }
                 List<Worksheets.Cell> cells = [];
+                            Logger.LogWarning("Sheet {s} PA sc:{sc} sr:{sr} ec:{ec} er:{er}", sheetName, printArea.StartColumn, printArea.StartRow,
+                printArea.EndColumn, printArea.EndRow);
+ 
                 for(int row = printArea.StartRow; row <= printArea.EndRow; row++)
                 {
                     for(int column = printArea.StartColumn; column <= printArea.EndColumn; column++)
@@ -111,18 +110,18 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     c.UpdateCellLength(sheet.ColumnWidths, sheet.RowHeights);
                 }
                 sheets.Add(sheet);
+
+                // TODO delete
+                break;
             }
-        
         }
         return new ()
         {
             FileName = file.FileName,
             MimeType = file.ContentType,
-            OfficeFileData = new () {
-                FileData = fileData,
-            },
             RegisterUserId = signinUser.Id,
             LastUpdateDate = DateTime.Now.ToUniversalTime(),
+            OfficeFileSheets = sheets,
         };
     }
 
@@ -201,10 +200,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
         {
+            Logger.LogWarning("Formula ad:{ad} cr:{cr} mc:{mc}", address, calcResult, mergedCell);
             if (double.TryParse(calcResult, out double n))
             {
                 calcResult = n.ToString("G");
             }
+            Logger.LogWarning("Formula n:{n} cr:{cr}", n, calcResult);
             return new Worksheets.Cell
             {
                 Address = address,
@@ -238,6 +239,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                                     .Where(t => CheckIsPhonetic(t) == false)
                                     .Select(t => t.Text)
                 );
+                Logger.LogWarning("SharedString ad:{ad} v:{v} cr:{cr} mc:{mc}", address, value, result, mergedCell);
                 return new Worksheets.Cell
                 {
                     Address = address,
@@ -260,6 +262,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             value = nv.ToString("G");
             valueType = Worksheets.CellValueType.Double;
         }
+        Logger.LogWarning("SharedString ad:{ad} v:{v} ty:{ty} mc:{mc}", address, value, valueType, mergedCell);
         return new Worksheets.Cell
         {
             Address = address,
@@ -504,13 +507,16 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         return null;
     }
-    private static Entities.TableCellBorders GetBorders(WorkbookPart bookPart, CellFormat? cellFormat)
+    private  Entities.TableCellBorders GetBorders(WorkbookPart bookPart, CellFormat? cellFormat)
     {
         if(cellFormat?.BorderId?.Value != null)
         {
             if (bookPart.WorkbookStylesPart?.Stylesheet?.Borders?.ElementAt(
                     (int)cellFormat.BorderId.Value) is Border border)
             {
+                Logger.LogWarning("GetB Diagonal:{dd} down:{d} up:{up} ver:{ver} start:{start}", border.DiagonalBorder?.Style?.InnerText,
+                    border.DiagonalDown?.InnerText == null, border.DiagonalUp?.InnerText == null, border.VerticalBorder?.Style?.InnerText,
+                     border.StartBorder?.Style?.InnerText);
                 return new()
                 {
                     Left = Worksheets.BorderTypeFactory.Get(border?.LeftBorder?.Style?.InnerText),

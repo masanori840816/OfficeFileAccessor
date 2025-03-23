@@ -34,6 +34,15 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
                     {
                         Logger.LogWarning("Faile reading the file");
                     } else {
+                        using(MemoryStream ms = new ())
+                        using(Stream stream = f.OpenReadStream())
+                        {
+                            stream.CopyTo(ms);
+                            file.OfficeFileData = new OfficeFileData
+                            {
+                                FileData = ms.ToArray()
+                            };
+                        }
                        ApplicationResult createResult = await OfficeFiles.CreateAsync(file);
                        Logger.LogWarning("CREATE Result {r}", createResult);
                     }
