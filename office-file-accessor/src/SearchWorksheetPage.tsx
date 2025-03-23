@@ -6,9 +6,11 @@ import { hasAnyTexts } from './texts/hasAnyTexts';
 import { addUrlParams } from './web/addUrlParams';
 import { SearchOfficeFile } from './officeFileAccessor.type';
 import { SearchWorksheetRow } from './components/SearchWorksheetRow';
+import { useNavigate } from 'react-router-dom';
 
 export function SearchWorksheetPage(): JSX.Element {
     const authContext = useAuthentication();
+    const navigate = useNavigate();
     const [files, setFiles] = useState<SearchOfficeFile[]>([]);
     const [fileName, setFileName] = useState('');
     const [userName, setUserName] = useState('');
@@ -45,6 +47,9 @@ export function SearchWorksheetPage(): JSX.Element {
     const handleUpdateToChanged  = (event: React.ChangeEvent<HTMLInputElement>) => {
         setUpdateDateTo(event.target.value);
     };
+    const openRegisterPage = () => {
+        navigate('/pages/officefiles/register/');
+    }
     const searchWorksheets = () => {
         let urlParams = '';
         if(hasAnyTexts(fileName)) {
@@ -114,7 +119,7 @@ export function SearchWorksheetPage(): JSX.Element {
                 </div>
             </div>
             <div className='h-full'>
-                <button className='min-w-[100px]'>Create</button>
+                <button className='min-w-[100px]' onClick={openRegisterPage}>Create</button>
             </div>
         </section>
         <section className='border rounded-lg shadow-lg w-[96%] h-[48%] p-[1%] ml-[2%] mt-[2%]'>
