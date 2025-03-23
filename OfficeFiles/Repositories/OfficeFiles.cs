@@ -91,6 +91,52 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
             .ThenBy(c => c.Column)
             .ToListAsync();
     }
+    public async Task<List<EditabledCell>> GetEditabledCellsByFileIdAsync(long fileId)
+    {
+        string sql = """
+            SELECT lfs.file_id AS "FileId",
+            sheet.id AS "SheetId",
+            sheet.name AS "SheetName",
+            tgroup.id AS "GroupId",
+            cell.id AS "CellId",
+            tgroup.display_order AS "GroupDisplayOrder",
+            tgroup.title AS "Title",
+            cell.column AS "Column",
+            cell.row AS "Row",
+            cell.vertical_length AS "VerticalLength",
+            cell.horizontal_length AS "HorizontalLength",
+            cell.value AS "Value",
+            cell.formula AS "Formula",
+            cell.value_type AS "ValueType",
+            cell.background_color AS "BackgroundColor",
+            cell.editabled AS "Editabled",
+            cell.vertical_writing AS "VerticalWriting",
+            cell.text_rotation AS "TextRotation",
+            font.font_name AS "FontName",
+            font.font_size AS "FontSize",
+            font.font_color AS "FontColor",
+            font.bold AS "Bold",
+            mtc.start_column AS "MergedStartColumn",
+            mtc.start_row AS "MergedStartRow",
+            mtc.end_column AS "MergedEndColumn",
+            mtc.end_row AS "MergedEndRow"
+            FROM office_file_sheet sheet
+            INNER JOIN link_file_sheet lfs ON sheet.id = lfs.sheet_id
+            INNER JOIN link_sheet_group lsg ON sheet.id = lsg.sheet_id
+            INNER JOIN table_group tgroup ON tgroup.id = lsg.table_group_id
+            INNER JOIN link_group_cell lgc ON tgroup.id = lgc.table_group_id
+            INNER JOIN table_cell cell ON cell.id = lgc.table_cell_id
+            LEFT JOIN table_cell_font_format font ON cell.id = font.table_cell_id
+            LEFT JOIN merged_table_cell mtc ON cell.id = mtc.table_cell_id
+        """;
+        return await Context.EditabledCells.FromSqlRaw(sql)
+            .Where(c => c.FileId == fileId && c.Editabled)
+            .OrderBy(c => c.SheetId)
+            .ThenBy(c => c.GroupDisplayOrder)
+            .ThenBy(c => c.Row)
+            .ThenBy(c => c.Column)
+            .ToListAsync();
+    } 
     public async Task<List<TableColumnWidth>> GetColumnWidthsAsync(long sheetId)
     {
         string sql = """

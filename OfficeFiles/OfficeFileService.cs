@@ -15,7 +15,7 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
 {
     private readonly DocFileReader docFileReader = new ();
     
-    public async Task<DownloadFile> RegisterAsync(IFormFileCollection files, DisplayUser signinUser)
+    public async Task<ApplicationResult> RegisterAsync(IFormFileCollection files, DisplayUser signinUser)
     {
         OfficeFile? file = null;
         foreach(var f in files!)
@@ -34,8 +34,8 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
                     {
                         Logger.LogWarning("Faile reading the file");
                     } else {
-                        ApplicationResult createResult = await OfficeFiles.CreateAsync(file);
-                        Logger.LogWarning("CREATE Result {r}", createResult);
+                       ApplicationResult createResult = await OfficeFiles.CreateAsync(file);
+                       Logger.LogWarning("CREATE Result {r}", createResult);
                     }
                     
                     break;
@@ -50,15 +50,10 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
         }
         if(file == null)
         {
-            return RegisterFileResult.GenerateFailedResult("Failed loading file", JsonOption.Get());
+            return ApplicationResult.GetFailedResult("Failed loading file");
         }
-        RegisterFileResult result = new ()
-        {
-            Result = ApplicationResult.GetSucceededResult(),
-            File = file,
-        };
 
-        return result.GenerateDownloadFile(JsonOption.Get());
+        return ApplicationResult.GetSucceededResult();
     }
     /// <summary>
     /// Get an office file and sheets by id.
