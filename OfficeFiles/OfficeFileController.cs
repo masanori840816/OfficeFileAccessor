@@ -28,8 +28,7 @@ public class OfficeFileController(ILogger<OfficeFileController> Logger, IOfficeF
         {
             return Unauthorized();
         }
-        DownloadFile file = await OfficeFiles.RegisterAsync(files, user);
-        return File(file.FileData, file.MimeType, file.FileName);
+        return Json(await OfficeFiles.RegisterAsync(files, user));
     }
     [HttpGet("/api/worksheets/search")]
     public async Task<IActionResult> SearchOfficeFiles([FromQuery] string? fileName, [FromQuery] string? userName,

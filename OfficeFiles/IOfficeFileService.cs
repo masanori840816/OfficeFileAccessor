@@ -9,7 +9,7 @@ namespace OfficeFileAccessor.OfficeFiles;
 
 public interface IOfficeFileService
 {
-    Task<DownloadFile> RegisterAsync(IFormFileCollection files, DisplayUser signinUser);
+    Task<ApplicationResult> RegisterAsync(IFormFileCollection files, DisplayUser signinUser);
     /// <summary>
     /// Get an office file and sheets by id.
     /// </summary>
