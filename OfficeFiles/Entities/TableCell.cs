@@ -48,7 +48,7 @@ public class TableCell
     public required int TextRotation { get; init; }
     public TableCellBorders? Borders { get; init; }
     public MergedTableCell? MergedCell { get; init; }
-    public InputTableCell? InputCell { get; set; }
+    public List<InputTableCell> InputCells { get; set; } = [];
     public TableCellFontFormat? FontFormat { get; init; }
     [JsonIgnore]
     public List<TableGroup> TableGroups { get; set; } = [];

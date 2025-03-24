@@ -27,9 +27,10 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .IsRequired();
         modelBuilder.Entity<InputTableCell>()
             .HasOne(m => m.TableCell)
-            .WithOne(c => c.InputCell)
-            .HasForeignKey<InputTableCell>(m => m.TableCellId)
+            .WithMany(c => c.InputCells)
+            .HasForeignKey(m => m.TableCellId)
             .IsRequired();
+
         modelBuilder.Entity<TableCellBorders>()
             .HasOne(m => m.TableCell)
             .WithOne(c => c.Borders)
