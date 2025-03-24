@@ -33,21 +33,19 @@ public class OfficeFileService(ILogger<OfficeFileService> Logger, IXlsFileReader
                     if(file == null)
                     {
                         Logger.LogWarning("Faile reading the file");
-                    } else {
-                        using(MemoryStream ms = new ())
-                        using(Stream stream = f.OpenReadStream())
-                        {
-                            stream.CopyTo(ms);
-                            file.OfficeFileData = new OfficeFileData
-                            {
-                                FileData = ms.ToArray()
-                            };
-                        }
-                       ApplicationResult createResult = await OfficeFiles.CreateAsync(file);
-                       Logger.LogWarning("CREATE Result {r}", createResult);
+                        return ApplicationResult.GetFailedResult("Faile reading the file");
                     }
+                    using(MemoryStream ms = new ())
+                    using(Stream stream = f.OpenReadStream())
+                    {
+                        stream.CopyTo(ms);
+                        file.OfficeFileData = new OfficeFileData
+                        {
+                            FileData = ms.ToArray()
+                        };
+                    }
+                    return await OfficeFiles.CreateAsync(file);
                     
-                    break;
                 case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
                     docFileReader.Read(f);
                     break;

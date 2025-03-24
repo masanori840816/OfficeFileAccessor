@@ -47,8 +47,8 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                                 continue;
                             }
                         }
-                        if(string.IsNullOrEmpty(c.Value) == false &&
-                            (titles == null || titles.Addresses.Any(a => a == c.Address) == false))
+                        if(string.IsNullOrEmpty(c.Value) == false || string.IsNullOrEmpty(c.BackgroundColor) == false 
+                            || c.Borders.CheckHasAnyBorders() == false)
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
@@ -60,7 +60,8 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 {
                     foreach(Worksheets.Cell c in g.Cells)
                     {
-                        if(string.IsNullOrEmpty(c.Value) == false)
+                        if(string.IsNullOrEmpty(c.Value) == false || string.IsNullOrEmpty(c.BackgroundColor) == false 
+                            || c.Borders.CheckHasAnyBorders() == false)
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
@@ -88,8 +89,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 int[] rows = [.. mergedCell.Select(c => c.Address.Row).Distinct()];
                 AddRestCells(mergedCell, g.Cells, columns, rows);                
                 string? backgroundColor = GetBackgroundColorFromMergedCells(mergedCell);
-                addedAddresses.AddRange(mergedCell.Select(c => c.Address));
-                                
+                addedAddresses.AddRange(mergedCell.Select(c => c.Address));             
                 group.TableCells.Add(
                     TableCell.Generate(cell.Address, MergeCellValues(mergedCell), 
                         cell.Formula, cell.ValueType,
