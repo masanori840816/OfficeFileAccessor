@@ -28,4 +28,17 @@ public record MergedTableCell
     public required int EndRow { get; init; }
     [JsonIgnore]
     public TableCell? TableCell { get; init; }
+    public static MergedTableCell Generate(List<Worksheets.Cell> cells)
+    {
+        Worksheets.Cell[] ordered = [.. cells.OrderBy(c => c.Address.Column).ThenBy(c => c.Address.Row)];
+        Worksheets.Cell firstCell = ordered.First();
+        Worksheets.Cell lastCell = ordered.Last();
+        return new ()
+        {
+            StartColumn = firstCell.Address.Column,
+            StartRow = firstCell.Address.Row,
+            EndColumn = lastCell.Address.Column,
+            EndRow = lastCell.Address.Row,
+        };
+    }
 }

@@ -55,20 +55,9 @@ public class TableCell
     
     public List<InputRecord> InputRecords { get; init; } = [];
 
-    public static TableCell Generate(Worksheets.Cell cell, Worksheets.MergedCell? mergedCell,
+    public static TableCell Generate(Worksheets.Cell cell, MergedTableCell? mergedCell,
         TableCellBorders borders)
     {
-        MergedTableCell? merged = null;
-        if(mergedCell != null)
-        {
-            merged = new ()
-            {
-                StartColumn = mergedCell.StartColumn,
-                StartRow = mergedCell.StartRow,
-                EndColumn = mergedCell.EndColumn, 
-                EndRow = mergedCell.EndRow,
-            };
-        }
         return new ()
         {
             Column = cell.Address.Column,
@@ -82,26 +71,15 @@ public class TableCell
             Borders = borders,
             BackgroundColor = cell.BackgroundColor,
             Editabled = cell.BackgroundColor == ConstantParams.EditableColor,
-            MergedCell = merged,
+            MergedCell = mergedCell,
             VerticalWriting = cell.VerticalWriting,
             TextRotation = (int)cell.TextRotation,
         };
     }
     public static TableCell Generate(Worksheets.CellAddress baseAddress, string mergedValue, string? formula,
         string valueType, TableCellBorders borders,
-        string? backgroundColor, Worksheets.MergedCell? mergedCell, bool verticalWriting, uint textRotation)
+        string? backgroundColor, MergedTableCell? mergedCell, bool verticalWriting, uint textRotation)
     {
-        MergedTableCell? merged = null;
-        if(mergedCell != null)
-        {
-            merged = new ()
-            {
-                StartColumn = mergedCell.StartColumn,
-                StartRow = mergedCell.StartRow,
-                EndColumn = mergedCell.EndColumn, 
-                EndRow = mergedCell.EndRow,
-            };
-        }
         return new ()
         {
             Column = baseAddress.Column,
@@ -112,7 +90,7 @@ public class TableCell
             Borders = borders,
             BackgroundColor = backgroundColor,
             Editabled = backgroundColor == ConstantParams.EditableColor,
-            MergedCell = merged,
+            MergedCell = mergedCell,
             VerticalWriting = verticalWriting,
             TextRotation = (int)textRotation,
         };

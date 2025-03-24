@@ -52,7 +52,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.TableCells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
+                            group.TableCells.Add(TableCell.Generate(c, Entities.MergedTableCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -64,7 +64,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.TableCells.Add(TableCell.Generate(c, Worksheets.MergedCell.Generate(mergedCell), noBorders));
+                            group.TableCells.Add(TableCell.Generate(c, Entities.MergedTableCell.Generate(mergedCell), noBorders));
                         }
                     }
                 }
@@ -94,7 +94,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                     TableCell.Generate(cell.Address, MergeCellValues(mergedCell), 
                         cell.Formula, cell.ValueType,
                         GetBordersFromMergedCells(mergedCell), 
-                        backgroundColor, Worksheets.MergedCell.Generate(mergedCell),
+                        backgroundColor, Entities.MergedTableCell.Generate(mergedCell),
                         cell.VerticalWriting, cell.TextRotation));
             }
         }

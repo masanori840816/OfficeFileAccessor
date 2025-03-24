@@ -49,7 +49,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 Worksheets.PrintArea printArea = GetPrintArea(bookPart, sheetName);
                 List<Entities.TableColumnWidth> allWidths = GetColumnWidths(targetSheet, printArea);
                 List<Entities.TableRowHeight> allHeights = GetRowHeights(targetSheet, printArea);
-                List<Worksheets.MergedCell> mergedCells = GetMergedCells(sheetPart);
+                List<Entities.MergedTableCell> mergedCells = GetMergedCells(sheetPart);
                 List<Entities.Shape> shapes = [];
                 DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
                 if (drawingsPart != null)
@@ -72,10 +72,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                         }
                     }
                 }
-                List<Worksheets.Cell> cells = [];
-                            Logger.LogWarning("Sheet {s} PA sc:{sc} sr:{sr} ec:{ec} er:{er}", sheetName, printArea.StartColumn, printArea.StartRow,
-                printArea.EndColumn, printArea.EndRow);
- 
+                List<Worksheets.Cell> cells = []; 
                 for(int row = printArea.StartRow; row <= printArea.EndRow; row++)
                 {
                     for(int column = printArea.StartColumn; column <= printArea.EndColumn; column++)
@@ -110,9 +107,6 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                     c.UpdateCellLength(sheet.ColumnWidths, sheet.RowHeights);
                 }
                 sheets.Add(sheet);
-
-                // TODO delete
-                break;
             }
         }
         return new ()
@@ -126,7 +120,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     }
 
     private  Worksheets.Cell GetCellValue(WorkbookPart bookPart, Cell cell,
-        List<Worksheets.MergedCell> mergedCells)
+        List<Entities.MergedTableCell> mergedCells)
     {
         CellFormat? cellFormat = GetCellFormat(bookPart, cell);
         // Borders
@@ -137,41 +131,33 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         TextDirection textDirection = GetTextDirection(cellFormat);
         // Font format
         Entities.TableCellFontFormat? cellFontFormat = GetFontFormat(bookPart, cellFormat);
-        Logger.LogWarning("Cell Value v:{v} it:{it} f:{f} ref:{r}", cell.CellValue?.Text, cell.CellValue?.InnerText, cell.CellFormula?.Text, cell.CellReference);
         uint? numberFormatId = cellFormat?.NumberFormatId?.Value;
-        if(numberFormatId == null)
+        if(numberFormatId != null)
         {
-            Logger.LogWarning("numformatid was null ref:{r}", cell.CellReference);
-        }
-        else {
             Worksheets.NumberFormat? numberFormat = Worksheets.NumberFormat.DefaultNumberFormat((uint)numberFormatId)
                 ?? GetNumberFormat(bookPart, (uint)numberFormatId!);
-            if(numberFormat == null)
-            {
-                if(numberFormatId != 0)
-                {
-                    
-                    Logger.LogWarning("Failed getting number format id: {nid} ref:{r}", numberFormatId, cell.CellReference);
-                }
-            }
-            else
+            if(numberFormat != null)
             {
                 Logger.LogWarning("Format ID:{id} format:{f} ref:{r}", numberFormat?.NumberFormatId, numberFormat?.Format, cell.CellReference);
             }
 
 
-
             NumberingFormat? numberingFormat = bookPart.WorkbookStylesPart?.Stylesheet?.NumberingFormats?
                 .Elements<NumberingFormat>()?.FirstOrDefault(nf => nf.NumberFormatId != null && nf.NumberFormatId == numberFormatId);
             var cellValue = cell.CellValue?.Text;
-            if (numberingFormat != null && cellValue != null)
+            if(string.IsNullOrEmpty(numberingFormat?.FormatCode?.Value) == false)
             {
-                string? formatCode = numberingFormat.FormatCode?.Value;
+                string formatCode = numberingFormat.FormatCode.Value;
                 if (double.TryParse(cellValue, out double numericValue))
                 {
                     var nValue = numericValue.ToString(formatCode, CultureInfo.InvariantCulture);
                     Logger.LogWarning("NVVValue {nv} ref:{r}", nValue, cell.CellReference);
+                } else {
+                    numericValue = 0d;
+                    var nValue = numericValue.ToString(formatCode, CultureInfo.InvariantCulture);
+                    Logger.LogWarning("Zero NVValue {nv} ref:{r}", nValue, cell.CellReference);
                 }
+
             }
         }
                     
@@ -181,7 +167,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         string? calcResult = cell.CellValue?.InnerText;
         Worksheets.CellAddress address = Worksheets.CellAddress.GenerateFromAddress(cell.CellReference?.Value);
         bool merged = false;
-        Worksheets.MergedCell? mergedCell = null;
+        Entities.MergedTableCell? mergedCell = null;
         foreach(var m in mergedCells)
         {
             if(m.StartColumn <= address.Column &&
@@ -383,14 +369,14 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     /// </summary>
     /// <param name="sheetPart"></param>
     /// <returns></returns>
-    public List<Worksheets.MergedCell> GetMergedCells(WorksheetPart sheetPart)
+    public List<Entities.MergedTableCell> GetMergedCells(WorksheetPart sheetPart)
     {
         MergeCells? mergeCells = sheetPart.Worksheet.Elements<MergeCells>().FirstOrDefault();
         if(mergeCells == null)
         {
             return [];
         }
-        List<Worksheets.MergedCell> results = [];
+        List<Entities.MergedTableCell> results = [];
         foreach (MergeCell mergeCell in mergeCells.Cast<MergeCell>())
         {
             string? reference = mergeCell.Reference;

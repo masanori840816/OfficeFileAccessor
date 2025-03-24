@@ -13,7 +13,7 @@ public class Cell
     public TableCellFontFormat? FontFormat { get; init; }
     public required TableCellBorders Borders { get; init; }
     // Only the start cell of a merged cell has this value.
-    public MergedCell? MergedCell { get; init; }
+    public MergedTableCell? MergedCell { get; init; }
     public bool Merged { get; init; }
     public required bool VerticalWriting { get; init; }
     public required uint TextRotation { get; init; }
