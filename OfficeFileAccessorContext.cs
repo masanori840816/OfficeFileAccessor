@@ -25,6 +25,11 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
             .WithOne(c => c.MergedCell)
             .HasForeignKey<MergedTableCell>(m => m.TableCellId)
             .IsRequired();
+        modelBuilder.Entity<InputTableCell>()
+            .HasOne(m => m.TableCell)
+            .WithOne(c => c.InputCell)
+            .HasForeignKey<InputTableCell>(m => m.TableCellId)
+            .IsRequired();
         modelBuilder.Entity<TableCellBorders>()
             .HasOne(m => m.TableCell)
             .WithOne(c => c.Borders)
@@ -186,6 +191,7 @@ public class OfficeFileAccessorContext(DbContextOptions<OfficeFileAccessorContex
     public DbSet<TableGroup> Groups => Set<TableGroup>();
     public DbSet<TableCell> Cells => Set<TableCell>();
     public DbSet<MergedTableCell> MergedCells => Set<MergedTableCell>();
+    public DbSet<InputTableCell> InputTableCells => Set<InputTableCell>();
     public DbSet<TableCellBorders> CellBorders => Set<TableCellBorders>();
     public DbSet<TableCellFontFormat> FontFormats => Set<TableCellFontFormat>();
 
