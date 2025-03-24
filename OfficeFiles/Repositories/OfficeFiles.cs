@@ -12,6 +12,15 @@ public class OfficeFiles(ILogger<OfficeFile> Logger, OfficeFileAccessorContext C
         using var transaction = await Context.Database.BeginTransactionAsync();
         try
         {
+            OfficeFile? existed = await Context.OfficeFiles.Where(f => f.FileName == newItem.FileName)
+                .OrderByDescending(f => f.Version)
+                .FirstOrDefaultAsync();
+            int version = 1;
+            if(existed != null)
+            {
+                version = existed.Version + 1;
+            }
+            newItem.Version = version;
             await Context.OfficeFiles.AddAsync( newItem );
             await Context.SaveChangesAsync();
             await transaction.CommitAsync();
