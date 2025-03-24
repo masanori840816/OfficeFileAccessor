@@ -39,4 +39,15 @@ public record TableCellBorders
             Bottom = BorderType.None,
         };
     }
+    public bool CheckHasAnyBorders()
+    {
+        if(Left != BorderType.None ||
+            Top != BorderType.None ||
+            Right != BorderType.None ||
+            Bottom != BorderType.None)
+        {
+            return true;
+        }
+        return false;
+    }
 }
