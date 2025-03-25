@@ -144,7 +144,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
 
             NumberingFormat? numberingFormat = bookPart.WorkbookStylesPart?.Stylesheet?.NumberingFormats?
                 .Elements<NumberingFormat>()?.FirstOrDefault(nf => nf.NumberFormatId != null && nf.NumberFormatId == numberFormatId);
-            var cellValue = cell.CellValue?.Text;
+            string? cellValue = cell.CellValue?.Text;
             if(string.IsNullOrEmpty(numberingFormat?.FormatCode?.Value) == false)
             {
                 string formatCode = numberingFormat.FormatCode.Value;

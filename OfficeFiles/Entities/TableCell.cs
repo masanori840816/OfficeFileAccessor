@@ -56,7 +56,7 @@ public class TableCell
     public List<InputRecord> InputRecords { get; init; } = [];
 
     public static TableCell Generate(Worksheets.Cell cell, MergedTableCell? mergedCell,
-        TableCellBorders borders)
+        List<InputTableCell> inputCells, TableCellBorders borders)
     {
         return new ()
         {
@@ -72,13 +72,14 @@ public class TableCell
             BackgroundColor = cell.BackgroundColor,
             Editabled = cell.BackgroundColor == ConstantParams.EditableColor,
             MergedCell = mergedCell,
+            InputCells = inputCells,
             VerticalWriting = cell.VerticalWriting,
             TextRotation = (int)cell.TextRotation,
         };
     }
     public static TableCell Generate(Worksheets.CellAddress baseAddress, string mergedValue, string? formula,
-        string valueType, TableCellBorders borders,
-        string? backgroundColor, MergedTableCell? mergedCell, bool verticalWriting, uint textRotation)
+        string valueType, TableCellBorders borders, string? backgroundColor, 
+        MergedTableCell? mergedCell, List<InputTableCell> inputCells, bool verticalWriting, uint textRotation)
     {
         return new ()
         {
@@ -91,6 +92,7 @@ public class TableCell
             BackgroundColor = backgroundColor,
             Editabled = backgroundColor == ConstantParams.EditableColor,
             MergedCell = mergedCell,
+            InputCells = inputCells,
             VerticalWriting = verticalWriting,
             TextRotation = (int)textRotation,
         };

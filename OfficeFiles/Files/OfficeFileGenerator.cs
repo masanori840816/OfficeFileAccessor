@@ -52,7 +52,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.TableCells.Add(TableCell.Generate(c, Entities.MergedTableCell.Generate(mergedCell), noBorders));
+                            group.TableCells.Add(TableCell.Generate(c, Entities.MergedTableCell.Generate(mergedCell), GetInputTableCells(mergedCell), c.Borders));
                         }
                     }
                 }
@@ -65,7 +65,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         {
                             List<Worksheets.Cell> mergedCell = [c];
                             AddMergedCells(c, mergedCell, g.Cells);
-                            group.TableCells.Add(TableCell.Generate(c, Entities.MergedTableCell.Generate(mergedCell), noBorders));
+                            group.TableCells.Add(TableCell.Generate(c, Entities.MergedTableCell.Generate(mergedCell), GetInputTableCells(mergedCell), c.Borders));
                         }
                     }
                 }
@@ -87,7 +87,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                 AddLeftBottom(cell.Address, mergedCell, g.Cells);
                 int[] columns = [.. mergedCell.Select(c => c.Address.Column).Distinct()];
                 int[] rows = [.. mergedCell.Select(c => c.Address.Row).Distinct()];
-                AddRestCells(mergedCell, g.Cells, columns, rows);                
+                AddRestCells(mergedCell, g.Cells, columns, rows);
                 string? backgroundColor = GetBackgroundColorFromMergedCells(mergedCell);
                 addedAddresses.AddRange(mergedCell.Select(c => c.Address));             
                 group.TableCells.Add(
@@ -95,6 +95,7 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
                         cell.Formula, cell.ValueType,
                         GetBordersFromMergedCells(mergedCell), 
                         backgroundColor, Entities.MergedTableCell.Generate(mergedCell),
+                        GetInputTableCells(mergedCell),
                         cell.VerticalWriting, cell.TextRotation));
             }
         }
@@ -202,6 +203,78 @@ public class OfficeFileGenerator(ILogger<OfficeFileGenerator> Logger): IOfficeFi
         current.Add(bottom);
         AddMergedCells(bottom, current, allCells);
         AddLeftBottom(bottomAddress, current, allCells);
+    }
+    private static List<Entities.InputTableCell> GetInputTableCells(List<Worksheets.Cell> mergedCells)
+    {
+        List<Entities.InputTableCell> results = [];
+        int minColumn = mergedCells.Min(m => m.Address.Column);
+        int maxColumn = mergedCells.Max(m => m.Address.Column);
+        int minRow = mergedCells.Min(m => m.Address.Row);
+        int maxRow = mergedCells.Max(m => m.Address.Row);
+                
+        for(var col = minColumn; col <= maxColumn; col++)
+        {
+            for(var row = minRow; row <= maxRow; row++)
+            {
+                Worksheets.Cell? c = mergedCells.FirstOrDefault(m => m.Address.Column == col && m.Address.Row == row);
+                if(c == null)
+                {
+                    continue;
+                }
+                if(c.BackgroundColor != ConstantParams.EditableColor)
+                {
+                    continue;
+                }
+                int startColumn = col;
+                int startRow = row;
+                int endColumn = col;
+                int endRow = row;
+                if(c.MergedCell != null)
+                {
+                    endColumn = c.MergedCell.EndColumn;
+                    endRow = c.MergedCell.EndRow;
+                }
+                for(var icol = endColumn; icol <= maxColumn; icol++)
+                {
+                    Worksheets.Cell? endCell = mergedCells.FirstOrDefault(m => m.Address.Column == icol && m.Address.Row == row);
+                    if(endCell == null)
+                    {
+                        continue;
+                    }
+                    if(endCell.BackgroundColor != ConstantParams.EditableColor)
+                    {
+                        break;
+                    }
+                    endColumn = icol;
+                }
+                for(var irow = endRow; irow <= maxRow; irow++)
+                {
+                    Worksheets.Cell? endCell = mergedCells.FirstOrDefault(m => m.Address.Column == endColumn && m.Address.Row == irow);
+                    if(endCell == null)
+                    {
+                        continue;
+                    }
+                    if(endCell.BackgroundColor != ConstantParams.EditableColor)
+                    {
+                        break;
+                    }
+                    endRow = irow;
+                }
+                if(results.Any(c => c.StartColumn <= startColumn && endColumn <= c.EndColumn &&
+                    c.StartRow <= startRow && endRow <= c.EndRow))
+                {
+                    continue;
+                }
+                results.Add(new InputTableCell
+                {
+                    StartColumn = startColumn,
+                    StartRow = startRow,
+                    EndColumn = endColumn,
+                    EndRow = endRow
+                });
+            }
+        }
+        return results;
     }
     private static string MergeCellValues(List<Worksheets.Cell> cells)
     {
