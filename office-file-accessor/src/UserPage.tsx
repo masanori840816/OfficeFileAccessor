@@ -5,6 +5,7 @@ import { getServerUrl } from './web/serverUrlGetter';
 import { getCookieValue } from './web/cookieValues';
 import * as numbers from './numbers/parseNumbers';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
+import * as logs from './accessLogs/logWriter';
 import { DisplayUser, UpdateUser } from './officeFileAccessor.type';
 import { hasAnyTexts } from './texts/hasAnyTexts';
 
@@ -17,6 +18,9 @@ export function UserPage(): JSX.Element {
     const authContext = useAuthentication();
     const search = useLocation().search;
     const navigate = useNavigate();
+    useEffect(() => {
+        logs.writeAccessLog('UserPage');
+    }, []);
     useEffect(() => {
         authStatusChecker.checkStatus(authContext);
     }, [authContext]);

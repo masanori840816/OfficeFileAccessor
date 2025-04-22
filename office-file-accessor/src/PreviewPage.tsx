@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthentication } from './auth/authenticationContext';
 import { getServerUrl } from './web/serverUrlGetter';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
+import * as logs from './accessLogs/logWriter';
 import * as pixels from './numbers/pixelConverter';
 import * as numbers from './numbers/parseNumbers';
 import { DisplayOfficeFileSheet, PreviewOfficeFileSheets } from './officeFileAccessor.type';
@@ -20,7 +21,8 @@ export function PreviewPage(): JSX.Element {
     const search = useLocation().search;
     const navigate = useNavigate();
     useEffect(() => {
-        setDpi(pixels.getDPI())
+        logs.writeAccessLog('PreviewPage');
+        setDpi(pixels.getDPI());
     }, []);
     useEffect(() => {
         authStatusChecker.checkStatus(authContext);

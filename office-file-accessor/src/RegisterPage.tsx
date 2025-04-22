@@ -3,13 +3,16 @@ import { getServerUrl } from './web/serverUrlGetter';
 import { getCookieValue } from './web/cookieValues';
 import { useAuthentication } from './auth/authenticationContext';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
+import * as logs from './accessLogs/logWriter';
 import { hasAnyTexts } from './texts/hasAnyTexts';
 import { ApplicationResult } from './officeFileAccessor.type';
 
 export function RegisterPage(): JSX.Element {
   const [files, setFiles] = useState<FileList|null>(null);
   const authContext = useAuthentication();
-  
+  useEffect(() => {
+    logs.writeAccessLog('RegisterPage');
+}, []);
   useEffect(() => {
           authStatusChecker.checkStatus(authContext);
       }, [authContext]);

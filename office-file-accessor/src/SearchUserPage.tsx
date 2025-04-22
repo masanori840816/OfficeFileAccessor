@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthentication } from './auth/authenticationContext';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
+import * as logs from './accessLogs/logWriter';
 import { getServerUrl } from './web/serverUrlGetter';
 import { SearchUser } from './auth/authenticationType';
 import { SearchUserRow } from './components/SearchUserRow';
@@ -20,6 +21,7 @@ export function SearchUserPage(): JSX.Element {
         authStatusChecker.checkStatus(authContext);
     }, [authContext]);
     useEffect(() => {
+        logs.writeAccessLog('SearchUserPage');
         fetch(`${getServerUrl()}/api/users/search`, {
             mode: 'cors',
             method: 'GET',
