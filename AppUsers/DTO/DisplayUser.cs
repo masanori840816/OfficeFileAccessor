@@ -26,4 +26,13 @@ public record DisplayUser
             Email = user.Email ?? "",
         };
     }
+    public static DisplayUser AnonymousUser()
+    {
+        return new ()
+        {
+            Id = -1,
+            UserName = "anonymous",
+            Email = "",
+        };
+    }
 }
