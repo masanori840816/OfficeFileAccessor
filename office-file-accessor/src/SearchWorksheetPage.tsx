@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthentication } from './auth/authenticationContext';
 import * as authStatusChecker from './auth/authenticationStatusChecker';
+import * as logs from './accessLogs/logWriter';
 import { getServerUrl } from './web/serverUrlGetter';
 import { hasAnyTexts } from './texts/hasAnyTexts';
 import { addUrlParams } from './web/addUrlParams';
@@ -17,6 +18,7 @@ export function SearchWorksheetPage(): JSX.Element {
     const [updateDateFrom, setUpdateDateFrom] = useState('');
     const [updateDateTo, setUpdateDateTo] = useState('');
     useEffect(() => {
+        logs.writeAccessLog('SearchWorksheetPage');
         fetch(`${getServerUrl()}/api/worksheets/search`, {
             mode: 'cors',
             method: 'GET',
