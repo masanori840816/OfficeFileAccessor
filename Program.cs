@@ -118,7 +118,7 @@ try
         {
             return next(context);
         }
-        if(requestPath.EndsWith("/") == false)
+        if(requestPath.EndsWith('/') == false)
         {
             requestPath += "/";
         }
