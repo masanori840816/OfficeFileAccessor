@@ -8,15 +8,11 @@ using OfficeFileAccessor.AppUsers.DTO;
 namespace OfficeFileAccessor.Logs;
 
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-public class ClientLogController: Controller
+public class ClientLogController(IApplicationUserService users) : Controller
 {
     private static readonly NLog.Logger accessLogger = NLog.LogManager.GetLogger("AccessLogger");
-    private readonly IApplicationUserService users;
+    private readonly IApplicationUserService users = users;
 
-    public ClientLogController(IApplicationUserService users)
-    {
-        this.users = users;
-    }
     [HttpGet("/api/logs/pageaccess")]
     public async Task<IActionResult> LogPageAccess([FromQuery] string page)
     {
