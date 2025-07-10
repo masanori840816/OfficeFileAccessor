@@ -109,6 +109,7 @@ try
     }
     app.UseCors(AllowOrigins);
     app.UseRouting();
+    app.UseStaticFiles();
     
     var antiforgery = app.Services.GetRequiredService<IAntiforgery>();
     app.Use((context, next) =>
