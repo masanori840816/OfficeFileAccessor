@@ -13,6 +13,7 @@ import { UserPage } from './UserPage';
 import { PreviewPage } from './PreviewPage';
 import { SearchUserPage } from './SearchUserPage';
 import { SearchWorksheetPage } from './SearchWorksheetPage';
+import { UIActionPage } from './UIActionPage';
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
           <Route path='/pages/officefiles/preview/' element={<PreviewPage />} />
           <Route path='/pages/users/edit/' element={<UserPage />} />
           <Route path='/pages/users/' element={<SearchUserPage />} />
+          <Route path='/pages/uievents/' element={<UIActionPage />} /> 
         </Routes  >
         </Router>
       </AuthenticationProvider>
