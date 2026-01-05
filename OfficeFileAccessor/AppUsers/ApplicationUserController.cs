@@ -2,14 +2,17 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using OfficeFileAccessor.AppUsers.DTO;
 
 namespace OfficeFileAccessor.AppUsers;
 
 [AutoValidateAntiforgeryToken]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUserService Users): Controller
+public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUserService Users,
+    IStringLocalizer<SharedResource> Localizer): Controller
 {
+    private readonly IStringLocalizer<SharedResource> _localizer = Localizer;
     [AllowAnonymous]
     [HttpPost("/api/users/signin")]
     public async Task<IActionResult> ApplicationSignIn([FromBody] SignInValue value)
@@ -52,7 +55,7 @@ public class ApplicationUserController(IAntiforgery Antiforgery, IApplicationUse
         DisplayUser? user = await Users.GetUserAsync(userId);
         if(user == null)
         {
-            return BadRequest("User was not found");
+            return BadRequest(_localizer["Alert_UserNotFound"]);
         }
         return Json(user);
     }

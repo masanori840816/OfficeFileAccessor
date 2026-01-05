@@ -19,7 +19,7 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
         var target = await Users.GetByEmailForSignInAsync(value.Email);
         if(target == null)
         {
-            return new (Result: ApplicationResult.GetFailedResult(_localizer["Error_InvalidEmailOrPassword"]), User: null);
+            return new (Result: ApplicationResult.GetFailedResult(_localizer["Alert_InvalidEmailOrPassword"]), User: null);
         }
         SignInResult result = await SignIn.PasswordSignInAsync(target, value.Password, false, false);
         if(result.Succeeded)
@@ -27,7 +27,7 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
             response.Cookies.Append("User-Token", Tokens.GenerateToken(target), DefaultCookieOption.Get());         
             return new (Result: ApplicationResult.GetSucceededResult(), User: DTO.DisplayUser.Create(target));
         }
-        return new (Result: ApplicationResult.GetFailedResult(_localizer["Error_InvalidEmailOrPassword"]), User: null);
+        return new (Result: ApplicationResult.GetFailedResult(_localizer["Alert_InvalidEmailOrPassword"]), User: null);
     }
     public async Task SignOutAsync(HttpResponse response)
     {
@@ -67,15 +67,15 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
     {
         if(string.IsNullOrEmpty(user.UserName))
         {
-            return ApplicationResult.GetFailedResult("UserName is required");
+            return ApplicationResult.GetFailedResult(_localizer["Alert_UserNameIsRequired"]);
         }
         if(string.IsNullOrEmpty(user.Email))
         {
-            return ApplicationResult.GetFailedResult("Email is required");
+            return ApplicationResult.GetFailedResult(_localizer["Alert_EmailIsRequired"]);
         }
         if(string.IsNullOrEmpty(user.Password))
         {
-            return ApplicationResult.GetFailedResult("Password is required");
+            return ApplicationResult.GetFailedResult(_localizer["Alert_PasswordIsRequired"]);
         }
         return await Users.CreateOrUpdateUserAsync(user);
     }
