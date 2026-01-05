@@ -86,6 +86,15 @@ try
         .AddUserStore<ApplicationUserStore>()
         .AddEntityFrameworkStores<OfficeFileAccessorContext>()
         .AddDefaultTokenProviders();
+    builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+    builder.Services.Configure<RequestLocalizationOptions>(options =>
+    {
+        string[] supportedCultures = ["en", "ja"];
+        // Use English by default
+        options.SetDefaultCulture(supportedCultures[0])
+            .AddSupportedCultures(supportedCultures)
+            .AddSupportedUICultures(supportedCultures);
+    });
     builder.Services.AddScoped<IOfficeFileService, OfficeFileService>();
     builder.Services.AddScoped<IApplicationUsers, ApplicationUsers>();
     builder.Services.AddScoped<IApplicationUserService, ApplicationUserService>();

@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Localization;
 using OfficeFileAccessor.Apps;
 using OfficeFileAccessor.AppUsers.Entities;
 using OfficeFileAccessor.AppUsers.Repositories;
@@ -10,14 +10,16 @@ namespace OfficeFileAccessor.AppUsers;
 
 public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
     IApplicationUsers Users,
-    IUserTokens Tokens): IApplicationUserService
+    IUserTokens Tokens,
+    IStringLocalizer<SharedResource> Localizer): IApplicationUserService
 {
+    private readonly IStringLocalizer<SharedResource> _localizer = Localizer;
     public async Task<DTO.SignInResult> SignInAsync(DTO.SignInValue value, HttpResponse response)
     {
         var target = await Users.GetByEmailForSignInAsync(value.Email);
         if(target == null)
         {
-            return new (Result: ApplicationResult.GetFailedResult("Invalid e-mail or password"), User: null);
+            return new (Result: ApplicationResult.GetFailedResult(_localizer["Error_InvalidEmailOrPassword"]), User: null);
         }
         SignInResult result = await SignIn.PasswordSignInAsync(target, value.Password, false, false);
         if(result.Succeeded)
@@ -25,7 +27,7 @@ public class ApplicationUserService(SignInManager<ApplicationUser> SignIn,
             response.Cookies.Append("User-Token", Tokens.GenerateToken(target), DefaultCookieOption.Get());         
             return new (Result: ApplicationResult.GetSucceededResult(), User: DTO.DisplayUser.Create(target));
         }
-        return new (Result: ApplicationResult.GetFailedResult("Invalid e-mail or password"), User: null);
+        return new (Result: ApplicationResult.GetFailedResult(_localizer["Error_InvalidEmailOrPassword"]), User: null);
     }
     public async Task SignOutAsync(HttpResponse response)
     {

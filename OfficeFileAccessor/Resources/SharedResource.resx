@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  
+  <data name="Error_InvalidEmailOrPassword" xml:space="preserve">
+    <value>Invalid e-mail or password</value>
+  </data>
+</root>
