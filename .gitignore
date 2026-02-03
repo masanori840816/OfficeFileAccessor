@@ -1,4 +1,6 @@
 bin
 obj
 wwwroot/dist/*
+office-file-accessor/dist/*
 node_modules
+.vite
