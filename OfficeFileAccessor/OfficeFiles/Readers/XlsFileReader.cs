@@ -215,7 +215,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         {
             SharedStringTablePart? sharedStringTablePart = bookPart.GetPartsOfType<SharedStringTablePart>()
                 ?.FirstOrDefault();
-            if (sharedStringTablePart != null)
+            if (sharedStringTablePart?.SharedStringTable != null)
             {
                 OpenXmlElement sharedStringItem = sharedStringTablePart.SharedStringTable
                     .ElementAt(int.Parse(value));
@@ -372,6 +372,10 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     /// <returns></returns>
     public List<Entities.MergedTableCell> GetMergedCells(WorksheetPart sheetPart)
     {
+        if(sheetPart.Worksheet == null)
+        {
+            return [];
+        }
         MergeCells? mergeCells = sheetPart.Worksheet.Elements<MergeCells>().FirstOrDefault();
         if(mergeCells == null)
         {
@@ -580,6 +584,10 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
     }
     private static Worksheets.PrintArea GetPrintArea(WorkbookPart bookPart, string sheetName)
     {
+        if(bookPart.Workbook == null)
+        {
+            return Worksheets.PrintArea.DefaultPrintArea();
+        }
         DefinedNames? definedNames = bookPart.Workbook.DefinedNames;
         if(definedNames == null)
         {
