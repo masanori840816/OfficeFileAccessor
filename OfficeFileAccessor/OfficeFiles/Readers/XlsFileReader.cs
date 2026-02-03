@@ -14,6 +14,7 @@ namespace OfficeFileAccessor.OfficeFiles.Readers;
 public class XlsFileReader(ILogger<XlsFileReader> Logger,
     IOfficeFileGenerator FileGenerator) : IXlsFileReader
 {
+    private readonly ILogger<XlsFileReader> _logger = Logger;
     private readonly double DefaultWidth = Numbers.ConvertFromPixelToCentimeter(8.38 * 7.0);
     private readonly double DefaultHeight = Numbers.ConvertFromPointToCentimeter(18.75);
 
@@ -26,9 +27,9 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         using (SpreadsheetDocument spreadsheet = SpreadsheetDocument.Open(stream, false))
         {
             WorkbookPart? bookPart = spreadsheet.WorkbookPart;
-            if(bookPart == null)
+            if(bookPart?.Workbook == null)
             {
-                Logger.LogWarning("Failed getting WorkbookPart");
+                _logger.LogWarning("Failed getting WorkbookPart");
                 return null;
             }
             foreach(Sheet s in bookPart.Workbook.Descendants<Sheet>())
@@ -52,7 +53,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 List<Entities.MergedTableCell> mergedCells = GetMergedCells(sheetPart);
                 List<Entities.Shape> shapes = [];
                 DrawingsPart? drawingsPart = sheetPart?.DrawingsPart;
-                if (drawingsPart != null)
+                if (drawingsPart?.WorksheetDrawing != null)
                 {
                     // Get shapes from only OneCellAnchor and TwoCellAnchor
                     foreach (OneCellAnchor drawing in drawingsPart.WorksheetDrawing.Elements<OneCellAnchor>())
@@ -138,7 +139,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 ?? GetNumberFormat(bookPart, (uint)numberFormatId!);
             if(numberFormat != null)
             {
-                Logger.LogWarning("Format ID:{id} format:{f} ref:{r}", numberFormat?.NumberFormatId, numberFormat?.Format, cell.CellReference);
+                _logger.LogWarning("Format ID:{id} format:{f} ref:{r}", numberFormat?.NumberFormatId, numberFormat?.Format, cell.CellReference);
             }
 
 
@@ -151,11 +152,11 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                 if (double.TryParse(cellValue, out double numericValue))
                 {
                     var nValue = numericValue.ToString(formatCode, CultureInfo.InvariantCulture);
-                    Logger.LogWarning("NVVValue {nv} ref:{r}", nValue, cell.CellReference);
+                    _logger.LogWarning("NVVValue {nv} ref:{r}", nValue, cell.CellReference);
                 } else {
                     numericValue = 0d;
                     var nValue = numericValue.ToString(formatCode, CultureInfo.InvariantCulture);
-                    Logger.LogWarning("Zero NVValue {nv} ref:{r}", nValue, cell.CellReference);
+                    _logger.LogWarning("Zero NVValue {nv} ref:{r}", nValue, cell.CellReference);
                 }
 
             }
@@ -186,12 +187,12 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         }
         if(string.IsNullOrEmpty(formula) == false && string.IsNullOrEmpty(calcResult) == false)
         {
-            Logger.LogWarning("Formula ad:{ad} cr:{cr} mc:{mc}", address, calcResult, mergedCell);
+            _logger.LogWarning("Formula ad:{ad} cr:{cr} mc:{mc}", address, calcResult, mergedCell);
             if (double.TryParse(calcResult, out double n))
             {
                 calcResult = n.ToString("G");
             }
-            Logger.LogWarning("Formula n:{n} cr:{cr}", n, calcResult);
+            _logger.LogWarning("Formula n:{n} cr:{cr}", n, calcResult);
             return new Worksheets.Cell
             {
                 Address = address,
@@ -225,7 +226,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
                                     .Where(t => CheckIsPhonetic(t) == false)
                                     .Select(t => t.Text)
                 );
-                Logger.LogWarning("SharedString ad:{ad} v:{v} cr:{cr} mc:{mc}", address, value, result, mergedCell);
+                _logger.LogWarning("SharedString ad:{ad} v:{v} cr:{cr} mc:{mc}", address, value, result, mergedCell);
                 return new Worksheets.Cell
                 {
                     Address = address,
@@ -248,7 +249,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             value = nv.ToString("G");
             valueType = Worksheets.CellValueType.Double;
         }
-        Logger.LogWarning("SharedString ad:{ad} v:{v} ty:{ty} mc:{mc}", address, value, valueType, mergedCell);
+        _logger.LogWarning("SharedString ad:{ad} v:{v} ty:{ty} mc:{mc}", address, value, valueType, mergedCell);
         return new Worksheets.Cell
         {
             Address = address,
@@ -451,12 +452,8 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         for (int i = printArea.StartRow; i <= printArea.EndRow; i++)
         {
             Row? row = sheetData.Elements<Row>().FirstOrDefault(r => r.RowIndex?.Value == i);
-            if(row == null)
-            {
-                continue;
-            }
             double height = DefaultHeight;
-            if(row.Height?.Value != null)
+            if(row?.Height?.Value != null)
             {
                 height = Numbers.ConvertFromPointToCentimeter(row.Height.Value);
             }
@@ -500,7 +497,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
             if (bookPart.WorkbookStylesPart?.Stylesheet?.Borders?.ElementAt(
                     (int)cellFormat.BorderId.Value) is Border border)
             {
-                Logger.LogWarning("GetB Diagonal:{dd} down:{d} up:{up} ver:{ver} start:{start}", border.DiagonalBorder?.Style?.InnerText,
+                _logger.LogWarning("GetB Diagonal:{dd} down:{d} up:{up} ver:{ver} start:{start}", border.DiagonalBorder?.Style?.InnerText,
                     border.DiagonalDown?.InnerText == null, border.DiagonalUp?.InnerText == null, border.VerticalBorder?.Style?.InnerText,
                      border.StartBorder?.Style?.InnerText);
                 return new()
@@ -657,7 +654,7 @@ public class XlsFileReader(ILogger<XlsFileReader> Logger,
         });
         return results;
     }
-    private static List<Entities.TableRowHeight> GetMergedHeights(List<Entities.TableRowHeight> allRows,
+    private List<Entities.TableRowHeight> GetMergedHeights(List<Entities.TableRowHeight> allRows,
         List<Entities.TableCell> cells)
     {
         List<Entities.TableRowHeight> results = [];
