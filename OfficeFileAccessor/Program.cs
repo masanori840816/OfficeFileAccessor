@@ -134,7 +134,9 @@ try
         }
         // The sign-in page needs anti-forgery token before authentication.
         if (string.Equals(requestPath, "/officefiles/pages/signin/", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(requestPath, "/pages/signin/", StringComparison.OrdinalIgnoreCase))
+            string.Equals(requestPath, "/pages/signin/", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(requestPath, "/officefiles/api/xsrf-token/", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(requestPath, "/api/xsrf-token/", StringComparison.OrdinalIgnoreCase))
         {
             // Remove last token
             context.Response.Cookies.Delete("User-Token");
